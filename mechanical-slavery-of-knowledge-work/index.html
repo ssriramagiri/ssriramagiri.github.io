@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Mechanical Slavery of Knowledge Work</title>
+  <style>
+    @font-face {
+      font-family: 'TX-02';
+      src: url('TX-02 3/TX-02-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'TX-02';
+      src: url('TX-02 3/TX-02-Oblique.otf') format('opentype');
+      font-weight: 400;
+      font-style: italic;
+    }
+    @font-face {
+      font-family: 'TX-02';
+      src: url('TX-02 3/TX-02-Medium.otf') format('opentype');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'TX-02';
+      src: url('TX-02 3/TX-02-Medium-Oblique.otf') format('opentype');
+      font-weight: 500;
+      font-style: italic;
+    }
+    @font-face {
+      font-family: 'TX-02';
+      src: url('TX-02 3/TX-02-Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'TX-02';
+      src: url('TX-02 3/TX-02-Bold-Oblique.otf') format('opentype');
+      font-weight: 700;
+      font-style: italic;
+    }
+    @font-face {
+      font-family: 'TX-02';
+      src: url('TX-02 3/TX-02-Retina.otf') format('opentype');
+      font-weight: 450;
+      font-style: normal;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: 'TX-02', monospace;
+      font-weight: 400;
+      color: #1a1a1a;
+      background: #f8f7f4;
+      line-height: 1.7;
+      padding: 0 1.5rem;
+    }
+
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 6rem 0 8rem;
+    }
+
+    h1 {
+      font-weight: 500;
+      font-size: 1.35rem;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+      margin-bottom: 2.5rem;
+      color: #111;
+    }
+
+    blockquote {
+      font-style: italic;
+      font-weight: 400;
+      font-size: 0.85rem;
+      line-height: 1.65;
+      color: #555;
+      border-left: 2px solid #ccc;
+      padding-left: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    blockquote cite {
+      display: block;
+      margin-top: 0.5rem;
+      font-style: normal;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    p { font-size: 0.85rem; margin-bottom: 1.4rem; color: #2a2a2a; }
+
+    .pull {
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: #111;
+      margin: 2.5rem 0;
+      line-height: 1.5;
+    }
+
+    .closing {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid #ddd;
+    }
+    .closing p { color: #444; }
+
+    details.tech-aside {
+      margin: 1.8rem 0 1.4rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 0;
+      background: #faf9f6;
+    }
+    details.tech-aside summary {
+      font-family: 'TX-02', monospace;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #555;
+      cursor: pointer;
+      padding: 0.75rem 1rem;
+      letter-spacing: 0.02em;
+      list-style: none;
+    }
+    details.tech-aside summary::-webkit-details-marker { display: none; }
+    details.tech-aside summary::before {
+      content: '▸ ';
+      color: #999;
+      margin-right: 0.25rem;
+    }
+    details.tech-aside[open] summary::before { content: '▾ '; }
+    details.tech-aside .aside-body {
+      padding: 0 1rem 1rem;
+      border-top: 1px solid #eee;
+    }
+    details.tech-aside .aside-body h4 {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #333;
+      margin: 1rem 0 0.4rem;
+      letter-spacing: 0.01em;
+    }
+    details.tech-aside .aside-body ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 0.6rem;
+    }
+    details.tech-aside .aside-body ul li {
+      font-size: 0.82rem;
+      color: #2a2a2a;
+      line-height: 1.6;
+      padding: 0.2rem 0 0.2rem 1rem;
+      position: relative;
+    }
+    details.tech-aside .aside-body ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: #bbb;
+    }
+    details.tech-aside .aside-body p {
+      font-size: 0.82rem;
+      margin-bottom: 0.8rem;
+    }
+
+    h2 {
+      font-weight: 500;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #999;
+      margin: 3.5rem 0 1.8rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e8e6e2;
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 3.5rem 0 5rem; }
+      h1 { font-size: 1.15rem; }
+      h2 { font-size: 0.6rem; margin: 2.5rem 0 1.4rem; }
+    }
+
+    /* ── Decomposition viz ── */
+    .decomposition {
+      margin: 3.5rem 0;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .viz-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .viz-btn {
+      font-family: 'TX-02', monospace;
+      font-size: 0.7rem;
+      font-weight: 450;
+      padding: 0.3rem 0.6rem;
+      background: transparent;
+      border: 1px solid #c5c3be;
+      color: #888;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      letter-spacing: 0.01em;
+      line-height: 1.4;
+      outline: none;
+    }
+    .viz-btn:hover { border-color: #888; color: #333; }
+    .viz-btn.active { background: #1a1a1a; border-color: #1a1a1a; color: #f5f4f0; }
+    .viz-btn-unified { margin-left: 0.25rem; border-color: #999; color: #666; font-weight: 500; }
+
+    .viz-section-label {
+      font-size: 0.62rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #aaa;
+      margin-bottom: 0.5rem;
+    }
+
+    /* work cards */
+    .work-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      margin-bottom: 0.4rem;
+    }
+    .work-card {
+      padding: 0.65rem 0.45rem 0.55rem;
+      border: 1px solid #ddd;
+      text-align: center;
+      transition: background 0.35s ease, border-color 0.35s ease, opacity 0.35s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .work-card-name {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #333;
+      margin-bottom: 0.2rem;
+      transition: color 0.35s ease;
+    }
+    .work-card-desc {
+      font-size: 0.5rem;
+      color: #aaa;
+      line-height: 1.35;
+      transition: color 0.35s ease;
+    }
+    .work-card-qual {
+      font-size: 0.48rem;
+      font-weight: 500;
+      font-style: italic;
+      line-height: 1.4;
+      margin-top: 0.2rem;
+      height: 3.2rem;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease, color 0.3s ease;
+    }
+    .work-card-qual.visible { opacity: 1; }
+
+    /* spider + notes side-by-side */
+    .viz-spider-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: flex-start;
+    }
+    .viz-chart-wrap {
+      flex: 0 0 52%;
+    }
+    .viz-chart-wrap svg { width: 100%; height: auto; display: block; }
+
+    .viz-notes {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      padding-top: 0.15rem;
+    }
+    .viz-notes.visible { opacity: 1; }
+    .viz-note-item {
+      font-size: 0.5rem;
+      color: #999;
+      line-height: 1.45;
+      padding: 0.18rem 0;
+      border-bottom: 1px solid #f0eeea;
+      transition: color 0.3s ease, opacity 0.3s ease;
+    }
+    .viz-note-item:last-child { border-bottom: none; }
+    .viz-note-label {
+      font-weight: 600;
+      color: #666;
+      transition: color 0.3s ease;
+    }
+
+    /* shared summary */
+    .viz-summary {
+      margin-top: 0.7rem;
+      font-size: 0.78rem;
+      color: #555;
+      font-style: italic;
+      min-height: 1.2em;
+      line-height: 1.55;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .viz-summary.visible { opacity: 1; }
+
+    /* conclusion */
+    .viz-conclusion {
+      margin-top: 2rem;
+      padding: 1rem 1.2rem;
+      border-left: 2px solid #1a1a1a;
+    }
+    .viz-conclusion p {
+      font-size: 0.72rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+    }
+    .viz-conclusion p:last-child { margin-bottom: 0; }
+    .viz-gap-tags {
+      display: flex;
+      gap: 0.35rem;
+      margin: 0.5rem 0 0.7rem;
+      flex-wrap: wrap;
+    }
+    .viz-gap-tag {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #1a1a1a;
+      padding: 0.2rem 0.45rem;
+      border: 1px solid #1a1a1a;
+    }
+
+    /* spacer between sections */
+    .viz-spacer { height: 1.5rem; }
+
+    /* ── Time-breakdown viz ── */
+    .time-breakdown {
+      margin: 2.5rem 0 3rem;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .tw-split {
+      display: flex;
+      font-size: 0.6rem;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.2rem;
+    }
+    .tw-split span {
+      overflow: hidden;
+      white-space: nowrap;
+      display: block;
+    }
+    .tw-split-labels {
+      display: flex;
+      font-size: 0.45rem;
+      color: #999;
+      margin-bottom: 1.2rem;
+    }
+    .tw-split-labels span {
+      text-align: center;
+    }
+    .tw-stat-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-bottom: 1.2rem;
+    }
+    .tw-stat-card {
+      padding: 0.55rem 0.45rem;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    .tw-stat-label {
+      font-size: 0.48rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #888;
+      margin-bottom: 0.1rem;
+    }
+    .tw-stat-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .tw-stat-sub {
+      font-size: 0.42rem;
+      color: #aaa;
+      margin-top: 0.05rem;
+    }
+    .tw-group-label {
+      font-size: 0.5rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #aaa;
+      margin: 0.9rem 0 0.35rem;
+    }
+    .tw-group-label:first-child { margin-top: 0; }
+    .tw-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 0.15rem;
+      font-size: 0.6rem;
+      line-height: 1.5;
+    }
+    .tw-bar-label {
+      width: 130px;
+      color: #888;
+      flex-shrink: 0;
+      text-align: right;
+      padding-right: 0.6rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tw-bar-dots {
+      flex: 1;
+      color: #1a1a1a;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .tw-bar-dots .tw-dot-empty { color: #ddd; }
+    .tw-bar-value {
+      min-width: 42px;
+      text-align: right;
+      color: #555;
+      padding-left: 0.5rem;
+      font-weight: 500;
+    }
+    .tw-bar-tools {
+      font-size: 0.42rem;
+      color: #bbb;
+      padding-left: 0.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 120px;
+    }
+    .tw-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      margin-bottom: 0.9rem;
+      font-size: 0.5rem;
+      color: #999;
+    }
+    .tw-legend-item { display: flex; align-items: center; gap: 0.25rem; }
+    .tw-legend-char { color: #1a1a1a; font-size: 0.6rem; letter-spacing: 0.02em; }
+    .tw-insight {
+      margin-top: 1rem;
+      padding: 0.6rem 0.8rem;
+      border-left: 2px solid #1a1a1a;
+      font-size: 0.6rem;
+      line-height: 1.6;
+      color: #555;
+    }
+    .tw-note {
+      font-size: 0.5rem;
+      color: #aaa;
+      margin-top: 0.5rem;
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      .viz-spider-row { flex-direction: column; }
+      .viz-chart-wrap { flex: auto; max-width: 100%; }
+      .viz-tools { gap: 0.25rem; }
+      .viz-btn { font-size: 0.6rem; padding: 0.25rem 0.45rem; }
+      .work-cards { gap: 3px; }
+      .work-card { padding: 0.4rem 0.2rem; }
+      .work-card-name { font-size: 0.46rem; letter-spacing: 0.02em; }
+      .work-card-desc { display: none; }
+      .work-card-qual { font-size: 0.4rem; height: 3rem; }
+      .viz-note-item { font-size: 0.45rem; }
+      .viz-conclusion { padding: 0.8rem 1rem; }
+      .viz-conclusion p { font-size: 0.65rem; }
+      .tw-stat-row { grid-template-columns: repeat(2, 1fr); }
+      .tw-bar-row { font-size: 0.5rem; }
+      .tw-bar-label { width: 85px; font-size: 0.48rem; }
+      .tw-bar-value { font-size: 0.48rem; min-width: 36px; }
+      .tw-bar-tools { display: none; }
+      .tw-stat-value { font-size: 0.8rem; }
+      .tw-legend { font-size: 0.42rem; gap: 0.5rem; }
+      .tw-insight { font-size: 0.52rem; }
+      .tw-split { font-size: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <article class="page">
+    <h1>The Mechanical Slavery of Knowledge Work</h1>
+
+    <blockquote>
+      "All unintellectual labour, all monotonous, dull labour, all labour that deals with dreadful things, and involves unpleasant conditions, must be done by machinery. Machinery must work for us."
+      <cite>— Oscar Wilde, <em>The Soul of Man Under Socialism</em> (1891)</cite>
+    </blockquote>
+
+    <p>Wilde was writing about coal mines in 1891. But he might as well have been writing about AI in 2026. If you watch how most knowledge workers actually spend their day, you see the same pattern. Tedium, in place of danger. A huge share of the hours are spent on things that don't require thinking at all.</p>
+
+    <p>Regardless of what you do, you open your inbox, there are 40 messages, maybe five require judgment. The rest are status pings, scheduling, someone forwarding something you need to skim so you can update a doc so someone else can update a slide. You copy action items from meeting notes into the project tracker. You chase a Slack thread to find out what actually got decided — it wasn't in the summary, it was the reply four messages down. You reformat numbers into a deck. None of this is thinking. All of it is hours.</p>
+
+    <p class="pull">The modern knowledge worker is a human integration layer between software that doesn't talk to itself. And we're trying to build better highways instead of better cities.</p>
+
+    <p>If you look at what people actually do at a computer all day, it collapses into about five things. Not five apps, not five file formats. Five kinds of cognitive work.</p>
+
+    <p><strong>Attention</strong> — what needs my focus right now. <strong>Commitment</strong> — what I've agreed to do, and by when. <strong>Artifact</strong> — a thing I'm making or maintaining. <strong>Context</strong> — accumulated knowledge bearing on a decision. <strong>Coordination</strong> — synchronizing with other people so the previous four don't collide.</p>
+
+    <p>Every productivity tool you've used serves some subset of these. A document editor is Artifact with a thin layer of Coordination. A project tracker is Commitment with some Attention routing. Email is Coordination that quietly doubles as Context storage and Commitment tracking, which is why your inbox becomes a todo list even though it's terrible at it. Calendar is Commitment plus Attention, minus everything else.</p>
+
+    <p>The interesting part isn't that these five exist. It's that no tool serves all of them, and the gaps between tools are exactly where work breaks down. You finish a meeting (Coordination), open a doc to capture what was decided (Artifact), realize you need to update a deadline (Commitment), check Slack to confirm something someone said (Context), and then lose twenty minutes because the thing that needed your Attention was in a different tab entirely. The friction isn't in any single tool. It's in the seams between them.</p>
+
+    <p>This is why "integrations" don't actually fix the problem. Connecting Notion to Slack to Google Calendar doesn't unify the five — it creates a plumbing layer between tools that each still model only their own slice. The context that matters — why this artifact relates to that commitment, who last changed the state of this coordination thread — doesn't survive the trip through a webhook.</p>
+
+    <p>Can a single system serve all five natively by treating all five as first-class objects in the same data model, so that the relationships between them are as real as the objects themselves.</p>
+
+    <p>If you actually try to spec out what that unified data model requires, the list of primitives is surprisingly short — about ten concepts. Every productivity tool you've ever used is some combination of these, wrapped in different UI and sold as a different product category.</p>
+
+    <details class="tech-aside">
+      <summary>The primitives, operations, and temporal modes</summary>
+      <div class="aside-body">
+
+        <h4>Primitives (~10 concepts)</h4>
+        <ul>
+          <li>Content, Participants, State, Schema</li>
+          <li>Routing, Provenance, Time</li>
+          <li>Change detection, Triggers</li>
+        </ul>
+
+        <h4>Operations</h4>
+        <ul>
+          <li><strong>Table stakes</strong> — create, edit, version, share, comment, search, notify</li>
+          <li><strong>Merge</strong> — where collaboration models diverge: CRDTs, operational transforms, last-write-wins. Most tools quietly punt on this.</li>
+          <li><strong>Transform</strong> — restructuring: pivot a table, reflow a layout, collapse an outline into a summary</li>
+          <li><strong>Query</strong> — filtering, sorting, computing across structures. These three are where the data model gets stress-tested.</li>
+        </ul>
+
+        <h4>Temporal modes</h4>
+        <ul>
+          <li><strong>Synchronous</strong> — live cursors, shared editing, calls</li>
+          <li><strong>Asynchronous</strong> — email, comments, pull requests</li>
+          <li><strong>Scheduled</strong> — deadlines, calendar blocks, reminders</li>
+          <li><strong>Reactive</strong> — event-driven, triggered by state change</li>
+        </ul>
+
+        <p>Reactive is the interesting one. A bot responding to a keyword. A pipeline firing when a row updates. An agent noticing a doc changed and propagating the consequence downstream. No existing tool handles reactive mode natively, and it's the one most natural to AI collaboration — an AI participant doesn't poll your inbox or wait for an @-mention. It watches state. That requires change detection and triggers as first-class primitives, not afterthoughts bolted on through Zapier.</p>
+
+        <p>Temporal mode changes the meaning of every other primitive. The same spreadsheet means something different when you're co-editing it live versus reviewing it before a board meeting versus receiving it as an email attachment. Same content, same schema. Different mode, different work type, different tool. That's the fracture the current landscape is built on. A unified system would let the mode shift without forcing a tool shift.</p>
+
+      </div>
+    </details>
+
+    <p>None of this is complicated to understand. It is genuinely hard to build. Notion got three or four of the five work types, and they still don't have real spreadsheets or real spatial layout, ten years in. But "hard to build" is not the same thing as "hard to understand." The design space is finite and mappable. It just doesn't feel that way when you're staring at a hundred tools that each do overlapping fractions of the same thing.</p>
+
+    <div class="decomposition" id="decomposition">
+      <div class="viz-tools" id="vizTools">
+        <button class="viz-btn" data-tool="slack">Slack</button>
+        <button class="viz-btn" data-tool="calendar">Calendar</button>
+        <button class="viz-btn" data-tool="email">Email</button>
+        <button class="viz-btn" data-tool="docs">Docs</button>
+        <button class="viz-btn" data-tool="slides">Slides</button>
+        <button class="viz-btn" data-tool="sheets">Sheets</button>
+        <button class="viz-btn" data-tool="linear">Linear</button>
+        <button class="viz-btn viz-btn-unified" data-tool="unified">Unified Workspace</button>
+      </div>
+
+      <div class="viz-section-label">What work does it serve?</div>
+      <div class="work-cards" id="workCards">
+        <div class="work-card">
+          <div class="work-card-name">Attention</div>
+          <div class="work-card-desc">What needs my focus right now</div>
+          <div class="work-card-qual"></div>
+        </div>
+        <div class="work-card">
+          <div class="work-card-name">Commitment</div>
+          <div class="work-card-desc">What I've agreed to do, and by when</div>
+          <div class="work-card-qual"></div>
+        </div>
+        <div class="work-card">
+          <div class="work-card-name">Artifact</div>
+          <div class="work-card-desc">A thing I'm making or maintaining</div>
+          <div class="work-card-qual"></div>
+        </div>
+        <div class="work-card">
+          <div class="work-card-name">Context</div>
+          <div class="work-card-desc">Accumulated knowledge for a decision</div>
+          <div class="work-card-qual"></div>
+        </div>
+        <div class="work-card">
+          <div class="work-card-name">Coordination</div>
+          <div class="work-card-desc">Synchronizing with other people</div>
+          <div class="work-card-qual"></div>
+        </div>
+      </div>
+
+      <div class="viz-spacer"></div>
+
+      <div class="viz-section-label">How is it built?</div>
+      <div class="viz-spider-row">
+        <div class="viz-chart-wrap" id="vizChartWrap"></div>
+        <div class="viz-notes" id="vizNotes"></div>
+      </div>
+
+      <div class="viz-summary" id="vizSummary"></div>
+    </div>
+
+    <div class="time-breakdown" id="timeBreakdown">
+      <div class="viz-tools" id="twTabs">
+        <button class="viz-btn active" data-view="avg">Average</button>
+        <button class="viz-btn" data-view="pm">PM</button>
+        <button class="viz-btn" data-view="eng">Engineer</button>
+        <button class="viz-btn" data-view="exec">Executive</button>
+        <button class="viz-btn" data-view="design">Designer</button>
+        <button class="viz-btn" data-view="sales">Sales</button>
+        <button class="viz-btn" data-view="student">Student</button>
+        <button class="viz-btn" data-view="biz">Biz Owner</button>
+      </div>
+
+      <div class="tw-split" id="twSplit"></div>
+      <div class="tw-split-labels" id="twSplitLabels"></div>
+
+      <div class="tw-stat-row">
+        <div class="tw-stat-card">
+          <div class="tw-stat-label">Communication</div>
+          <div class="tw-stat-value" id="twStatComm"></div>
+          <div class="tw-stat-sub" id="twStatCommSub"></div>
+        </div>
+        <div class="tw-stat-card">
+          <div class="tw-stat-label">Info Retrieval</div>
+          <div class="tw-stat-value" id="twStatSearch"></div>
+          <div class="tw-stat-sub" id="twStatSearchSub"></div>
+        </div>
+        <div class="tw-stat-card">
+          <div class="tw-stat-label">Creation</div>
+          <div class="tw-stat-value" id="twStatCreate"></div>
+          <div class="tw-stat-sub" id="twStatCreateSub"></div>
+        </div>
+        <div class="tw-stat-card">
+          <div class="tw-stat-label">Admin</div>
+          <div class="tw-stat-value" id="twStatAdmin"></div>
+          <div class="tw-stat-sub" id="twStatAdminSub"></div>
+        </div>
+      </div>
+
+      <div class="tw-legend">
+        <div class="tw-legend-item"><span class="tw-legend-char">&#x2588;</span> Communication</div>
+        <div class="tw-legend-item"><span class="tw-legend-char">&#x2591;</span> Info retrieval</div>
+        <div class="tw-legend-item"><span class="tw-legend-char">&#x2592;</span> Creation</div>
+        <div class="tw-legend-item"><span class="tw-legend-char">&#x25aa;</span> Admin</div>
+      </div>
+
+      <div id="twChartArea"></div>
+
+      <div class="tw-insight" id="twInsight"></div>
+      <div class="tw-note" id="twSourceNote"></div>
+    </div>
+
+    <h2>The Workspace That Doesn't Exist</h2>
+
+    <p>The primitives consistently weakest across every tool — Trigger, Provenance, Context, Diff — are the ones that connect things: why something exists, what spawned it, what changed, and what should react. A Google Doc has no idea it was created because of a Slack thread about a client request that came in via email. You know that. The software doesn't. The context graph — the web of relationships between artifacts, decisions, conversations, and people — is maintained entirely in your head. It's the most important layer, it exists in no product, and it's exactly what an AI layer is positioned to provide. It's the workspace that doesn't exist.</p>
+
+    <p>The models are good enough. They can write, reason, summarize, and draft. But today you're stuck between two bad options: siloed AI features inside single-primitive editors that can't see the context graph, or manual context-gathering across tools, one-shotting output in Claude or ChatGPT, then hauling it back into Word or Slides to iterate endlessly. Neither is the final form factor.</p>
+
+    <p>The obvious response is to connect the silos — protocols like MCP that let AI fetch data from Slack, Drive, your calendar, whatever. And that's useful. But fetching fragments on demand is not the same as understanding. The AI gets snapshots, not a living model. It can pull a Slack message and a Google Doc into the same prompt, but it doesn't know that the message caused the doc. The relationships between things — the part that actually constitutes context — stay invisible. You're building better highways between cities. The argument here is that you need one city where everything is walkable.</p>
+
+    <p>When the primitives share an environment, the boundaries dissolve. An outline becomes a table. A thread becomes a task. A meeting triggers a set of doc revisions. The AI doesn't just edit within one document type — it moves fluidly across all of them, because from its perspective they're all structured data in the same graph. You say "turn the action items from Tuesday's meeting into tasks on the board and update the brief accordingly" and it works, because it sees the meeting, the board, and the brief in one persistent context.</p>
+
+    <p>Email, calendar, and messaging become native context, not integrations you configure. The AI that helps you revise a strategy doc already knows the meeting changed the scope, because it was there. The context graph stops living in your head and starts living in the software.</p>
+
+    <p>And once it does, something else shifts. The AI no longer needs to wait for a prompt. Every AI product today starts with a text box — write something clever and maybe you'll get something useful back. That's five steps where the human does everything and the AI just responds. But if the system already holds the context graph — your meetings, your commitments, the state of every artifact — the AI can observe, infer, and act before you ask. Your Monday morning briefing is prepped because the AI watched the calendar. The status update is drafted because it saw what shipped. The three emails that matter are flagged because it knows the project state. The chat box doesn't disappear, but it stops being the front door. It becomes the thing you reach for after the system has already earned your attention by doing the work you would have spent the first two hours on. Action first, conversation second. TikTok won the attention war not by asking users what they wanted to watch, but by observing and serving. The same inversion applies here — but it only works if the AI can see the full graph. A siloed assistant trapped in one app doesn't know enough to act proactively. A unified system does.</p>
+
+    <h2>The flywheel</h2>
+
+    <p>There's a second-order effect worth noting. A workspace where AI agents operate alongside humans — taking actions across documents, data, and project state, getting feedback in real time — is one of the densest reinforcement learning environments you could design. Every accepted edit is a positive signal. Every rejected suggestion is a correction. Every task reassigned from agent to human is a boundary marker. The training data is organic, grounded in real collaboration, and spans all of knowledge work.</p>
+
+    <p>This matters more than it sounds. The binding constraint on AI progress right now isn't models or compute — it's the absence of realistic environments where agents can practice real work and get scored on the outcome. Labs are already spending serious money to manufacture these environments synthetically: hand-crafted tasks where an agent tries to build a feature or debug an unfamiliar codebase, graded by automated tests. Estimates put the cost at thousands of dollars per task, because cheap synthetic tasks waste expensive training runs. There's a growing market of startups whose entire business is building these simulations.</p>
+
+    <p>But simulation has a ceiling. You can test whether an agent follows a spec to reproduce known software. You can't simulate an engineer reading a vague Slack thread, inferring what the PM actually wants, making a scope judgment, and looping back to clarify. That kind of contextual, multi-step decision-making only happens in real work — and it only gets captured if the environment where it happens is built to record it. The messiest, most valuable training signal is exactly the stuff that resists formalization into a synthetic task.</p>
+
+    <p>A workspace that owns the full stack — comms, docs, tasks, and the relationships between them — produces this signal as a byproduct of people doing their jobs. Not thousands of tasks at thousands of dollars each, but millions of interactions, continuously, with the full context graph attached. The product generates the data. The data makes the AI better. The better AI makes the product more valuable. And no incumbent can extract this from their own tools without colliding with the same privacy constraints and structural fragmentation that prevent them from building the workspace in the first place.</p>
+
+    <div class="closing">
+      <p>Imagine a world where humans are dedicated to enjoying cultivated leisure, creating beauty, reading inspiring works, or simply contemplating the world with admiration and delight — all while the necessary machinery operates efficiently in the background.</p>
+
+      <p>This perspective is fundamentally human, not focused on productivity. Time is a finite resource, and every moment spent on inefficient tasks — like copying action items between applications, hunting for context across countless tabs, or reformatting a colleague's work — is a moment lost. It's time taken away from the truly unique contributions only you can make: the innovative idea, the crucial relationship-building, the essential judgment call, the vital creative leap.</p>
+
+      <p>The ultimate goal isn't just a workspace that makes people more productive; it's one that gives them their time, and their life, back.</p>
+    </div>
+  </article>
+  <script src="viz.js"></script>
+</body>
+</html>
