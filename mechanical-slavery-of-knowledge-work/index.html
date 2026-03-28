@@ -358,138 +358,6 @@
     /* spacer between sections */
     .viz-spacer { height: 1.5rem; }
 
-    /* ── Time-breakdown viz ── */
-    .time-breakdown {
-      margin: 2.5rem 0 3rem;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    .tw-split {
-      display: flex;
-      font-size: 0.6rem;
-      letter-spacing: 0.02em;
-      line-height: 1.2;
-      margin-bottom: 0.2rem;
-    }
-    .tw-split span {
-      overflow: hidden;
-      white-space: nowrap;
-      display: block;
-    }
-    .tw-split-labels {
-      display: flex;
-      font-size: 0.45rem;
-      color: #999;
-      margin-bottom: 1.2rem;
-    }
-    .tw-split-labels span {
-      text-align: center;
-    }
-    .tw-stat-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
-      margin-bottom: 1.2rem;
-    }
-    .tw-stat-card {
-      padding: 0.55rem 0.45rem;
-      border: 1px solid #ddd;
-      text-align: center;
-    }
-    .tw-stat-label {
-      font-size: 0.48rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #888;
-      margin-bottom: 0.1rem;
-    }
-    .tw-stat-value {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #1a1a1a;
-    }
-    .tw-stat-sub {
-      font-size: 0.42rem;
-      color: #aaa;
-      margin-top: 0.05rem;
-    }
-    .tw-group-label {
-      font-size: 0.5rem;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #aaa;
-      margin: 0.9rem 0 0.35rem;
-    }
-    .tw-group-label:first-child { margin-top: 0; }
-    .tw-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 0.15rem;
-      font-size: 0.6rem;
-      line-height: 1.5;
-    }
-    .tw-bar-label {
-      width: 130px;
-      color: #888;
-      flex-shrink: 0;
-      text-align: right;
-      padding-right: 0.6rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .tw-bar-dots {
-      flex: 1;
-      color: #1a1a1a;
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-    .tw-bar-dots .tw-dot-empty { color: #ddd; }
-    .tw-bar-value {
-      min-width: 42px;
-      text-align: right;
-      color: #555;
-      padding-left: 0.5rem;
-      font-weight: 500;
-    }
-    .tw-bar-tools {
-      font-size: 0.42rem;
-      color: #bbb;
-      padding-left: 0.4rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 120px;
-    }
-    .tw-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.7rem;
-      margin-bottom: 0.9rem;
-      font-size: 0.5rem;
-      color: #999;
-    }
-    .tw-legend-item { display: flex; align-items: center; gap: 0.25rem; }
-    .tw-legend-char { color: #1a1a1a; font-size: 0.6rem; letter-spacing: 0.02em; }
-    .tw-insight {
-      margin-top: 1rem;
-      padding: 0.6rem 0.8rem;
-      border-left: 2px solid #1a1a1a;
-      font-size: 0.6rem;
-      line-height: 1.6;
-      color: #555;
-    }
-    .tw-note {
-      font-size: 0.5rem;
-      color: #aaa;
-      margin-top: 0.5rem;
-      line-height: 1.5;
-      font-style: italic;
-    }
 
     @media (max-width: 600px) {
       .viz-spider-row { flex-direction: column; }
@@ -504,15 +372,6 @@
       .viz-note-item { font-size: 0.45rem; }
       .viz-conclusion { padding: 0.8rem 1rem; }
       .viz-conclusion p { font-size: 0.65rem; }
-      .tw-stat-row { grid-template-columns: repeat(2, 1fr); }
-      .tw-bar-row { font-size: 0.5rem; }
-      .tw-bar-label { width: 85px; font-size: 0.48rem; }
-      .tw-bar-value { font-size: 0.48rem; min-width: 36px; }
-      .tw-bar-tools { display: none; }
-      .tw-stat-value { font-size: 0.8rem; }
-      .tw-legend { font-size: 0.42rem; gap: 0.5rem; }
-      .tw-insight { font-size: 0.52rem; }
-      .tw-split { font-size: 0.5rem; }
     }
   </style>
 </head>
@@ -531,13 +390,13 @@
 
     <p class="pull">The modern knowledge worker is a human integration layer between software that doesn't talk to itself. And we're trying to build better highways instead of better cities.</p>
 
-    <p>If you look at what people actually do at a computer all day, it collapses into about five things. Not five apps, not five file formats. Five kinds of cognitive work.</p>
+    <p>If you look at what people actually do at a computer all day, it collapses into about five things. Five kinds of cognitive work.</p>
 
     <p><strong>Attention</strong> — what needs my focus right now. <strong>Commitment</strong> — what I've agreed to do, and by when. <strong>Artifact</strong> — a thing I'm making or maintaining. <strong>Context</strong> — accumulated knowledge bearing on a decision. <strong>Coordination</strong> — synchronizing with other people so the previous four don't collide.</p>
 
     <p>Every productivity tool you've used serves some subset of these. A document editor is Artifact with a thin layer of Coordination. A project tracker is Commitment with some Attention routing. Email is Coordination that quietly doubles as Context storage and Commitment tracking, which is why your inbox becomes a todo list even though it's terrible at it. Calendar is Commitment plus Attention, minus everything else.</p>
 
-    <p>The interesting part isn't that these five exist. It's that no tool serves all of them, and the gaps between tools are exactly where work breaks down. You finish a meeting (Coordination), open a doc to capture what was decided (Artifact), realize you need to update a deadline (Commitment), check Slack to confirm something someone said (Context), and then lose twenty minutes because the thing that needed your Attention was in a different tab entirely. The friction isn't in any single tool. It's in the seams between them.</p>
+    <p>The interesting part is that no tool serves all of them, and the gaps between tools are exactly where work breaks down. You finish a meeting (Coordination), open a doc to capture what was decided (Artifact), realize you need to update a deadline (Commitment), check Slack to confirm something someone said (Context), and then lose twenty minutes because the thing that needed your Attention was in a different tab entirely. The friction isn't in any single tool. It's in the seams between them.</p>
 
     <p>This is why "integrations" don't actually fix the problem. Connecting Notion to Slack to Google Calendar doesn't unify the five — it creates a plumbing layer between tools that each still model only their own slice. The context that matters — why this artifact relates to that commitment, who last changed the state of this coordination thread — doesn't survive the trip through a webhook.</p>
 
@@ -631,57 +490,6 @@
       </div>
 
       <div class="viz-summary" id="vizSummary"></div>
-    </div>
-
-    <div class="time-breakdown" id="timeBreakdown">
-      <div class="viz-tools" id="twTabs">
-        <button class="viz-btn active" data-view="avg">Average</button>
-        <button class="viz-btn" data-view="pm">PM</button>
-        <button class="viz-btn" data-view="eng">Engineer</button>
-        <button class="viz-btn" data-view="exec">Executive</button>
-        <button class="viz-btn" data-view="design">Designer</button>
-        <button class="viz-btn" data-view="sales">Sales</button>
-        <button class="viz-btn" data-view="student">Student</button>
-        <button class="viz-btn" data-view="biz">Biz Owner</button>
-      </div>
-
-      <div class="tw-split" id="twSplit"></div>
-      <div class="tw-split-labels" id="twSplitLabels"></div>
-
-      <div class="tw-stat-row">
-        <div class="tw-stat-card">
-          <div class="tw-stat-label">Communication</div>
-          <div class="tw-stat-value" id="twStatComm"></div>
-          <div class="tw-stat-sub" id="twStatCommSub"></div>
-        </div>
-        <div class="tw-stat-card">
-          <div class="tw-stat-label">Info Retrieval</div>
-          <div class="tw-stat-value" id="twStatSearch"></div>
-          <div class="tw-stat-sub" id="twStatSearchSub"></div>
-        </div>
-        <div class="tw-stat-card">
-          <div class="tw-stat-label">Creation</div>
-          <div class="tw-stat-value" id="twStatCreate"></div>
-          <div class="tw-stat-sub" id="twStatCreateSub"></div>
-        </div>
-        <div class="tw-stat-card">
-          <div class="tw-stat-label">Admin</div>
-          <div class="tw-stat-value" id="twStatAdmin"></div>
-          <div class="tw-stat-sub" id="twStatAdminSub"></div>
-        </div>
-      </div>
-
-      <div class="tw-legend">
-        <div class="tw-legend-item"><span class="tw-legend-char">&#x2588;</span> Communication</div>
-        <div class="tw-legend-item"><span class="tw-legend-char">&#x2591;</span> Info retrieval</div>
-        <div class="tw-legend-item"><span class="tw-legend-char">&#x2592;</span> Creation</div>
-        <div class="tw-legend-item"><span class="tw-legend-char">&#x25aa;</span> Admin</div>
-      </div>
-
-      <div id="twChartArea"></div>
-
-      <div class="tw-insight" id="twInsight"></div>
-      <div class="tw-note" id="twSourceNote"></div>
     </div>
 
     <h2>The Workspace That Doesn't Exist</h2>
