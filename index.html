@@ -19,26 +19,37 @@
       height: 100%;
       overflow: hidden;
       background: #0a0a0a;
-      color-scheme: light dark;
       font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
-    #bouncer {
-      position: absolute;
-      left: 0;
-      top: 0;
-      display: inline-block;
-      white-space: pre;
-      font-size: 1.4rem;
-      line-height: 1;
-      letter-spacing: 0.02em;
-      margin: 0;
-      padding: 0;
-      transition: color 0.4s ease;
-      pointer-events: none;
-      user-select: none;
+    .flipdot-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: transparent;
+      padding: 12px;
+    }
+
+    .flipdot-grid {
+      display: grid;
+      gap: 3px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      transition: background 0.06s ease-out, box-shadow 0.06s ease-out;
+      will-change: background, box-shadow;
+    }
+
+    .dot.on {
+      background: #e8e8e8;
+      box-shadow: 0 0 3px rgba(232,232,232,0.4);
     }
 
     .nav-overlay {
@@ -113,34 +124,20 @@
       line-height: 1.6;
     }
 
-    @media (prefers-color-scheme: light) {
-      html, body { background: #f5f5f5; }
-      .nav-overlay a { color: #ccc; }
-      .nav-overlay a::before { color: #ddd; }
-      .nav-overlay a:hover { color: #999; }
-      .nav-overlay a:hover::before { color: #aaa; }
-      .site-id { color: #ddd; }
-    }
-
     @media (max-width: 600px) {
-      #bouncer { font-size: 0.75rem; }
+      .flipdot-container { padding: 8px; }
+      .flipdot-grid { gap: 2px; }
+      .dot { width: 5px; height: 5px; }
       .nav-overlay { bottom: 1.2rem; left: 1.2rem; }
       .site-id { bottom: 1.2rem; right: 1.2rem; }
-    }
-
-    @media (min-width: 601px) and (max-width: 1024px) {
-      #bouncer { font-size: 1rem; }
     }
   </style>
 </head>
 <body>
 
-<pre id="bouncer">┌─────────────────┐
-│ ▄▀▀▀  ▄▀▀▄  ▀█▀ │
-│ ▀▀▀▄  █▄▄█   █  │
-│ ▀▀▀   ▀  ▀  ▀▀▀ │
-│ ◆◇◆         001 │
-└─────────────────┘</pre>
+<div class="flipdot-container">
+  <div class="flipdot-grid" id="grid"></div>
+</div>
 
 <nav>
   <ul class="nav-overlay">
@@ -152,6 +149,7 @@
   <div id="stockholm-clock"></div>
   <div>ssriramagiri.com</div>
 </div>
+
 <script>
 (function () {
   var clockEl = document.getElementById('stockholm-clock');
@@ -170,27 +168,403 @@
 })();
 
 (function () {
-  var el = document.getElementById('bouncer');
-  var colors = ['#1a73e8','#1e8e3e','#c5221f','#f9ab00','#babcbe'];
-  var ci = 0, x = 0, y = 0, dx = 1.5, dy = 1.5;
+  var COLS = 40;
+  var ROWS = 40;
+  var grid = document.getElementById('grid');
+  grid.style.gridTemplateColumns = 'repeat(' + COLS + ', 1fr)';
 
-  function frame() {
-    var w = el.offsetWidth, h = el.offsetHeight;
-    var mx = innerWidth - w, my = innerHeight - h;
-
-    if (x <= 0 || x >= mx) { dx = -dx; el.style.color = colors[ci++ % colors.length]; }
-    if (y <= 0 || y >= my) { dy = -dy; el.style.color = colors[ci++ % colors.length]; }
-
-    x = Math.max(0, Math.min(mx, x + dx));
-    y = Math.max(0, Math.min(my, y + dy));
-
-    el.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-    requestAnimationFrame(frame);
+  // Adjust for mobile
+  if (window.innerWidth <= 600) {
+    COLS = 32;
+    ROWS = 32;
+    grid.style.gridTemplateColumns = 'repeat(' + COLS + ', 1fr)';
   }
 
-  x = Math.random() * (innerWidth - el.offsetWidth);
-  y = Math.random() * (innerHeight - el.offsetHeight);
-  requestAnimationFrame(frame);
+  var dots = [];
+  for (var i = 0; i < ROWS * COLS; i++) {
+    var d = document.createElement('div');
+    d.className = 'dot';
+    grid.appendChild(d);
+    dots.push(d);
+  }
+
+  var state = new Uint8Array(ROWS * COLS);
+  var prev = new Uint8Array(ROWS * COLS);
+
+  function set(r, c, v) {
+    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) state[r * COLS + c] = v ? 1 : 0;
+  }
+  function get(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return 0;
+    return state[r * COLS + c];
+  }
+
+  function clear() { state.fill(0); }
+
+  function render() {
+    for (var i = 0; i < state.length; i++) {
+      if (state[i] !== prev[i]) {
+        if (state[i]) dots[i].classList.add('on');
+        else dots[i].classList.remove('on');
+      }
+    }
+    prev.set(state);
+  }
+
+  // 5x7 pixel font for text
+  var FONT = {
+    S: [0x1e,0x21,0x20,0x1e,0x01,0x21,0x1e],
+    A: [0x0e,0x11,0x11,0x1f,0x11,0x11,0x11],
+    I: [0x1f,0x04,0x04,0x04,0x04,0x04,0x1f],
+    ' ': [0,0,0,0,0,0,0],
+    0: [0x0e,0x11,0x13,0x15,0x19,0x11,0x0e],
+    1: [0x04,0x0c,0x04,0x04,0x04,0x04,0x0e],
+    2: [0x0e,0x11,0x01,0x06,0x08,0x10,0x1f],
+    3: [0x0e,0x11,0x01,0x06,0x01,0x11,0x0e],
+    4: [0x02,0x06,0x0a,0x12,0x1f,0x02,0x02],
+    5: [0x1f,0x10,0x1e,0x01,0x01,0x11,0x0e],
+    6: [0x06,0x08,0x10,0x1e,0x11,0x11,0x0e],
+    7: [0x1f,0x01,0x02,0x04,0x04,0x04,0x04],
+    8: [0x0e,0x11,0x11,0x0e,0x11,0x11,0x0e],
+    9: [0x0e,0x11,0x11,0x0f,0x01,0x02,0x0c],
+    ':': [0x00,0x04,0x04,0x00,0x04,0x04,0x00],
+  };
+
+  function drawChar(ch, startR, startC) {
+    var glyph = FONT[ch];
+    if (!glyph) return;
+    for (var r = 0; r < 7; r++) {
+      for (var c = 0; c < 5; c++) {
+        if (glyph[r] & (1 << (4 - c))) set(startR + r, startC + c, 1);
+      }
+    }
+  }
+
+  function drawText(text, startR, startC) {
+    for (var i = 0; i < text.length; i++) {
+      drawChar(text[i], startR, startC + i * 6);
+    }
+  }
+
+  // --- Animation patterns ---
+
+  // 1. Apple-style cursive "hello" drawn progressively
+  var helloPath = []; // float coords for distance-field rendering
+  var helloCells = []; // precomputed {idx, pathPos} for fast animation
+  var helloPhase = 0;
+  (function buildHelloPath() {
+    function cubicBez(p0, p1, p2, p3, n) {
+      var pts = [];
+      for (var i = 0; i <= n; i++) {
+        var t = i / n, u = 1 - t;
+        pts.push({
+          x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
+          y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y
+        });
+      }
+      return pts;
+    }
+
+    // Design space: x ~1-28, y ~-1 to 17. baseline=14, x-height=7.5, ascender=1
+    var segs = [
+      // h: stem up
+      [{x:2,y:14}, {x:2,y:10}, {x:2,y:5}, {x:2,y:1}],
+      // h: top loop
+      [{x:2,y:1}, {x:2,y:-1}, {x:4.5,y:-1}, {x:4,y:2.5}],
+      // h: stem back down
+      [{x:4,y:2.5}, {x:3.5,y:6}, {x:3,y:10}, {x:3,y:14}],
+      // h: curve into arch
+      [{x:3,y:14}, {x:3,y:16.5}, {x:6,y:9}, {x:7.5,y:7.5}],
+      // h: arch peak and down
+      [{x:7.5,y:7.5}, {x:8.5,y:7}, {x:9.5,y:7.5}, {x:10,y:10}],
+      // h: to baseline
+      [{x:10,y:10}, {x:10.3,y:12}, {x:10.3,y:13.5}, {x:10.5,y:14.5}],
+
+      // e: up from baseline
+      [{x:10.5,y:14.5}, {x:11,y:13}, {x:11.5,y:11}, {x:12,y:10}],
+      // e: crossbar right
+      [{x:12,y:10}, {x:13,y:9.5}, {x:14,y:9.5}, {x:15,y:10.5}],
+      // e: loop over top
+      [{x:15,y:10.5}, {x:15.5,y:8.5}, {x:14.5,y:7}, {x:13,y:7}],
+      // e: loop left and down
+      [{x:13,y:7}, {x:11.5,y:7}, {x:11,y:9}, {x:11.5,y:11}],
+      // e: exit to baseline
+      [{x:11.5,y:11}, {x:12,y:13.5}, {x:14,y:15.5}, {x:15.5,y:14.5}],
+
+      // l1: ascender up
+      [{x:15.5,y:14.5}, {x:16,y:11}, {x:16.5,y:6}, {x:17,y:1}],
+      // l1: top loop
+      [{x:17,y:1}, {x:17.2,y:-1}, {x:19.5,y:-1}, {x:19,y:2.5}],
+      // l1: back down
+      [{x:19,y:2.5}, {x:18.5,y:6}, {x:18,y:11}, {x:18.5,y:14.5}],
+
+      // l2: ascender up
+      [{x:18.5,y:14.5}, {x:19,y:11}, {x:19.5,y:6}, {x:20,y:1}],
+      // l2: top loop
+      [{x:20,y:1}, {x:20.2,y:-1}, {x:22.5,y:-1}, {x:22,y:2.5}],
+      // l2: back down
+      [{x:22,y:2.5}, {x:21.5,y:6}, {x:21,y:11}, {x:21.5,y:14.5}],
+
+      // o: up and into oval
+      [{x:21.5,y:14.5}, {x:22,y:13}, {x:23,y:10}, {x:24.5,y:8}],
+      // o: top right
+      [{x:24.5,y:8}, {x:26,y:7}, {x:27.5,y:8}, {x:27.5,y:10.5}],
+      // o: right down
+      [{x:27.5,y:10.5}, {x:27.5,y:13}, {x:26,y:15}, {x:24,y:15.5}],
+      // o: bottom back
+      [{x:24,y:15.5}, {x:22.5,y:15.5}, {x:22,y:14}, {x:22.5,y:11}],
+    ];
+
+    // Sample all segments into float-coord path
+    for (var s = 0; s < segs.length; s++) {
+      var pts = cubicBez(segs[s][0], segs[s][1], segs[s][2], segs[s][3], 40);
+      for (var i = (s === 0 ? 0 : 1); i < pts.length; i++) {
+        helloPath.push(pts[i]);
+      }
+    }
+
+    // Scale path to fit grid with margin
+    var margin = 2;
+    var scaleX = (COLS - margin * 2) / 29;
+    var scaleY = (ROWS - margin * 2) / 19;
+    var scale = Math.min(scaleX, scaleY);
+    var designW = 29 * scale;
+    var designH = 19 * scale;
+    var offC = (COLS - designW) / 2 - 1 * scale;
+    var offR = (ROWS - designH) / 2 + 1 * scale;
+
+    for (var p = 0; p < helloPath.length; p++) {
+      helloPath[p] = {
+        x: helloPath[p].x * scale + offC,
+        y: helloPath[p].y * scale + offR
+      };
+    }
+
+    // Precompute distance field: for each grid cell, find earliest path index within stroke radius
+    var STROKE = 0.55;
+    var STROKE_SQ = STROKE * STROKE;
+    var activation = new Float32Array(ROWS * COLS);
+    for (var i = 0; i < activation.length; i++) activation[i] = 1e9;
+
+    for (var pi = 0; pi < helloPath.length; pi++) {
+      var px = helloPath[pi].x, py = helloPath[pi].y;
+      var minR = Math.max(0, Math.floor(py - STROKE - 1));
+      var maxR = Math.min(ROWS - 1, Math.ceil(py + STROKE + 1));
+      var minC = Math.max(0, Math.floor(px - STROKE - 1));
+      var maxC = Math.min(COLS - 1, Math.ceil(px + STROKE + 1));
+      for (var r = minR; r <= maxR; r++) {
+        for (var c = minC; c <= maxC; c++) {
+          var dr = r - py, dc = c - px;
+          if (dr * dr + dc * dc < STROKE_SQ) {
+            var idx = r * COLS + c;
+            if (pi < activation[idx]) activation[idx] = pi;
+          }
+        }
+      }
+    }
+
+    // Build sorted list of cells by activation time
+    for (var i = 0; i < activation.length; i++) {
+      if (activation[i] < 1e9) {
+        helloCells.push({ idx: i, at: activation[i] });
+      }
+    }
+    helloCells.sort(function(a, b) { return a.at - b.at; });
+  })();
+
+  var helloCellPtr = 0;
+  function animHello() {
+    var drawUpTo = helloPhase * 4;
+    while (helloCellPtr < helloCells.length && helloCells[helloCellPtr].at <= drawUpTo) {
+      state[helloCells[helloCellPtr].idx] = 1;
+      helloCellPtr++;
+    }
+    helloPhase++;
+    return helloPhase > helloPath.length / 4 + 80;
+  }
+
+  // 2. Concentric rings expanding
+  var ringPhase = 0;
+  function animRings() {
+    clear();
+    var cx = COLS / 2, cy = ROWS / 2;
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var dist = Math.sqrt((c - cx) * (c - cx) + (r - cy) * (r - cy));
+        var ring = Math.floor(dist) % 6;
+        var phase = (ring + ringPhase) % 6;
+        if (phase < 2) set(r, c, 1);
+      }
+    }
+    ringPhase++;
+    return ringPhase > 200;
+  }
+
+  // 3. Matrix rain
+  var drops = [];
+  var rainPhase = 0;
+  function animRain() {
+    if (rainPhase === 0) {
+      drops = [];
+      for (var c = 0; c < COLS; c++) {
+        drops.push({ c: c, r: -Math.floor(Math.random() * ROWS), speed: 0.3 + Math.random() * 0.7, len: 3 + Math.floor(Math.random() * 8) });
+      }
+    }
+    clear();
+    for (var i = 0; i < drops.length; i++) {
+      var d = drops[i];
+      for (var j = 0; j < d.len; j++) {
+        var row = Math.floor(d.r) - j;
+        if (row >= 0 && row < ROWS) set(row, d.c, 1);
+      }
+      d.r += d.speed;
+      if (d.r - d.len > ROWS) {
+        d.r = -Math.floor(Math.random() * 10);
+        d.len = 3 + Math.floor(Math.random() * 8);
+      }
+    }
+    rainPhase++;
+    return rainPhase > 200;
+  }
+
+  // 4. Game of Life
+  var lifeState, lifeTick;
+  function animLifeInit() {
+    lifeState = new Uint8Array(ROWS * COLS);
+    for (var i = 0; i < lifeState.length; i++) lifeState[i] = Math.random() < 0.35 ? 1 : 0;
+    lifeTick = 0;
+  }
+  function animLife() {
+    if (lifeTick === 0) animLifeInit();
+    var next = new Uint8Array(ROWS * COLS);
+    for (var r = 0; r < ROWS; r++) {
+      for (var c = 0; c < COLS; c++) {
+        var n = 0;
+        for (var dr = -1; dr <= 1; dr++) {
+          for (var dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            var nr = (r + dr + ROWS) % ROWS, nc = (c + dc + COLS) % COLS;
+            n += lifeState[nr * COLS + nc];
+          }
+        }
+        var alive = lifeState[r * COLS + c];
+        next[r * COLS + c] = (alive && (n === 2 || n === 3)) || (!alive && n === 3) ? 1 : 0;
+      }
+    }
+    lifeState = next;
+    state.set(lifeState);
+    lifeTick++;
+    return lifeTick > 200;
+  }
+
+  // 5. Sine wave
+  var wavePhase = 0;
+  function animWave() {
+    clear();
+    for (var c = 0; c < COLS; c++) {
+      var y1 = Math.sin((c * 0.2) + wavePhase * 0.1) * (ROWS * 0.3) + ROWS / 2;
+      var y2 = Math.cos((c * 0.15) + wavePhase * 0.08) * (ROWS * 0.25) + ROWS / 2;
+      for (var r = 0; r < ROWS; r++) {
+        if (Math.abs(r - y1) < 1.5 || Math.abs(r - y2) < 1.5) set(r, c, 1);
+      }
+    }
+    wavePhase++;
+    return wavePhase > 200;
+  }
+
+  // 6. Spinning square
+  var spinPhase = 0;
+  function animSpin() {
+    clear();
+    var cx = COLS / 2, cy = ROWS / 2;
+    var size = Math.min(COLS, ROWS) * 0.3;
+    var angle = spinPhase * 0.06;
+    var corners = [];
+    for (var i = 0; i < 4; i++) {
+      var a = angle + i * Math.PI / 2;
+      corners.push({ x: cx + Math.cos(a) * size, y: cy + Math.sin(a) * size });
+    }
+    // Draw lines between corners
+    for (var e = 0; e < 4; e++) {
+      var p0 = corners[e], p1 = corners[(e + 1) % 4];
+      var steps = 60;
+      for (var s = 0; s <= steps; s++) {
+        var t = s / steps;
+        var px = p0.x + (p1.x - p0.x) * t;
+        var py = p0.y + (p1.y - p0.y) * t;
+        set(Math.round(py), Math.round(px), 1);
+      }
+    }
+    spinPhase++;
+    return spinPhase > 200;
+  }
+
+  // 7. Clock display
+  var clockTick = 0;
+  function animClock() {
+    clear();
+    var now = new Date();
+    var opts = { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    var time = now.toLocaleTimeString('en-GB', opts);
+    // Draw time centered
+    var textR = Math.floor((ROWS - 7) / 2);
+    var totalW = time.length * 6 - 1;
+    var textC = Math.floor((COLS - totalW) / 2);
+    drawText(time, textR, textC);
+    clockTick++;
+    return clockTick > 200;
+  }
+
+  // 8. Noise dissolve
+  var noisePhase = 0;
+  function animNoise() {
+    var density = Math.abs(Math.sin(noisePhase * 0.04));
+    for (var i = 0; i < state.length; i++) {
+      state[i] = Math.random() < density ? 1 : 0;
+    }
+    noisePhase++;
+    return noisePhase > 40;
+  }
+
+  // --- Sequencer ---
+  var animations = [
+    { fn: animHello, reset: function() { helloPhase = 0; helloCellPtr = 0; clear(); } },
+    { fn: animNoise, reset: function() { noisePhase = 0; } },
+    { fn: animRings, reset: function() { ringPhase = 0; } },
+    { fn: animNoise, reset: function() { noisePhase = 0; } },
+    { fn: animWave, reset: function() { wavePhase = 0; } },
+    { fn: animNoise, reset: function() { noisePhase = 0; } },
+    { fn: animLife, reset: function() { lifeTick = 0; } },
+    { fn: animNoise, reset: function() { noisePhase = 0; } },
+    { fn: animSpin, reset: function() { spinPhase = 0; } },
+    { fn: animNoise, reset: function() { noisePhase = 0; } },
+    { fn: animRain, reset: function() { rainPhase = 0; } },
+    { fn: animNoise, reset: function() { noisePhase = 0; } },
+    { fn: animClock, reset: function() { clockTick = 0; } },
+    { fn: animNoise, reset: function() { noisePhase = 0; } },
+  ];
+
+  var currentAnim = 0;
+  var frameCount = 0;
+  var FRAME_INTERVAL = 50; // ms between frames
+  var lastFrame = 0;
+
+  animations[0].reset();
+
+  function loop(ts) {
+    if (ts - lastFrame >= FRAME_INTERVAL) {
+      lastFrame = ts;
+      var done = animations[currentAnim].fn();
+      render();
+      if (done) {
+        currentAnim = (currentAnim + 1) % animations.length;
+        animations[currentAnim].reset();
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
 })();
 </script>
 
