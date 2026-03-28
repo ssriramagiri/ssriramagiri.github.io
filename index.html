@@ -178,6 +178,82 @@
     }
     .game-hud.visible { display: block; }
 
+    .about-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      pointer-events: none;
+      visibility: hidden;
+    }
+    .about-overlay.visible {
+      visibility: visible;
+    }
+    .about-word {
+      position: absolute;
+      font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', monospace;
+      color: #e8e8e8;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease-in, transform 0.4s ease-in;
+      pointer-events: none;
+    }
+    .about-overlay.visible .about-word {
+      opacity: var(--o, 0.6);
+      transform: translateY(0);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0s),
+                  transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0s);
+    }
+    .about-overlay.closing .about-word {
+      opacity: 0 !important;
+      transform: translateY(-8px) !important;
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 1, 1), transform 0.4s cubic-bezier(0.4, 0, 1, 1) !important;
+      transition-delay: 0s !important;
+    }
+    .about-word.about-center {
+      transform: translateX(-50%) translateY(12px);
+    }
+    .about-overlay.visible .about-word.about-center {
+      transform: translateX(-50%) translateY(0);
+    }
+    .about-overlay.closing .about-word.about-center {
+      transform: translateX(-50%) translateY(-8px) !important;
+    }
+    a.about-word {
+      text-decoration: none;
+      color: #e8e8e8;
+    }
+    a.about-word:hover {
+      opacity: 1 !important;
+    }
+    .about-overlay.visible a.about-word {
+      pointer-events: auto;
+    }
+    .site-preview {
+      position: fixed;
+      width: 340px;
+      height: 213px;
+      background: #0a0a0a;
+      border: 1px solid #222;
+      z-index: 50;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      overflow: hidden;
+    }
+    .site-preview.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #about-toggle.active::before {
+      content: '▶';
+      animation: none;
+    }
+
     @media (max-width: 600px) {
       .flipdot-container { padding: 8px; }
       .flipdot-grid { gap: 2px; }
@@ -191,6 +267,22 @@
         margin-bottom: 0; margin-top: 0.4rem;
       }
       .game-hud { right: auto; left: 1.2rem; }
+      .about-overlay.visible {
+        background: rgba(10, 10, 10, 0.9);
+        pointer-events: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+        padding: 3rem 1.5rem;
+        overflow-y: auto;
+      }
+      .about-overlay .about-word {
+        position: static !important;
+        white-space: normal;
+        text-align: center;
+      }
     }
   </style>
 </head>
@@ -202,16 +294,43 @@
 
 <nav>
   <ul class="nav-overlay">
+    <li><a href="#" id="about-toggle">About</a></li>
     <li><a href="/mechanical-slavery-of-knowledge-work/">The Mechanical Slavery of Knowledge Work</a></li>
   </ul>
 </nav>
+
+<div class="site-preview" id="site-preview"></div>
+
+<div class="about-overlay" id="about-overlay">
+  <!-- Identity -->
+  <a class="about-word" href="https://eqtventures.com" target="_blank" style="top:3%;left:6%;font-size:0.9rem;--o:1;--d:0.05s">BUILDING AND INVESTING AT EQT VENTURES</a>
+  <span class="about-word" style="top:14%;left:3%;font-size:0.65rem;--o:0.75;--d:0.15s">SELF-TAUGHT PROGRAMMER + DESIGNER</span>
+  <span class="about-word" style="top:8%;left:42%;font-size:0.6rem;--o:0.7;--d:0.2s">INDIA → AUSTRALIA → SWEDEN</span>
+
+  <!-- Things I care about — word cloud scattered around left side + top-right -->
+  <span class="about-word" style="top:4%;right:5%;font-size:0.8rem;--o:1;--d:0.1s">THINGS I CARE ABOUT</span>
+  <span class="about-word" style="top:18%;right:3%;font-size:0.75rem;--o:0.75;--d:0.2s">TECHNOLOGY AS ABUNDANCE</span>
+  <span class="about-word" style="top:30%;right:6%;font-size:0.7rem;--o:0.75;--d:0.25s">EXTENDING COGNITION</span>
+  <span class="about-word" style="top:44%;right:3%;font-size:0.65rem;--o:0.75;--d:0.35s">RAISING THE BASELINE FOR 8 BILLION</span>
+  <span class="about-word" style="top:56%;right:5%;font-size:0.7rem;--o:0.75;--d:0.45s">MAKING THE WORLD MORE PROGRAMMABLE</span>
+
+  <!-- Portfolio — clustered together bottom center -->
+  <span class="about-word about-center" style="top:74%;left:50%;font-size:0.8rem;--o:1;--d:0.35s">PORTFOLIO</span>
+  <a class="about-word" href="https://1x.tech" target="_blank" style="top:80%;left:18%;font-size:0.65rem;--o:0.65;--d:0.38s">1X TECHNOLOGIES</a>
+  <a class="about-word" href="https://nothing.tech" target="_blank" data-preview="https://www.youtube.com/embed/MMVuPuFKM3U?autoplay=1&mute=1" style="top:82%;left:38%;font-size:0.65rem;--o:0.65;--d:0.4s">NOTHING</a>
+  <a class="about-word" href="https://odyssey.systems" target="_blank" style="top:80%;right:28%;font-size:0.65rem;--o:0.65;--d:0.42s">ODYSSEY</a>
+  <a class="about-word" href="https://exploration.space" target="_blank" style="top:82%;right:8%;font-size:0.65rem;--o:0.65;--d:0.44s">THE EXPLORATION COMPANY</a>
+  <a class="about-word" href="https://hume.ai" target="_blank" style="top:88%;left:22%;font-size:0.65rem;--o:0.65;--d:0.46s">HUME <span style="font-size:0.5rem;opacity:0.6">(ACQ. GOOGLE)</span></a>
+  <a class="about-word" href="https://generative.vision" target="_blank" style="top:86%;left:42%;font-size:0.65rem;--o:0.65;--d:0.48s">GENERATIVE ENGINEERING</a>
+  <a class="about-word" href="https://camion.energy" target="_blank" style="top:88%;right:18%;font-size:0.65rem;--o:0.65;--d:0.5s">CAMION</a>
+</div>
 
 <div class="game-hud" id="game-hud">
   <span id="game-score">score: 0</span> · <span id="game-hint">esc to quit</span>
 </div>
 
 <div class="site-id">
-  <div id="game-trigger">???
+  <div id="game-trigger">?
     <div class="game-selector" id="game-selector">
       <div class="game-option" data-game="snake">snake</div>
     </div>
@@ -734,24 +853,34 @@
   });
 
   // --- Touch controls for games ---
-  var touchStartX = 0, touchStartY = 0;
+  var touchStartX = 0, touchStartY = 0, touchSwiped = false;
+  var SWIPE_THRESHOLD = 15;
+
   document.addEventListener('touchstart', function(e) {
     if (!activeGame) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
-  }, { passive: true });
+    touchSwiped = false;
+    e.preventDefault();
+  }, { passive: false });
 
-  document.addEventListener('touchend', function(e) {
-    if (!activeGame) return;
-    var dx = e.changedTouches[0].clientX - touchStartX;
-    var dy = e.changedTouches[0].clientY - touchStartY;
+  document.addEventListener('touchmove', function(e) {
+    if (!activeGame || touchSwiped) return;
+    var dx = e.touches[0].clientX - touchStartX;
+    var dy = e.touches[0].clientY - touchStartY;
     var absDx = Math.abs(dx), absDy = Math.abs(dy);
-    if (Math.max(absDx, absDy) < 20) return; // too short
+    if (Math.max(absDx, absDy) < SWIPE_THRESHOLD) return;
+    e.preventDefault();
+    touchSwiped = true;
     var key;
     if (absDx > absDy) key = dx > 0 ? 'ArrowRight' : 'ArrowLeft';
     else key = dy > 0 ? 'ArrowDown' : 'ArrowUp';
     if (gameKeyHandler) gameKeyHandler({ key: key, preventDefault: function(){} });
-  });
+    // Reset origin so continuous swiping chains new directions
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchSwiped = false;
+  }, { passive: false });
 
   // --- Snake game ---
   var snake, snakeDir, snakeFood, snakeScore, snakeAlive, snakeInputQueue;
@@ -854,6 +983,107 @@
       }
     }, 150);
     if (gameLoopId) { clearInterval(gameLoopId); gameLoopId = null; }
+  }
+
+  // --- About overlay ---
+  var aboutToggle = document.getElementById('about-toggle');
+  var aboutOverlay = document.getElementById('about-overlay');
+  var aboutOpen = false;
+  var aboutClosing = false;
+
+  function openAbout() {
+    aboutOpen = true;
+    aboutClosing = false;
+    aboutOverlay.classList.remove('closing');
+    aboutOverlay.classList.add('visible');
+    aboutToggle.classList.add('active');
+    preloadPreviews();
+  }
+
+  function closeAbout() {
+    if (aboutClosing) return;
+    aboutClosing = true;
+    aboutOverlay.classList.add('closing');
+    aboutToggle.classList.remove('active');
+    preview.classList.remove('visible');
+    setTimeout(function() {
+      aboutOverlay.classList.remove('visible', 'closing');
+      aboutOpen = false;
+      aboutClosing = false;
+      cleanupPreviews();
+    }, 450);
+  }
+
+  aboutToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (activeGame) return;
+    if (aboutOpen) closeAbout();
+    else openAbout();
+  });
+
+  aboutOverlay.addEventListener('click', function(e) {
+    if (e.target === aboutOverlay && aboutOpen) closeAbout();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (aboutOpen && e.key === 'Escape') {
+      e.preventDefault();
+      closeAbout();
+    }
+  });
+
+  // --- Site preview on hover (preloaded) ---
+  var preview = document.getElementById('site-preview');
+  var previewTimeout = null;
+  var preloadedFrames = {};
+
+  function preloadPreviews() {
+    var links = aboutOverlay.querySelectorAll('a.about-word[href]');
+    for (var i = 0; i < links.length; i++) {
+      var href = links[i].getAttribute('data-preview') || links[i].getAttribute('href');
+      if (!preloadedFrames[href]) {
+        var iframe = document.createElement('iframe');
+        iframe.src = href;
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+        iframe.style.cssText = 'width:1360px;height:850px;transform:scale(0.25);transform-origin:top left;border:none;pointer-events:none;position:absolute;top:0;left:0;display:none;';
+        preview.appendChild(iframe);
+        preloadedFrames[href] = iframe;
+      }
+    }
+  }
+
+  function cleanupPreviews() {
+    for (var key in preloadedFrames) {
+      if (preloadedFrames[key].parentNode) preloadedFrames[key].parentNode.removeChild(preloadedFrames[key]);
+    }
+    preloadedFrames = {};
+  }
+
+  var portfolioLinks = aboutOverlay.querySelectorAll('a.about-word[href]');
+  for (var i = 0; i < portfolioLinks.length; i++) {
+    (function(link) {
+      link.addEventListener('mouseenter', function() {
+        var href = link.getAttribute('data-preview') || link.getAttribute('href');
+        clearTimeout(previewTimeout);
+        for (var key in preloadedFrames) preloadedFrames[key].style.display = 'none';
+        if (preloadedFrames[href]) preloadedFrames[href].style.display = '';
+        var rect = link.getBoundingClientRect();
+        var pw = 340, ph = 213;
+        var x = rect.left;
+        var y = rect.top - ph - 8;
+        if (y < 8) y = rect.bottom + 8;
+        if (x + pw > window.innerWidth - 8) x = window.innerWidth - pw - 8;
+        if (x < 8) x = 8;
+        preview.style.left = x + 'px';
+        preview.style.top = y + 'px';
+        preview.classList.add('visible');
+      });
+      link.addEventListener('mouseleave', function() {
+        previewTimeout = setTimeout(function() {
+          preview.classList.remove('visible');
+        }, 150);
+      });
+    })(portfolioLinks[i]);
   }
 
 })();
