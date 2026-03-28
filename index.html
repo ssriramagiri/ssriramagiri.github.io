@@ -323,6 +323,7 @@
   <a class="about-word" href="https://hume.ai" target="_blank" style="top:88%;left:22%;font-size:0.65rem;--o:0.65;--d:0.46s">HUME <span style="font-size:0.5rem;opacity:0.6">(ACQ. GOOGLE)</span></a>
   <a class="about-word" href="https://generative.vision" target="_blank" style="top:86%;left:42%;font-size:0.65rem;--o:0.65;--d:0.48s">GENERATIVE ENGINEERING</a>
   <a class="about-word" href="https://camion.energy" target="_blank" style="top:88%;right:18%;font-size:0.65rem;--o:0.65;--d:0.5s">CAMION</a>
+  <a class="about-word" href="https://www.cemvision.tech/" target="_blank" style="top:92%;left:38%;font-size:0.65rem;--o:0.65;--d:0.52s">CEMVISION</a>
 </div>
 
 <div class="game-hud" id="game-hud">
@@ -563,13 +564,13 @@
 
   var helloCellPtr = 0;
   function animHello() {
-    var drawUpTo = helloPhase * 4;
+    var drawUpTo = helloPhase * 6;
     while (helloCellPtr < helloCells.length && helloCells[helloCellPtr].at <= drawUpTo) {
       state[helloCells[helloCellPtr].idx] = 1;
       helloCellPtr++;
     }
     helloPhase++;
-    return helloPhase > helloPath.length / 4 + 80;
+    return helloPhase > helloPath.length / 6 + 80;
   }
 
   // 2. Concentric rings expanding
@@ -985,6 +986,138 @@
     if (gameLoopId) { clearInterval(gameLoopId); gameLoopId = null; }
   }
 
+  // --- Smiley face for about overlay (sketchy, progressive draw) ---
+  var smileyPath = [];
+  var smileyCells = [];
+  var smileyPhase = 0;
+  var smileyCellPtr = 0;
+  var smileyAnimId = null;
+
+  (function buildSmileyPath() {
+    function cubicBez(p0, p1, p2, p3, n) {
+      var pts = [];
+      for (var i = 0; i <= n; i++) {
+        var t = i / n, u = 1 - t;
+        pts.push({
+          x: u*u*u*p0.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*p3.x,
+          y: u*u*u*p0.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*p3.y
+        });
+      }
+      return pts;
+    }
+
+    var segs = [
+      // Face outline — wobbly circle, clockwise from top
+      [{x:14,y:2.5},   {x:18.5,y:1.5}, {x:23,y:4.5},   {x:25,y:8.5}],
+      [{x:25,y:8.5},   {x:26.5,y:12},  {x:26,y:16},    {x:25,y:19}],
+      [{x:25,y:19},    {x:23.5,y:22.5},{x:20,y:25.5},  {x:16,y:26}],
+      [{x:16,y:26},    {x:12,y:26.5},  {x:8,y:25},     {x:5.5,y:22}],
+      [{x:5.5,y:22},   {x:3,y:19},     {x:2,y:15.5},   {x:2.5,y:12}],
+      [{x:2.5,y:12},   {x:3,y:8},      {x:5.5,y:4.5},  {x:9.5,y:2.5}],
+      [{x:9.5,y:2.5},  {x:11.5,y:1.5}, {x:13,y:2},     {x:15,y:3}],
+
+      // Left eye — small wobbly oval
+      [{x:8.5,y:9},    {x:8,y:8},      {x:10.5,y:7.5}, {x:11,y:9.5}],
+      [{x:11,y:9.5},   {x:11.5,y:11},  {x:9,y:11.5},   {x:8.5,y:9.5}],
+
+      // Right eye — slightly different shape for sketch feel
+      [{x:17.5,y:8.5}, {x:17,y:7.5},   {x:19.5,y:7},   {x:20.5,y:9}],
+      [{x:20.5,y:9},   {x:21,y:10.5},  {x:18.5,y:11.5},{x:17.5,y:9}],
+
+      // Mouth — sketchy smile arc
+      [{x:8,y:17.5},   {x:9.5,y:20},   {x:12,y:21.5},  {x:14.5,y:22}],
+      [{x:14.5,y:22},  {x:17,y:22},    {x:19.5,y:20},  {x:20.5,y:17}],
+    ];
+
+    // Segment indices where a new stroke begins (pen-up between these)
+    var newStroke = {0:1, 7:1, 9:1, 11:1};
+
+    for (var s = 0; s < segs.length; s++) {
+      var pts = cubicBez(segs[s][0], segs[s][1], segs[s][2], segs[s][3], 40);
+      for (var i = (newStroke[s] ? 0 : 1); i < pts.length; i++) {
+        smileyPath.push(pts[i]);
+      }
+    }
+
+    // Scale to fit grid with margin
+    var margin = 3;
+    var designSize = 28;
+    var scaleX = (COLS - margin * 2) / designSize;
+    var scaleY = (ROWS - margin * 2) / designSize;
+    var sc = Math.min(scaleX, scaleY);
+    var offC = (COLS - designSize * sc) / 2;
+    var offR = (ROWS - designSize * sc) / 2;
+
+    for (var p = 0; p < smileyPath.length; p++) {
+      smileyPath[p] = {
+        x: smileyPath[p].x * sc + offC,
+        y: smileyPath[p].y * sc + offR
+      };
+    }
+
+    // Distance field — same approach as hello
+    var STROKE = 0.55;
+    var STROKE_SQ = STROKE * STROKE;
+    var activation = new Float32Array(ROWS * COLS);
+    for (var i = 0; i < activation.length; i++) activation[i] = 1e9;
+
+    for (var pi = 0; pi < smileyPath.length; pi++) {
+      var px = smileyPath[pi].x, py = smileyPath[pi].y;
+      var minR = Math.max(0, Math.floor(py - STROKE - 1));
+      var maxR = Math.min(ROWS - 1, Math.ceil(py + STROKE + 1));
+      var minC = Math.max(0, Math.floor(px - STROKE - 1));
+      var maxC = Math.min(COLS - 1, Math.ceil(px + STROKE + 1));
+      for (var r = minR; r <= maxR; r++) {
+        for (var c = minC; c <= maxC; c++) {
+          var dr = r - py, dc = c - px;
+          if (dr * dr + dc * dc < STROKE_SQ) {
+            var idx = r * COLS + c;
+            if (pi < activation[idx]) activation[idx] = pi;
+          }
+        }
+      }
+    }
+
+    for (var i = 0; i < activation.length; i++) {
+      if (activation[i] < 1e9) {
+        smileyCells.push({ idx: i, at: activation[i] });
+      }
+    }
+    smileyCells.sort(function(a, b) { return a.at - b.at; });
+  })();
+
+  function startSmileyAnim() {
+    smileyPhase = 0;
+    smileyCellPtr = 0;
+    clear();
+    render();
+    var smileyLast = 0;
+    function tick(ts) {
+      if (smileyLast === 0) smileyLast = ts;
+      if (ts - smileyLast >= FRAME_INTERVAL) {
+        smileyLast = ts;
+        var drawUpTo = smileyPhase * 6;
+        while (smileyCellPtr < smileyCells.length && smileyCells[smileyCellPtr].at <= drawUpTo) {
+          state[smileyCells[smileyCellPtr].idx] = 1;
+          smileyCellPtr++;
+        }
+        render();
+        smileyPhase++;
+      }
+      if (smileyCellPtr < smileyCells.length) {
+        smileyAnimId = requestAnimationFrame(tick);
+      }
+    }
+    smileyAnimId = requestAnimationFrame(tick);
+  }
+
+  function stopSmileyAnim() {
+    if (smileyAnimId) {
+      cancelAnimationFrame(smileyAnimId);
+      smileyAnimId = null;
+    }
+  }
+
   // --- About overlay ---
   var aboutToggle = document.getElementById('about-toggle');
   var aboutOverlay = document.getElementById('about-overlay');
@@ -994,6 +1127,8 @@
   function openAbout() {
     aboutOpen = true;
     aboutClosing = false;
+    animPaused = true;
+    startSmileyAnim();
     aboutOverlay.classList.remove('closing');
     aboutOverlay.classList.add('visible');
     aboutToggle.classList.add('active');
@@ -1010,7 +1145,32 @@
       aboutOverlay.classList.remove('visible', 'closing');
       aboutOpen = false;
       aboutClosing = false;
+      stopSmileyAnim();
       cleanupPreviews();
+      // Noise dissolve transition before resuming
+      var noiseT = 0;
+      var noiseLast = 0;
+      function noiseOut(ts) {
+        if (noiseLast === 0) noiseLast = ts;
+        if (ts - noiseLast >= FRAME_INTERVAL) {
+          noiseLast = ts;
+          var density = Math.abs(Math.sin(noiseT * 0.04));
+          for (var i = 0; i < state.length; i++) {
+            state[i] = Math.random() < density ? 1 : 0;
+          }
+          render();
+          noiseT++;
+        }
+        if (noiseT < 40) {
+          requestAnimationFrame(noiseOut);
+        } else {
+          animPaused = false;
+          clear();
+          render();
+          animations[currentAnim].reset();
+        }
+      }
+      requestAnimationFrame(noiseOut);
     }, 450);
   }
 
