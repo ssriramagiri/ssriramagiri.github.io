@@ -124,12 +124,66 @@
       line-height: 1.6;
     }
 
+    #game-trigger {
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      display: inline-block;
+    }
+    #game-trigger:hover { color: #aaa; }
+
+    .game-selector {
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      margin-bottom: 0.4rem;
+      background: #111;
+      border: 1px solid #333;
+      padding: 0.3rem 0;
+      min-width: 10rem;
+      display: none;
+      z-index: 100;
+    }
+    .game-selector.open { display: block; }
+
+    .game-selector .game-option {
+      padding: 0.25rem 0.6rem;
+      font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.6rem;
+      color: #888;
+      cursor: pointer;
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+    }
+    .game-selector .game-option.active {
+      color: #fff;
+      background: #222;
+    }
+    .game-selector .game-option.active::before {
+      content: '▶ ';
+    }
+
+    .game-hud {
+      position: fixed;
+      top: 1rem;
+      right: 2rem;
+      font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.6rem;
+      color: #555;
+      z-index: 10;
+      letter-spacing: 0.04em;
+      display: none;
+    }
+    .game-hud.visible { display: block; }
+
     @media (max-width: 600px) {
       .flipdot-container { padding: 8px; }
       .flipdot-grid { gap: 2px; }
       .dot { width: 5px; height: 5px; }
       .nav-overlay { bottom: 1.2rem; left: 1.2rem; }
       .site-id { top: 1.2rem; left: 1.2rem; bottom: auto; right: auto; text-align: left; }
+      .game-selector { right: auto; left: 0; }
+      .game-hud { right: auto; left: 1.2rem; }
     }
   </style>
 </head>
@@ -145,7 +199,16 @@
   </ul>
 </nav>
 
+<div class="game-hud" id="game-hud">
+  <span id="game-score">score: 0</span> · <span id="game-hint">esc to quit</span>
+</div>
+
 <div class="site-id">
+  <div id="game-trigger">???
+    <div class="game-selector" id="game-selector">
+      <div class="game-option" data-game="snake">snake</div>
+    </div>
+  </div>
   <div id="stockholm-clock"></div>
   <div>ssriramagiri.com</div>
 </div>
@@ -551,20 +614,241 @@
 
   animations[0].reset();
 
+  var animPaused = false;
+
   function loop(ts) {
-    if (ts - lastFrame >= FRAME_INTERVAL) {
-      lastFrame = ts;
-      var done = animations[currentAnim].fn();
-      render();
-      if (done) {
-        currentAnim = (currentAnim + 1) % animations.length;
-        animations[currentAnim].reset();
+    if (!animPaused) {
+      if (ts - lastFrame >= FRAME_INTERVAL) {
+        lastFrame = ts;
+        var done = animations[currentAnim].fn();
+        render();
+        if (done) {
+          currentAnim = (currentAnim + 1) % animations.length;
+          animations[currentAnim].reset();
+        }
       }
     }
     requestAnimationFrame(loop);
   }
 
   requestAnimationFrame(loop);
+
+  // --- Game selector & games ---
+  var gameTrigger = document.getElementById('game-trigger');
+  var gameSelector = document.getElementById('game-selector');
+  var gameHud = document.getElementById('game-hud');
+  var gameScoreEl = document.getElementById('game-score');
+  var options = gameSelector.querySelectorAll('.game-option');
+  var selectorOpen = false;
+  var activeIdx = 0;
+  var activeGame = null; // null = animations running, string = game name
+  var gameLoopId = null;
+
+  function openSelector() {
+    selectorOpen = true;
+    gameSelector.classList.add('open');
+    activeIdx = 0;
+    updateSelectorHighlight();
+  }
+
+  function closeSelector() {
+    selectorOpen = false;
+    gameSelector.classList.remove('open');
+  }
+
+  function updateSelectorHighlight() {
+    for (var i = 0; i < options.length; i++) {
+      options[i].classList.toggle('active', i === activeIdx);
+    }
+  }
+
+  function selectGame(name) {
+    closeSelector();
+    startGame(name);
+  }
+
+  gameTrigger.addEventListener('click', function(e) {
+    if (activeGame) return;
+    e.stopPropagation();
+    if (selectorOpen) closeSelector();
+    else openSelector();
+  });
+
+  for (var i = 0; i < options.length; i++) {
+    (function(opt) {
+      opt.addEventListener('click', function(e) {
+        e.stopPropagation();
+        selectGame(opt.dataset.game);
+      });
+    })(options[i]);
+  }
+
+  document.addEventListener('click', function() {
+    if (selectorOpen) closeSelector();
+  });
+
+  // --- Game lifecycle ---
+  function startGame(name) {
+    animPaused = true;
+    activeGame = name;
+    clear();
+    render();
+    gameHud.classList.add('visible');
+    if (name === 'snake') snakeStart();
+  }
+
+  function stopGame() {
+    if (gameLoopId) { clearInterval(gameLoopId); gameLoopId = null; }
+    activeGame = null;
+    animPaused = false;
+    gameHud.classList.remove('visible');
+    clear();
+    render();
+    // Reset current animation so it restarts cleanly
+    animations[currentAnim].reset();
+  }
+
+  // --- Keyboard handler ---
+  var gameKeyHandler = null;
+
+  document.addEventListener('keydown', function(e) {
+    // Selector navigation
+    if (selectorOpen) {
+      if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = (activeIdx - 1 + options.length) % options.length; updateSelectorHighlight(); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = (activeIdx + 1) % options.length; updateSelectorHighlight(); }
+      else if (e.key === 'Enter') { e.preventDefault(); selectGame(options[activeIdx].dataset.game); }
+      else if (e.key === 'Escape') { e.preventDefault(); closeSelector(); }
+      return;
+    }
+    // Quit game
+    if (activeGame && e.key === 'Escape') { e.preventDefault(); stopGame(); return; }
+    // Forward to game
+    if (activeGame && gameKeyHandler) gameKeyHandler(e);
+  });
+
+  // --- Touch controls for games ---
+  var touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', function(e) {
+    if (!activeGame) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (!activeGame) return;
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    var absDx = Math.abs(dx), absDy = Math.abs(dy);
+    if (Math.max(absDx, absDy) < 20) return; // too short
+    var key;
+    if (absDx > absDy) key = dx > 0 ? 'ArrowRight' : 'ArrowLeft';
+    else key = dy > 0 ? 'ArrowDown' : 'ArrowUp';
+    if (gameKeyHandler) gameKeyHandler({ key: key, preventDefault: function(){} });
+  });
+
+  // --- Snake game ---
+  var snake, snakeDir, snakeFood, snakeScore, snakeAlive, snakeInputQueue;
+
+  function snakeStart() {
+    var midR = Math.floor(ROWS / 2), midC = Math.floor(COLS / 2);
+    snake = [{ r: midR, c: midC }, { r: midR, c: midC - 1 }, { r: midR, c: midC - 2 }];
+    snakeDir = { r: 0, c: 1 };
+    snakeInputQueue = [];
+    snakeScore = 0;
+    snakeAlive = true;
+    gameScoreEl.textContent = 'score: 0';
+    snakePlaceFood();
+
+    gameKeyHandler = function(e) {
+      var k = e.key;
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(k) === -1) return;
+      e.preventDefault();
+      // Check against last queued direction (or current dir if queue empty)
+      var ref = snakeInputQueue.length > 0 ? snakeInputQueue[snakeInputQueue.length - 1] : snakeDir;
+      var nd = null;
+      if (k === 'ArrowUp' && ref.r !== 1) nd = { r: -1, c: 0 };
+      else if (k === 'ArrowDown' && ref.r !== -1) nd = { r: 1, c: 0 };
+      else if (k === 'ArrowLeft' && ref.c !== 1) nd = { r: 0, c: -1 };
+      else if (k === 'ArrowRight' && ref.c !== -1) nd = { r: 0, c: 1 };
+      if (nd && snakeInputQueue.length < 3) snakeInputQueue.push(nd);
+    };
+
+    gameLoopId = setInterval(snakeTick, 120);
+  }
+
+  function snakePlaceFood() {
+    var occupied = {};
+    for (var i = 0; i < snake.length; i++) occupied[snake[i].r + ',' + snake[i].c] = true;
+    var attempts = 0;
+    do {
+      snakeFood = { r: Math.floor(Math.random() * ROWS), c: Math.floor(Math.random() * COLS) };
+      attempts++;
+    } while (occupied[snakeFood.r + ',' + snakeFood.c] && attempts < 1000);
+  }
+
+  function snakeTick() {
+    if (!snakeAlive) return;
+    if (snakeInputQueue.length > 0) snakeDir = snakeInputQueue.shift();
+    var head = snake[0];
+    var nr = head.r + snakeDir.r;
+    var nc = head.c + snakeDir.c;
+
+    // Wall collision
+    if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) { snakeDie(); return; }
+    // Self collision
+    for (var i = 0; i < snake.length; i++) {
+      if (snake[i].r === nr && snake[i].c === nc) { snakeDie(); return; }
+    }
+
+    snake.unshift({ r: nr, c: nc });
+
+    // Eat food
+    if (nr === snakeFood.r && nc === snakeFood.c) {
+      snakeScore++;
+      gameScoreEl.textContent = 'score: ' + snakeScore;
+      snakePlaceFood();
+    } else {
+      snake.pop();
+    }
+
+    // Draw
+    clear();
+    // Draw food (blink)
+    var blink = Date.now() % 400 < 250;
+    if (blink) set(snakeFood.r, snakeFood.c, 1);
+    // Draw snake
+    for (var i = 0; i < snake.length; i++) set(snake[i].r, snake[i].c, 1);
+    render();
+  }
+
+  function snakeDie() {
+    snakeAlive = false;
+    // Flash the grid
+    var flashes = 0;
+    var flashId = setInterval(function() {
+      if (flashes % 2 === 0) {
+        for (var i = 0; i < snake.length; i++) state[snake[i].r * COLS + snake[i].c] = 0;
+      } else {
+        for (var i = 0; i < snake.length; i++) state[snake[i].r * COLS + snake[i].c] = 1;
+      }
+      render();
+      flashes++;
+      if (flashes > 5) {
+        clearInterval(flashId);
+        // Show score briefly then exit
+        clear();
+        var scoreText = '' + snakeScore;
+        var textR = Math.floor((ROWS - 7) / 2);
+        var totalW = scoreText.length * 6 - 1;
+        var textC = Math.floor((COLS - totalW) / 2);
+        drawText(scoreText, textR, textC);
+        render();
+        setTimeout(function() { stopGame(); }, 1500);
+      }
+    }, 150);
+    if (gameLoopId) { clearInterval(gameLoopId); gameLoopId = null; }
+  }
+
 })();
 </script>
 
