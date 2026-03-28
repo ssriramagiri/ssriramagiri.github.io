@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>218 This is Fine</title>
+  <title>ssriramagiri</title>
   <style>
     @font-face {
       font-family: 'Berkeley Mono';
@@ -14,184 +14,193 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html {
-      font-size: 16px;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+    html, body {
+      height: 100%;
+      overflow: hidden;
     }
 
     body {
       font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
-      color: #c4c4c4;
-      background: #0a0a0a;
+      background: #f8f6f1;
+      color: #3a3632;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 2rem;
-      overflow: hidden;
-    }
-
-    .container {
-      max-width: 640px;
-      width: 100%;
       position: relative;
     }
 
-    .status-line {
-      font-size: 0.6rem;
-      color: #333;
-      margin-bottom: 2rem;
-      letter-spacing: 0.05em;
+    .floater {
+      position: fixed;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      animation: drift ease-in-out infinite;
     }
 
-    .error-code {
-      font-size: 6rem;
-      font-weight: 400;
-      color: #1a1a1a;
-      line-height: 1;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.15em;
+    @keyframes drift {
+      0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+    }
+
+    .scene {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      z-index: 1;
       position: relative;
-    }
-
-    .error-code span {
-      position: relative;
-      display: inline-block;
-    }
-
-    .error-code .glyph-2 { color: #222; }
-    .error-code .glyph-1 { color: #1e1e1e; }
-    .error-code .glyph-8 { color: #252525; }
-
-    .error-title {
-      font-size: 0.85rem;
-      font-weight: 400;
-      color: #444;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 2.5rem;
-    }
-
-    .divider {
-      color: #1a1a1a;
-      font-size: 0.55rem;
-      letter-spacing: 0.3em;
-      margin-bottom: 2rem;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-
-    .description {
-      font-size: 0.7rem;
-      color: #333;
-      line-height: 1.8;
-      margin-bottom: 3rem;
-      max-width: 480px;
-    }
-
-    .description em {
-      font-style: normal;
-      color: #555;
     }
 
     .art {
-      font-size: 0.5rem;
-      line-height: 1.35;
-      color: #161616;
+      font-size: clamp(0.45rem, 1.1vw, 0.75rem);
+      line-height: 1.45;
       white-space: pre;
-      margin-bottom: 3rem;
-      overflow: hidden;
+      letter-spacing: 0.02em;
     }
 
-    .nav {
-      list-style: none;
+    .c-sky     { color: #8ab4cc; }
+    .c-sun     { color: #e8b84b; }
+    .c-cloud   { color: #c5c0b8; }
+    .c-plant   { color: #7ca67c; }
+    .c-brown   { color: #a08060; }
+    .c-warm    { color: #c49070; }
+    .c-stone   { color: #9a9590; }
+    .c-text    { color: #6a6560; }
+    .c-frame   { color: #b0aaa0; }
+    .c-accent  { color: #d4886a; }
+    .c-water   { color: #89b5c9; }
+    .c-music   { color: #c4a0d0; }
+    .c-heart   { color: #d4886a; }
+    .c-bird    { color: #8a8580; }
+    .c-dark    { color: #5a5550; }
+    .c-screen  { color: #7ca67c; }
+    .c-dim     { color: #c8c3ba; }
+
+    .blink {
+      animation: blinker 1s step-end infinite;
+    }
+    @keyframes blinker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .bob {
+      display: inline-block;
+      animation: bobble 3s ease-in-out infinite;
+    }
+    @keyframes bobble {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+
+    .name-line {
+      font-size: clamp(0.5rem, 1.2vw, 0.8rem);
+      letter-spacing: 0.35em;
+      color: #b0a89d;
+      margin-top: 1.5rem;
+      text-transform: lowercase;
+    }
+
+    .links {
+      margin-top: 1.2rem;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      align-items: center;
+      gap: 0.4rem;
     }
 
-    .nav a {
-      font-size: 0.65rem;
-      color: #2a2a2a;
+    .links a {
+      font-size: clamp(0.45rem, 1vw, 0.65rem);
+      color: #b5afa5;
       text-decoration: none;
       letter-spacing: 0.04em;
       transition: color 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
     }
 
-    .nav a::before {
-      content: '→';
-      color: #1a1a1a;
-      transition: color 0.3s ease;
+    .links a:hover {
+      color: #6a6560;
     }
 
-    .nav a:hover { color: #666; }
-    .nav a:hover::before { color: #444; }
-
-    .footer {
-      margin-top: 4rem;
-      font-size: 0.5rem;
-      color: #1a1a1a;
-      letter-spacing: 0.06em;
+    .links a::before {
+      content: '· ';
+      color: #d0cbc2;
     }
 
-    @media (max-width: 600px) {
-      .error-code { font-size: 4rem; }
-      .art { font-size: 0.4rem; }
-      body { padding: 1.5rem; }
+    @media (max-width: 550px) {
+      .art { font-size: 0.38rem; line-height: 1.35; }
+      .name-line { font-size: 0.5rem; }
+    }
+
+    @media (max-width: 380px) {
+      .art { font-size: 0.3rem; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="status-line">HTTP/1.1 218 THIS_IS_FINE</div>
 
-    <div class="error-code">
-      <span class="glyph-2">2</span><span class="glyph-1">1</span><span class="glyph-8">8</span>
-    </div>
-
-    <div class="error-title">This is Fine</div>
-
-    <div class="divider">────────────────────────────────────────────────</div>
-
-    <div class="description">
-      <em>A non-standard status code indicating that a resource
-      is functioning despite issues elsewhere.</em>
-    </div>
-
+<div class="scene">
 <pre class="art">
-        ╭──────────────────────────────╮
-        │                              │
-        │    ┌─┐                       │
-        │    │░│   ╭───╮               │
-        │    │░│   │   │  ┌──┐         │
-        │    │░│   │   │  │▓▓│         │
-        │  ┌─┴─┴─┐ ╰───╯  │▓▓│         │
-        │  │░░░░░│    ╱    └──┘         │
-        │  │░░░░░│   ╱                  │
-        │  └─────┘  ╱   ╔══╗           │
-        │     ▲    ╱    ║  ║   ~ ~ ~   │
-        │     │   ╱     ╚══╝  ~ ~ ~ ~  │
-        │     │  ╱            ~ ~ ~ ~  │
-        │   ┌─┴─────────────────────┐  │
-        │   │ ▸ this_is_fine = true │  │
-        │   └───────────────────────┘  │
-        │                              │
-        ╰──────────────────────────────╯
+<span class="c-dim">                                                                          </span>
+<span class="c-cloud">            ☁               </span><span class="c-sun">  ☀  </span><span class="c-cloud">                  ☁</span>
+<span class="c-cloud">                    ☁                          ☁</span>
+<span class="c-bird">                                  ∿         ∿</span>
+<span class="c-dim">                                                                          </span>
+<span class="c-dim">       ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌</span>
+<span class="c-dim">                                                                          </span>
+<span class="c-frame">                ╭──────────────────────────────────────╮</span>
+<span class="c-frame">                │</span>                                      <span class="c-frame">│</span>
+<span class="c-frame">                │</span>    <span class="c-brown">┌───┐</span>          <span class="c-stone">╔════╗</span>    <span class="c-music"><span class="bob">♪</span></span>       <span class="c-frame">│</span>
+<span class="c-frame">                │</span>    <span class="c-brown">│</span><span class="c-warm">▒▒▒</span><span class="c-brown">│</span>   <span class="c-warm">☕</span>     <span class="c-stone">║</span><span class="c-screen"> &gt;_ </span><span class="c-stone">║</span>            <span class="c-frame">│</span>
+<span class="c-frame">                │</span>    <span class="c-brown">│</span><span class="c-warm">▒▒▒</span><span class="c-brown">│</span>          <span class="c-stone">║</span><span class="c-screen"> hi </span><span class="c-stone">║</span>   <span class="c-music"><span class="bob">♫</span></span>      <span class="c-frame">│</span>
+<span class="c-frame">                │</span>    <span class="c-brown">│</span><span class="c-warm">▒▒▒</span><span class="c-brown">│</span>          <span class="c-stone">╚════╝</span>            <span class="c-frame">│</span>
+<span class="c-frame">                │</span>    <span class="c-brown">└─┬─┘</span>          <span class="c-stone">┌┴──┴┐</span>           <span class="c-frame">│</span>
+<span class="c-frame">                │</span>      <span class="c-brown">│</span>            <span class="c-stone">└────┘</span>           <span class="c-frame">│</span>
+<span class="c-frame">                │</span>                                      <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark">  ╱╲  </span>  <span class="c-text">┌────────────────────┐</span>  <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark"> ╱  ╲ </span>  <span class="c-text">│</span> <span class="c-screen">thinking about</span>     <span class="c-text">│</span>  <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark">╱ ◠◠ ╲</span>  <span class="c-text">│</span> <span class="c-screen">things</span><span class="c-screen blink">█</span>            <span class="c-text">│</span>  <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark">│ ‿‿ │</span>  <span class="c-text">└────────────────────┘</span>  <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark">╱╲  ╱╲</span>    <span class="c-plant">⌇</span>    <span class="c-plant">⌇</span>              <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark">╱  ╲╱  </span>   <span class="c-plant">⚘</span>    <span class="c-plant">✿</span>    <span class="c-plant">❀</span>        <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark">│      </span>  <span class="c-plant">╱│╲</span>  <span class="c-plant">╱│╲</span>  <span class="c-plant">╱│╲</span>      <span class="c-frame">│</span>
+<span class="c-frame">                │</span>  <span class="c-dark">┘    └</span>  <span class="c-brown">━┷━</span>  <span class="c-brown">━┷━</span>  <span class="c-brown">━┷━</span>      <span class="c-frame">│</span>
+<span class="c-frame">                │</span>                                      <span class="c-frame">│</span>
+<span class="c-frame">                ╰──────────────────────────────────────╯</span>
+<span class="c-dim">                                                                          </span>
+<span class="c-dim">       ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌</span>
+<span class="c-dim">                                                                          </span>
+<span class="c-water">        ·  ∼  ·  ∼  · </span> <span class="c-plant">✿</span> <span class="c-water"> ·  ∼  · </span> <span class="c-plant">❀</span> <span class="c-water"> ·  ∼  ·  ∼  · </span> <span class="c-plant">✿</span> <span class="c-water"> ·  ∼</span>
 </pre>
 
-    <div class="divider">────────────────────────────────────────────────</div>
+  <div class="name-line">ssriramagiri</div>
 
-    <nav>
-      <ul class="nav">
-        <li><a href="/mechanical-slavery-of-knowledge-work/">The Mechanical Slavery of Knowledge Work</a></li>
-      </ul>
-    </nav>
-
-    <div class="footer">ssriramagiri.com</div>
+  <div class="links">
+    <a href="/mechanical-slavery-of-knowledge-work/">The Mechanical Slavery of Knowledge Work</a>
   </div>
+</div>
+
+<script>
+  const symbols = ['✦','✧','·','∘','○','◦','◌','⊹','⋆','∗','˚','∙','⊛','◇','△','▽','☆','⟡','⊙','⟐'];
+  const colors = ['#ddd5ca','#d4cfc6','#e0d8ce','#c8c0b5','#d8d0c5','#cec6bb'];
+
+  for (let i = 0; i < 35; i++) {
+    const el = document.createElement('div');
+    el.className = 'floater';
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.top = Math.random() * 100 + 'vh';
+    el.style.fontSize = (0.6 + Math.random() * 1.2) + 'rem';
+    el.style.color = colors[Math.floor(Math.random() * colors.length)];
+    el.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
+    el.style.setProperty('--dy', (Math.random() * -80 - 20) + 'px');
+    el.style.setProperty('--rot', (Math.random() * 40 - 20) + 'deg');
+    el.style.animationDuration = (12 + Math.random() * 20) + 's';
+    el.style.animationDelay = (Math.random() * -25) + 's';
+    document.body.appendChild(el);
+  }
+</script>
+
 </body>
 </html>
