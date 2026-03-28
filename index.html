@@ -14,192 +14,709 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-    }
-
     body {
-      font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
-      background: #f8f6f1;
-      color: #3a3632;
+      background: #e6d5b8;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: 'Berkeley Mono', 'SF Mono', 'Courier New', monospace;
+      overflow: auto;
+    }
+
+    .machine {
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .device {
+      position: relative;
+      width: 640px;
+      background: #333;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        0 2px 0 #3a3a3a,
+        0 4px 0 #252525,
+        0 8px 30px rgba(0,0,0,0.35);
+      margin-top: 260px;
+      overflow: visible;
+    }
+
+    /* ── RECEIPT ── */
+    .receipt {
+      position: absolute;
+      width: 192px;
+      left: 50%;
+      transform: translateX(-40%);
+      bottom: calc(100% - 18px);
+      z-index: 3;
+    }
+
+    .receipt-paper {
+      background: linear-gradient(180deg, #f0c840 0%, #e8c030 100%);
+      padding: 14px 16px 20px;
+      font-size: 10px;
+      line-height: 1.65;
+      color: #302800;
+      border-radius: 3px 3px 0 0;
+      box-shadow: 2px 3px 12px rgba(0,0,0,0.15);
+      white-space: pre;
+    }
+
+    .receipt-paper a {
+      color: #302800;
+      text-decoration: none;
+    }
+
+    .receipt-paper a:hover {
+      text-decoration: underline;
+      text-decoration-style: dashed;
+    }
+
+    /* ── TOP ROW ── */
+    .top-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .tape-section {
+      flex: 1;
+    }
+
+    .tape-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .tape-label {
+      font-size: 7px;
+      color: #777;
+      letter-spacing: 0.15em;
+    }
+
+    .tape-counter {
+      background: #1a1a1a;
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #ddd;
+      letter-spacing: 0.2em;
+      border: 1px solid #444;
+      border-radius: 2px;
+      font-family: inherit;
+    }
+
+    .tape-deck {
+      background: #282828;
+      border-radius: 5px;
+      padding: 10px 14px;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      border: 1px solid #3e3e3e;
+    }
+
+    .reel {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: spin 4s linear infinite;
+    }
+
+    .reel:nth-child(2) { animation-duration: 3s; }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .reel-hub {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #444;
+      border: 1px solid #555;
+    }
+
+    .crt {
+      background: #14305a;
+      border-radius: 5px;
+      height: 95px;
+      margin-top: 8px;
+      border: 2px solid #1a1a1a;
+      overflow: hidden;
       position: relative;
     }
 
-    .floater {
-      position: fixed;
+    .crt canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .crt::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+      );
       pointer-events: none;
-      user-select: none;
-      opacity: 0;
-      animation: drift ease-in-out infinite;
     }
 
-    @keyframes drift {
-      0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-      10%  { opacity: 1; }
-      90%  { opacity: 1; }
-      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+    .slot-column {
+      flex: 0 0 192px;
     }
 
-    .scene {
+    .slot-visual {
+      background: #2a2a2a;
+      height: 100%;
+      border-radius: 4px;
+      border: 1px solid #3e3e3e;
+    }
+
+    .pixel-section {
+      flex: 0 0 120px;
+      display: flex;
+      align-items: flex-start;
+      padding-top: 8px;
+    }
+
+    .pixel-art {
+      font-size: 11px;
+      line-height: 1.05;
+      color: #1a1a1a;
+      white-space: pre;
+      font-family: inherit;
+    }
+
+    /* ── AUTO SHUTOFF ── */
+    .auto-label {
+      font-size: 7px;
+      color: #666;
+      letter-spacing: 0.25em;
+      text-align: center;
+      padding: 8px 0;
+      border-top: 1px solid #444;
+      border-bottom: 1px solid #444;
+      margin-bottom: 12px;
+    }
+
+    /* ── BOTTOM ROW ── */
+    .bottom-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .controls-left {
+      flex: 0 0 100px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0;
-      z-index: 1;
+      gap: 8px;
+      padding-top: 4px;
+    }
+
+    .crosshair {
+      font-size: 5.5px;
+      line-height: 1.1;
+      color: #ddd;
+      white-space: pre;
+      font-family: inherit;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 16px);
+      grid-template-rows: repeat(3, 16px);
+      gap: 1px;
+    }
+
+    .dp {
+      background: #444;
+      border: 1px solid #555;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 7px;
+    }
+
+    .dp-e { background: transparent; border: none; }
+
+    .transport {
+      display: flex;
+      gap: 3px;
+    }
+
+    .tr-btn {
+      width: 20px;
+      height: 16px;
+      background: #3a3a3a;
+      border: 1px solid #4a4a4a;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #888;
+      font-size: 7px;
+    }
+
+    /* ── SWITCHES ── */
+    .switches {
+      flex: 0 0 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding-top: 6px;
+      font-size: 6px;
+      color: #777;
+      letter-spacing: 0.08em;
+    }
+
+    .sw-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .sw-label { min-width: 36px; }
+
+    .sw-track {
+      width: 30px;
+      height: 12px;
+      background: #222;
+      border-radius: 2px;
+      border: 1px solid #444;
+      display: flex;
+      align-items: center;
+      padding: 1px;
+    }
+
+    .sw-knob {
+      width: 9px;
+      height: 8px;
+      background: #666;
+      border-radius: 2px;
+    }
+
+    .sw-on .sw-knob { margin-left: auto; }
+
+    .batt-dot {
+      width: 7px;
+      height: 7px;
+      background: #3a3a3a;
+      border-radius: 50%;
+      border: 1px solid #555;
+    }
+
+    /* ── POCKET COMPUTER ── */
+    .computer {
+      flex: 1;
+    }
+
+    .pc-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .pc-label {
+      font-size: 7px;
+      color: #888;
+      letter-spacing: 0.08em;
+    }
+
+    .pc-on {
+      font-size: 6px;
+      color: #777;
+    }
+
+    .pc-indicators {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 5px;
+      flex-wrap: wrap;
+    }
+
+    .pc-ind {
+      font-size: 5px;
+      color: #555;
+      background: #262626;
+      padding: 1px 3px;
+      border: 1px solid #3a3a3a;
+      border-radius: 1px;
+    }
+
+    .lcd {
+      background: linear-gradient(180deg, #d89828 0%, #c88818 100%);
+      border-radius: 3px;
+      padding: 7px 12px;
+      margin-bottom: 7px;
+      border: 2px solid #1a1a1a;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lcd::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 40%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent);
+      pointer-events: none;
+    }
+
+    .lcd-text {
+      font-size: 15px;
+      color: #502800;
+      letter-spacing: 0.1em;
       position: relative;
     }
 
-    .art {
-      font-size: clamp(0.45rem, 1.1vw, 0.75rem);
-      line-height: 1.45;
-      white-space: pre;
-      letter-spacing: 0.02em;
+    .lcd-cursor {
+      animation: lbk 1s step-end infinite;
     }
 
-    .c-sky     { color: #8ab4cc; }
-    .c-sun     { color: #e8b84b; }
-    .c-cloud   { color: #c5c0b8; }
-    .c-plant   { color: #7ca67c; }
-    .c-brown   { color: #a08060; }
-    .c-warm    { color: #c49070; }
-    .c-stone   { color: #9a9590; }
-    .c-text    { color: #6a6560; }
-    .c-frame   { color: #b0aaa0; }
-    .c-accent  { color: #d4886a; }
-    .c-water   { color: #89b5c9; }
-    .c-music   { color: #c4a0d0; }
-    .c-heart   { color: #d4886a; }
-    .c-bird    { color: #8a8580; }
-    .c-dark    { color: #5a5550; }
-    .c-screen  { color: #7ca67c; }
-    .c-dim     { color: #c8c3ba; }
-
-    .blink {
-      animation: blinker 1s step-end infinite;
-    }
-    @keyframes blinker {
+    @keyframes lbk {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
     }
 
-    .bob {
-      display: inline-block;
-      animation: bobble 3s ease-in-out infinite;
-    }
-    @keyframes bobble {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-2px); }
-    }
-
-    .name-line {
-      font-size: clamp(0.5rem, 1.2vw, 0.8rem);
-      letter-spacing: 0.35em;
-      color: #b0a89d;
-      margin-top: 1.5rem;
-      text-transform: lowercase;
-    }
-
-    .links {
-      margin-top: 1.2rem;
+    /* ── KEYBOARD ── */
+    .keyboard {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 0.4rem;
+      gap: 3px;
     }
 
-    .links a {
-      font-size: clamp(0.45rem, 1vw, 0.65rem);
-      color: #b5afa5;
-      text-decoration: none;
-      letter-spacing: 0.04em;
-      transition: color 0.3s ease;
+    .kr {
+      display: flex;
+      gap: 3px;
     }
 
-    .links a:hover {
-      color: #6a6560;
+    .k {
+      background: linear-gradient(180deg, #4a4a4a, #3a3a3a);
+      border: 1px solid #555;
+      border-radius: 2px;
+      padding: 3px 4px;
+      font-size: 5.5px;
+      color: #ccc;
+      text-align: center;
+      min-width: 20px;
+      line-height: 1.2;
+      cursor: default;
+      user-select: none;
+      font-family: inherit;
     }
 
-    .links a::before {
-      content: '· ';
-      color: #d0cbc2;
+    .k-d {
+      background: linear-gradient(180deg, #383838, #2a2a2a);
+      color: #aaa;
     }
 
-    @media (max-width: 550px) {
-      .art { font-size: 0.38rem; line-height: 1.35; }
-      .name-line { font-size: 0.5rem; }
+    .k-a {
+      background: linear-gradient(180deg, #555, #444);
+      color: #eee;
+    }
+
+    .k-w { min-width: 40px; }
+    .k-sp { flex: 1; }
+
+    /* ── BRAND ── */
+    .brand {
+      margin-top: 12px;
+      padding-top: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .brand-sub {
+      font-size: 6.5px;
+      color: #888;
+      letter-spacing: 0.06em;
+      line-height: 1.6;
+    }
+
+    .brand-name {
+      font-size: 13px;
+      color: #999;
+      letter-spacing: 0.08em;
+      font-weight: bold;
+    }
+
+    .brand-spc { font-size: 7px; color: #666; letter-spacing: 0.06em; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .device {
+        transform: scale(0.72);
+        transform-origin: top center;
+        margin-top: 185px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .device {
+        transform: scale(0.52);
+        transform-origin: top center;
+        margin-top: 135px;
+      }
     }
 
     @media (max-width: 380px) {
-      .art { font-size: 0.3rem; }
+      .device {
+        transform: scale(0.42);
+        transform-origin: top center;
+        margin-top: 110px;
+      }
     }
   </style>
 </head>
 <body>
 
-<div class="scene">
-<pre class="art">
-<span class="c-dim">                                                                          </span>
-<span class="c-cloud">            ☁               </span><span class="c-sun">  ☀  </span><span class="c-cloud">                  ☁</span>
-<span class="c-cloud">                    ☁                          ☁</span>
-<span class="c-bird">                                  ∿         ∿</span>
-<span class="c-dim">                                                                          </span>
-<span class="c-dim">       ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌</span>
-<span class="c-dim">                                                                          </span>
-<span class="c-frame">                ╭──────────────────────────────────────╮</span>
-<span class="c-frame">                │</span>                                      <span class="c-frame">│</span>
-<span class="c-frame">                │</span>    <span class="c-brown">┌───┐</span>          <span class="c-stone">╔════╗</span>    <span class="c-music"><span class="bob">♪</span></span>       <span class="c-frame">│</span>
-<span class="c-frame">                │</span>    <span class="c-brown">│</span><span class="c-warm">▒▒▒</span><span class="c-brown">│</span>   <span class="c-warm">☕</span>     <span class="c-stone">║</span><span class="c-screen"> &gt;_ </span><span class="c-stone">║</span>            <span class="c-frame">│</span>
-<span class="c-frame">                │</span>    <span class="c-brown">│</span><span class="c-warm">▒▒▒</span><span class="c-brown">│</span>          <span class="c-stone">║</span><span class="c-screen"> hi </span><span class="c-stone">║</span>   <span class="c-music"><span class="bob">♫</span></span>      <span class="c-frame">│</span>
-<span class="c-frame">                │</span>    <span class="c-brown">│</span><span class="c-warm">▒▒▒</span><span class="c-brown">│</span>          <span class="c-stone">╚════╝</span>            <span class="c-frame">│</span>
-<span class="c-frame">                │</span>    <span class="c-brown">└─┬─┘</span>          <span class="c-stone">┌┴──┴┐</span>           <span class="c-frame">│</span>
-<span class="c-frame">                │</span>      <span class="c-brown">│</span>            <span class="c-stone">└────┘</span>           <span class="c-frame">│</span>
-<span class="c-frame">                │</span>                                      <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark">  ╱╲  </span>  <span class="c-text">┌────────────────────┐</span>  <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark"> ╱  ╲ </span>  <span class="c-text">│</span> <span class="c-screen">thinking about</span>     <span class="c-text">│</span>  <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark">╱ ◠◠ ╲</span>  <span class="c-text">│</span> <span class="c-screen">things</span><span class="c-screen blink">█</span>            <span class="c-text">│</span>  <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark">│ ‿‿ │</span>  <span class="c-text">└────────────────────┘</span>  <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark">╱╲  ╱╲</span>    <span class="c-plant">⌇</span>    <span class="c-plant">⌇</span>              <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark">╱  ╲╱  </span>   <span class="c-plant">⚘</span>    <span class="c-plant">✿</span>    <span class="c-plant">❀</span>        <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark">│      </span>  <span class="c-plant">╱│╲</span>  <span class="c-plant">╱│╲</span>  <span class="c-plant">╱│╲</span>      <span class="c-frame">│</span>
-<span class="c-frame">                │</span>  <span class="c-dark">┘    └</span>  <span class="c-brown">━┷━</span>  <span class="c-brown">━┷━</span>  <span class="c-brown">━┷━</span>      <span class="c-frame">│</span>
-<span class="c-frame">                │</span>                                      <span class="c-frame">│</span>
-<span class="c-frame">                ╰──────────────────────────────────────╯</span>
-<span class="c-dim">                                                                          </span>
-<span class="c-dim">       ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌</span>
-<span class="c-dim">                                                                          </span>
-<span class="c-water">        ·  ∼  ·  ∼  · </span> <span class="c-plant">✿</span> <span class="c-water"> ·  ∼  · </span> <span class="c-plant">❀</span> <span class="c-water"> ·  ∼  ·  ∼  · </span> <span class="c-plant">✿</span> <span class="c-water"> ·  ∼</span>
-</pre>
+<div class="machine">
+  <div class="device">
 
-  <div class="name-line">ssriramagiri</div>
+    <!-- ── RECEIPT ── -->
+    <div class="receipt">
+      <div class="receipt-paper">    2026            2026.
+HELLO000000
+WELCOME
 
-  <div class="links">
-    <a href="/mechanical-slavery-of-knowledge-work/">The Mechanical Slavery of Knowledge Work</a>
+SSRIRAMAGIRI.COM
+SSRIRAMAGIRI.COM &lt;3
+
+PRINT("ESSAYS")
+──────────────────
+<a href="/mechanical-slavery-of-knowledge-work/">THE MECHANICAL
+SLAVERY OF
+KNOWLEDGE WORK</a>
+
+2 + 2
+                  4.
+
+STATUS
+              FINE.</div>
+    </div>
+
+    <!-- ── TOP ROW ── -->
+    <div class="top-row">
+      <div class="tape-section">
+        <div class="tape-header">
+          <span class="tape-label">TAPE COUNTER</span>
+          <span class="tape-counter">0013</span>
+        </div>
+        <div class="tape-deck">
+          <div class="reel"><div class="reel-hub"></div></div>
+          <div class="reel"><div class="reel-hub"></div></div>
+        </div>
+        <div class="crt"><canvas id="crt"></canvas></div>
+      </div>
+
+      <div class="slot-column"><div class="slot-visual"></div></div>
+
+      <div class="pixel-section">
+<pre class="pixel-art">
+ ██  ██████
+ ██      ██
+ ██     ██
+ ██    ██
+ ██   ██
+ ██  ██
+ ██ ██
+ ██ ██████</pre>
+      </div>
+    </div>
+
+    <!-- ── DIVIDER ── -->
+    <div class="auto-label">AUTOMATIC SHUT OFF</div>
+
+    <!-- ── BOTTOM ROW ── -->
+    <div class="bottom-row">
+      <div class="controls-left">
+<pre class="crosshair">      ██
+    ██████
+      ██
+██  ██████  ██
+████████████████
+██  ██████  ██
+      ██
+    ██████
+      ██</pre>
+        <div class="dpad">
+          <div class="dp dp-e"></div><div class="dp">▲</div><div class="dp dp-e"></div>
+          <div class="dp">◀</div><div class="dp">●</div><div class="dp">▶</div>
+          <div class="dp dp-e"></div><div class="dp">▼</div><div class="dp dp-e"></div>
+        </div>
+        <div class="transport">
+          <div class="tr-btn">◁</div>
+          <div class="tr-btn">▷</div>
+          <div class="tr-btn">■</div>
+          <div class="tr-btn">●</div>
+        </div>
+      </div>
+
+      <div class="switches">
+        <div class="sw-group"><span class="sw-label">REMOTE</span></div>
+        <div class="sw-group">
+          <span class="sw-label">OFF</span>
+          <div class="sw-track sw-on"><div class="sw-knob"></div></div>
+          <span>ON</span>
+        </div>
+        <div class="sw-group" style="margin-top:6px">
+          <span class="sw-label">LOW BATT</span>
+          <div class="batt-dot"></div>
+        </div>
+        <div class="sw-group" style="margin-top:6px"><span class="sw-label">PRINTER</span></div>
+        <div class="sw-group">
+          <span class="sw-label">OFF</span>
+          <div class="sw-track sw-on"><div class="sw-knob"></div></div>
+          <span>ON</span>
+        </div>
+      </div>
+
+      <div class="computer">
+        <div class="pc-top">
+          <span class="pc-label">POCKET COMPUTER &nbsp;&nbsp; SEIKO MC-2200</span>
+          <span class="pc-on">ON</span>
+        </div>
+        <div class="pc-indicators">
+          <span class="pc-ind">ROM24KBYT</span>
+          <span class="pc-ind">BASIC</span>
+          <span class="pc-ind">RAB</span>
+          <span class="pc-ind">FREESTR288</span>
+        </div>
+        <div class="lcd">
+          <span class="lcd-text">SSRIRAMAGIRI.COM<span class="lcd-cursor">▮</span></span>
+        </div>
+        <div class="keyboard">
+          <div class="kr">
+            <div class="k k-d">DEF</div><div class="k k-d">SHF</div>
+            <div class="k">V</div><div class="k">W</div>
+            <div style="width:8px"></div>
+            <div class="k k-d">DEL</div><div class="k k-d">INS</div><div class="k k-d">ON</div>
+            <div style="width:8px"></div>
+            <div class="k k-a">CA</div>
+          </div>
+          <div class="kr">
+            <div class="k">A</div><div class="k">B</div><div class="k">C</div>
+            <div class="k">D</div><div class="k">E</div><div class="k">F</div>
+            <div style="width:8px"></div>
+            <div class="k">7</div><div class="k">8</div><div class="k">9</div>
+            <div class="k k-d">÷</div>
+          </div>
+          <div class="kr">
+            <div class="k">G</div><div class="k">H</div><div class="k">I</div>
+            <div class="k">J</div><div class="k">K</div><div class="k">L</div>
+            <div style="width:8px"></div>
+            <div class="k">4</div><div class="k">5</div><div class="k">6</div>
+            <div class="k k-d">×</div>
+          </div>
+          <div class="kr">
+            <div class="k">M</div><div class="k">N</div><div class="k">O</div>
+            <div class="k">P</div><div class="k">Q</div><div class="k">R</div>
+            <div style="width:8px"></div>
+            <div class="k">1</div><div class="k">2</div><div class="k">3</div>
+            <div class="k k-d">−</div>
+          </div>
+          <div class="kr">
+            <div class="k">S</div><div class="k">T</div><div class="k">U</div>
+            <div class="k k-d">STP</div><div class="k k-d">NXT</div><div class="k k-d">RUN</div>
+            <div style="width:8px"></div>
+            <div class="k">0</div><div class="k">.</div><div class="k">±</div>
+            <div class="k k-d">+</div>
+          </div>
+          <div class="kr">
+            <div class="k k-sp">SPC</div>
+            <div style="width:8px"></div>
+            <div class="k k-w k-a">ENTER</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BRAND ── -->
+    <div class="brand">
+      <div>
+        <div class="brand-sub">MICROCASSETTE RECORDER &amp;<br>PRINTER</div>
+        <div class="brand-name">SEIKO MP-220</div>
+      </div>
+      <div class="brand-spc">SPC</div>
+    </div>
+
   </div>
 </div>
 
 <script>
-  const symbols = ['✦','✧','·','∘','○','◦','◌','⊹','⋆','∗','˚','∙','⊛','◇','△','▽','☆','⟡','⊙','⟐'];
-  const colors = ['#ddd5ca','#d4cfc6','#e0d8ce','#c8c0b5','#d8d0c5','#cec6bb'];
+  const canvas = document.getElementById('crt');
+  const ctx = canvas.getContext('2d');
 
-  for (let i = 0; i < 35; i++) {
-    const el = document.createElement('div');
-    el.className = 'floater';
-    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-    el.style.left = Math.random() * 100 + 'vw';
-    el.style.top = Math.random() * 100 + 'vh';
-    el.style.fontSize = (0.6 + Math.random() * 1.2) + 'rem';
-    el.style.color = colors[Math.floor(Math.random() * colors.length)];
-    el.style.setProperty('--dx', (Math.random() * 60 - 30) + 'px');
-    el.style.setProperty('--dy', (Math.random() * -80 - 20) + 'px');
-    el.style.setProperty('--rot', (Math.random() * 40 - 20) + 'deg');
-    el.style.animationDuration = (12 + Math.random() * 20) + 's';
-    el.style.animationDelay = (Math.random() * -25) + 's';
-    document.body.appendChild(el);
+  function resize() {
+    const r = canvas.parentElement.getBoundingClientRect();
+    canvas.width = r.width;
+    canvas.height = r.height;
   }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let t = 0;
+  function draw() {
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.strokeStyle = 'rgba(50,90,150,0.25)';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < w; x += 18) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 18) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#4488cc';
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = '#4488cc';
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const y = h / 2
+        + Math.sin((x + t) * 0.06) * (h * 0.22)
+        + Math.sin((x + t * 0.7) * 0.025) * (h * 0.12);
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#88ccee';
+    for (let i = 0; i < 9; i++) {
+      const x = i * w / 8;
+      const y = h / 2
+        + Math.sin((x + t) * 0.06) * (h * 0.22)
+        + Math.sin((x + t * 0.7) * 0.025) * (h * 0.12);
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    t += 1.2;
+    requestAnimationFrame(draw);
+  }
+  draw();
 </script>
 
 </body>
