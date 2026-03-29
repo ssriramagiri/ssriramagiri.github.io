@@ -268,20 +268,26 @@
       }
       .game-hud { right: auto; left: 1.2rem; }
       .about-overlay.visible {
-        background: rgba(10, 10, 10, 0.9);
+        background: rgba(10, 10, 10, 0.7);
         pointer-events: auto;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
-        gap: 0.7rem;
-        padding: 3rem 1.5rem;
+        gap: 0.6rem;
+        padding: 3rem 1.2rem;
         overflow-y: auto;
       }
       .about-overlay .about-word {
         position: static !important;
         white-space: normal;
-        text-align: center;
+        text-shadow: 0 0 12px rgba(10,10,10,1), 0 0 24px rgba(10,10,10,0.7);
+      }
+      .about-overlay .about-word:nth-child(3n+2) {
+        align-self: flex-end;
+      }
+      .about-overlay .about-word:nth-child(3n) {
+        align-self: center;
       }
     }
   </style>
@@ -1138,6 +1144,7 @@
   function closeAbout() {
     if (aboutClosing) return;
     aboutClosing = true;
+    stopSmileyAnim();
     aboutOverlay.classList.add('closing');
     aboutToggle.classList.remove('active');
     preview.classList.remove('visible');
@@ -1145,7 +1152,6 @@
       aboutOverlay.classList.remove('visible', 'closing');
       aboutOpen = false;
       aboutClosing = false;
-      stopSmileyAnim();
       cleanupPreviews();
       // Noise dissolve transition before resuming
       var noiseT = 0;
