@@ -85,7 +85,7 @@
       font-size: 1.35rem;
       line-height: 1.35;
       letter-spacing: -0.01em;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
       color: #111;
     }
 
@@ -97,7 +97,7 @@
       color: #555;
       border-left: 2px solid #ccc;
       padding-left: 1.25rem;
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
 
     blockquote cite {
@@ -114,19 +114,20 @@
       font-weight: 500;
       font-size: 0.95rem;
       color: #111;
-      margin: 2.5rem 0;
+      margin: 2rem 0;
       line-height: 1.5;
     }
 
     .closing {
-      margin-top: 2.5rem;
-      padding-top: 2rem;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
       border-top: 1px solid #ddd;
     }
     .closing p { color: #444; }
+    .closing p:last-child { margin-bottom: 0; }
 
     details.tech-aside {
-      margin: 1.8rem 0 1.4rem;
+      margin: 2rem 0;
       border: 1px solid #ddd;
       border-radius: 4px;
       padding: 0;
@@ -150,14 +151,14 @@
     }
     details.tech-aside[open] summary::before { content: '▾ '; }
     details.tech-aside .aside-body {
-      padding: 0 1rem 1rem;
+      padding: 0.75rem 1rem 1rem;
       border-top: 1px solid #eee;
     }
     details.tech-aside .aside-body h4 {
       font-size: 0.78rem;
       font-weight: 500;
       color: #333;
-      margin: 1rem 0 0.4rem;
+      margin: 0.5rem 0 0.4rem;
       letter-spacing: 0.01em;
     }
     details.tech-aside .aside-body ul {
@@ -189,20 +190,20 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: #999;
-      margin: 3.5rem 0 1.8rem;
-      padding-top: 1.5rem;
+      margin: 3rem 0 1.2rem;
+      padding-top: 1.2rem;
       border-top: 1px solid #e8e6e2;
     }
 
     @media (max-width: 600px) {
       .page { padding: 3.5rem 0 5rem; }
       h1 { font-size: 1.15rem; }
-      h2 { font-size: 0.6rem; margin: 2.5rem 0 1.4rem; }
+      h2 { font-size: 0.6rem; margin: 2.5rem 0 1rem; }
     }
 
     /* ── Decomposition viz ── */
     .decomposition {
-      margin: 3.5rem 0;
+      margin: 3rem 0;
       -webkit-user-select: none;
       user-select: none;
     }
@@ -337,7 +338,7 @@
 
     /* conclusion */
     .viz-conclusion {
-      margin-top: 2rem;
+      margin-top: 1.5rem;
       padding: 1rem 1.2rem;
       border-left: 2px solid #1a1a1a;
     }
@@ -397,6 +398,11 @@
 
     <p>Regardless of what you do, you open your inbox, there are 40 messages, maybe five require judgment. The rest are status pings, scheduling, someone forwarding something you need to skim so you can update a doc so someone else can update a slide. You copy action items from meeting notes into the project tracker. You chase a Slack thread to find out what actually got decided — it wasn't in the summary, it was the reply four messages down. You reformat numbers into a deck. None of this is thinking. All of it is hours, and a whole lot of anxiety.</p>
 
+    <figure style="margin: 2rem 0; display: flex; align-items: flex-start; gap: 1.2rem;">
+      <img src="../Jon Hamm Dancing GIF.gif" alt="Jon Hamm dancing" style="width: 50%; border-radius: 4px; flex-shrink: 0;">
+      <figcaption style="font-size: 0.75rem; color: #888; font-style: italic; line-height: 1.5;">When was the last time you felt like this going through your email or Slack?</figcaption>
+    </figure>
+
     <p class="pull">The modern knowledge worker is a human integration layer between software that doesn't talk to itself. And we're trying to build better highways instead of better cities.</p>
 
     <p>If you look at what people actually do at a computer all day, it collapses into about five things. Five kinds of cognitive work.</p>
@@ -405,15 +411,24 @@
 
     <p>Every productivity tool you've used serves some subset of these. A document editor is Artifact with a thin layer of Coordination. A project tracker is Commitment with some Attention routing. Email is Coordination that quietly doubles as Context storage and Commitment tracking, which is why your inbox becomes a todo list even though it's terrible at it. Calendar is Commitment plus Attention, minus everything else.</p>
 
-    <p>The interesting part is that no tool serves all of them, and the gaps between tools are exactly where work breaks down. You finish a meeting (Coordination), open a doc to capture what was decided (Artifact), realize you need to update a deadline (Commitment), check Slack to confirm something someone said (Context), and then lose twenty minutes because the thing that needed your Attention was in a different tab entirely. The friction isn't in any single tool. It's in the seams between them.</p>
+    <p>The interesting part is that no tool serves all of them (nor should they). And the gaps between tools are exactly where work breaks down. You finish a meeting (Coordination), open a doc to capture what was decided (Artifact), realize you need to update a deadline (Commitment), check Slack to confirm something someone said (Context), and then lose twenty minutes because the thing that needed your Attention was in a different tab entirely. The friction isn't in any single tool. It's in the seams between them.</p>
+
+    <details class="tech-aside">
+      <summary>The iPhone and OLE — two precedents for unifying the seams</summary>
+      <div class="aside-body">
+        <h4>The iPhone as platform unification</h4>
+        <p>Pre-iPhone, you had a camera, a music player, a phone, a PDA, a GPS — each a vertical device (or siloed app on a feature phone). The iPhone didn't just put them on one screen. It gave them a shared substrate: contacts, photos, location, notifications, internet — all first-class primitives accessible to every app simultaneously. Instagram couldn't exist on a feature phone. Not because the camera was worse, but because the platform didn't unify camera + contacts + internet + location into one context. The compound value was in the seams, not the individual capabilities.</p>
+
+        <h4>Microsoft's OLE / compound document era</h4>
+        <p>In the early 90s, Microsoft tried to solve "relationships between tools" with OLE. Embed a live Excel chart in a Word doc, have it update when the spreadsheet changes — objects from different tools coexisting in one context with live relationships. It mostly failed because the apps were still architecturally separate. The platform couldn't enforce a shared data model — it could only broker between proprietary ones. Which is basically what webhooks and Zapier do today. Same structural problem.</p>
+      </div>
+    </details>
 
     <p>This is why "integrations" don't actually fix the problem. Connecting Notion to Slack to Google Calendar doesn't unify the five — it creates a plumbing layer between tools that each still model only their own slice. The context that matters — why this artifact relates to that commitment, who last changed the state of this coordination thread — doesn't survive the trip through a webhook.</p>
 
     <p>Can a single system serve all five natively by treating all five as first-class objects in the same data model, so that the relationships between them are as real as the objects themselves.</p>
 
-    <p>If you actually try to spec out what that unified data model requires, the list of primitives is surprisingly short — about ten concepts. Every productivity tool you've ever used is some combination of these, wrapped in different UI and sold as a different product category.</p>
-
-    <p>None of this is complicated to understand. It is genuinely hard to build. Notion got three or four of the five work types, and they still don't have real spreadsheets or real spatial layout, ten years in. But "hard to build" is not the same thing as "hard to understand." The design space is finite and mappable. It just doesn't feel that way when you're staring at a hundred tools that each do overlapping fractions of the same thing.</p>
+    <p>If you actually try to spec out what that unified data model requires, the list of primitives is pretty short. Every productivity tool you've ever used is some combination of these, wrapped in different UI and sold as a different product category.</p>
 
     <div class="decomposition" id="decomposition">
       <div class="viz-tools" id="vizTools">
@@ -471,7 +486,7 @@
 
     <p>The primitives consistently weakest across every tool — Trigger, Provenance, Context, Diff — are the ones that connect things: why something exists, what spawned it, what changed, and what should react. A Google Doc has no idea it was created because of a Slack thread about a client request that came in via email. You know that. The software doesn't. The context graph — the web of relationships between artifacts, decisions, conversations, and people — is maintained entirely in your head. It's the most important layer, it exists in no product, and it's exactly what an AI layer is positioned to provide. It's the workspace that doesn't exist.</p>
 
-    <p>The models are good enough. They can write, reason, summarize, and draft. But today you're stuck between two bad options: siloed AI features inside single-primitive editors that can't see the context graph, or manual context-gathering across tools, one-shotting output in Claude or ChatGPT, then hauling it back into Word or Slides to iterate endlessly. Neither is the final form factor.</p>
+    <p>The models are good enough. They can write, reason, summarize, and draft. But today you're stuck between two options: siloed AI features inside single-primitive editors that can't see the context graph, or manual context-gathering across tools, one-shotting output in Claude or ChatGPT, then hauling it back into Word or Slides to iterate endlessly. Both work well for short-horizon, self-contained, containerized tasks. But neither feel like the final form factor.</p>
 
     <p>The obvious response is to connect the silos — protocols like MCP that let AI fetch data from Slack, Drive, your calendar, whatever. And that's useful. But fetching fragments on demand is not the same as understanding. The AI gets snapshots, not a living model. It can pull a Slack message and a Google Doc into the same prompt, but it doesn't know that the message caused the doc. The relationships between things — the part that actually constitutes context — stay invisible. You're building better highways between cities. The argument here is that you need one city where everything is walkable.</p>
 
@@ -482,11 +497,11 @@
     <p>And once it does, something else shifts. The AI no longer needs to wait for a prompt. Every AI product today starts with a text box — write something clever and maybe you'll get something useful back. That's five steps where the human does everything and the AI just responds. But if the system already holds the context graph — your meetings, your commitments, the state of every artifact — the AI can observe, infer, and act before you ask. Your Monday morning briefing is prepped because the AI watched the calendar. The status update is drafted because it saw what shipped. The three emails that matter are flagged because it knows the project state. The chat box doesn't disappear, but it stops being the front door. It becomes the thing you reach for after the system has already earned your attention by doing the work you would have spent the first two hours on. Action first, conversation second. TikTok won the attention war not by asking users what they wanted to watch, but by observing and serving. The same inversion applies here — but it only works if the AI can see the full graph. A siloed assistant trapped in one app doesn't know enough to act proactively. A unified system does.</p>
 
     <div class="closing">
-      <p>Imagine a world where humans are dedicated to enjoying cultivated leisure, creating beauty, reading inspiring works, or simply contemplating the world with admiration and delight — all while the necessary machinery operates efficiently in the background.</p>
+      <p>Imagine spending your days actually creating — designing something that didn't exist before, writing the piece that makes people feel something, building the thing that's genuinely new. Not formatting slides. Not chasing status updates. Not copy-pasting between apps. Creating.</p>
 
-      <p>This perspective is fundamentally human, not focused on productivity. Time is a finite resource, and every moment spent on inefficient tasks — like copying action items between applications, hunting for context across countless tabs, or reformatting a colleague's work — is a moment lost. It's time taken away from the truly unique contributions only you can make: the innovative idea, the crucial relationship-building, the essential judgment call, the vital creative leap.</p>
+      <p>Time is finite, and every minute spent on admin is a minute not spent making something beautiful. The mechanical slavery isn't just inefficient — it's tragic. People with real taste, real craft, real ideas, burning hours on work that a machine should be doing. The loss isn't measured in productivity. It's measured in all the things that never got made.</p>
 
-      <p>The ultimate goal isn't just a workspace that makes people more productive; it's one that gives them their time, and their life, back.</p>
+      <p>The goal isn't a better workspace. It's getting the admin out of the way so people can do what they're actually here to do — bring new things into the world.</p>
     </div>
     <h2>Braindumps</h2>
 
