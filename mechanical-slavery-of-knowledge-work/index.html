@@ -413,40 +413,6 @@
 
     <p>If you actually try to spec out what that unified data model requires, the list of primitives is surprisingly short — about ten concepts. Every productivity tool you've ever used is some combination of these, wrapped in different UI and sold as a different product category.</p>
 
-    <details class="tech-aside">
-      <summary>The primitives, operations, and temporal modes</summary>
-      <div class="aside-body">
-
-        <h4>Primitives (~10 concepts)</h4>
-        <ul>
-          <li>Content, Participants, State, Schema</li>
-          <li>Routing, Provenance, Time</li>
-          <li>Change detection, Triggers</li>
-        </ul>
-
-        <h4>Operations</h4>
-        <ul>
-          <li><strong>Table stakes</strong> — create, edit, version, share, comment, search, notify</li>
-          <li><strong>Merge</strong> — where collaboration models diverge: CRDTs, operational transforms, last-write-wins. Most tools quietly punt on this.</li>
-          <li><strong>Transform</strong> — restructuring: pivot a table, reflow a layout, collapse an outline into a summary</li>
-          <li><strong>Query</strong> — filtering, sorting, computing across structures. These three are where the data model gets stress-tested.</li>
-        </ul>
-
-        <h4>Temporal modes</h4>
-        <ul>
-          <li><strong>Synchronous</strong> — live cursors, shared editing, calls</li>
-          <li><strong>Asynchronous</strong> — email, comments, pull requests</li>
-          <li><strong>Scheduled</strong> — deadlines, calendar blocks, reminders</li>
-          <li><strong>Reactive</strong> — event-driven, triggered by state change</li>
-        </ul>
-
-        <p>Reactive is the interesting one. A bot responding to a keyword. A pipeline firing when a row updates. An agent noticing a doc changed and propagating the consequence downstream. No existing tool handles reactive mode natively, and it's the one most natural to AI collaboration — an AI participant doesn't poll your inbox or wait for an @-mention. It watches state. That requires change detection and triggers as first-class primitives, not afterthoughts bolted on through Zapier.</p>
-
-        <p>Temporal mode changes the meaning of every other primitive. The same spreadsheet means something different when you're co-editing it live versus reviewing it before a board meeting versus receiving it as an email attachment. Same content, same schema. Different mode, different work type, different tool. That's the fracture the current landscape is built on. A unified system would let the mode shift without forcing a tool shift.</p>
-
-      </div>
-    </details>
-
     <p>None of this is complicated to understand. It is genuinely hard to build. Notion got three or four of the five work types, and they still don't have real spreadsheets or real spatial layout, ten years in. But "hard to build" is not the same thing as "hard to understand." The design space is finite and mappable. It just doesn't feel that way when you're staring at a hundred tools that each do overlapping fractions of the same thing.</p>
 
     <div class="decomposition" id="decomposition">
@@ -515,6 +481,49 @@
 
     <p>And once it does, something else shifts. The AI no longer needs to wait for a prompt. Every AI product today starts with a text box — write something clever and maybe you'll get something useful back. That's five steps where the human does everything and the AI just responds. But if the system already holds the context graph — your meetings, your commitments, the state of every artifact — the AI can observe, infer, and act before you ask. Your Monday morning briefing is prepped because the AI watched the calendar. The status update is drafted because it saw what shipped. The three emails that matter are flagged because it knows the project state. The chat box doesn't disappear, but it stops being the front door. It becomes the thing you reach for after the system has already earned your attention by doing the work you would have spent the first two hours on. Action first, conversation second. TikTok won the attention war not by asking users what they wanted to watch, but by observing and serving. The same inversion applies here — but it only works if the AI can see the full graph. A siloed assistant trapped in one app doesn't know enough to act proactively. A unified system does.</p>
 
+    <div class="closing">
+      <p>Imagine a world where humans are dedicated to enjoying cultivated leisure, creating beauty, reading inspiring works, or simply contemplating the world with admiration and delight — all while the necessary machinery operates efficiently in the background.</p>
+
+      <p>This perspective is fundamentally human, not focused on productivity. Time is a finite resource, and every moment spent on inefficient tasks — like copying action items between applications, hunting for context across countless tabs, or reformatting a colleague's work — is a moment lost. It's time taken away from the truly unique contributions only you can make: the innovative idea, the crucial relationship-building, the essential judgment call, the vital creative leap.</p>
+
+      <p>The ultimate goal isn't just a workspace that makes people more productive; it's one that gives them their time, and their life, back.</p>
+    </div>
+    <h2>Braindumps</h2>
+
+    <details class="tech-aside">
+      <summary>The primitives, operations, and temporal modes</summary>
+      <div class="aside-body">
+
+        <h4>Primitives (~10 concepts)</h4>
+        <ul>
+          <li>Content, Participants, State, Schema</li>
+          <li>Routing, Provenance, Time</li>
+          <li>Change detection, Triggers</li>
+        </ul>
+
+        <h4>Operations</h4>
+        <ul>
+          <li><strong>Table stakes</strong> — create, edit, version, share, comment, search, notify</li>
+          <li><strong>Merge</strong> — where collaboration models diverge: CRDTs, operational transforms, last-write-wins. Most tools quietly punt on this.</li>
+          <li><strong>Transform</strong> — restructuring: pivot a table, reflow a layout, collapse an outline into a summary</li>
+          <li><strong>Query</strong> — filtering, sorting, computing across structures. These three are where the data model gets stress-tested.</li>
+        </ul>
+
+        <h4>Temporal modes</h4>
+        <ul>
+          <li><strong>Synchronous</strong> — live cursors, shared editing, calls</li>
+          <li><strong>Asynchronous</strong> — email, comments, pull requests</li>
+          <li><strong>Scheduled</strong> — deadlines, calendar blocks, reminders</li>
+          <li><strong>Reactive</strong> — event-driven, triggered by state change</li>
+        </ul>
+
+        <p>Reactive is the interesting one. A bot responding to a keyword. A pipeline firing when a row updates. An agent noticing a doc changed and propagating the consequence downstream. No existing tool handles reactive mode natively, and it's the one most natural to AI collaboration — an AI participant doesn't poll your inbox or wait for an @-mention. It watches state. That requires change detection and triggers as first-class primitives, not afterthoughts bolted on through Zapier.</p>
+
+        <p>Temporal mode changes the meaning of every other primitive. The same spreadsheet means something different when you're co-editing it live versus reviewing it before a board meeting versus receiving it as an email attachment. Same content, same schema. Different mode, different work type, different tool. That's the fracture the current landscape is built on. A unified system would let the mode shift without forcing a tool shift.</p>
+
+      </div>
+    </details>
+
     <details class="tech-aside">
       <summary>Second-order effects and the flywheel</summary>
       <div class="aside-body">
@@ -528,13 +537,6 @@
       </div>
     </details>
 
-    <div class="closing">
-      <p>Imagine a world where humans are dedicated to enjoying cultivated leisure, creating beauty, reading inspiring works, or simply contemplating the world with admiration and delight — all while the necessary machinery operates efficiently in the background.</p>
-
-      <p>This perspective is fundamentally human, not focused on productivity. Time is a finite resource, and every moment spent on inefficient tasks — like copying action items between applications, hunting for context across countless tabs, or reformatting a colleague's work — is a moment lost. It's time taken away from the truly unique contributions only you can make: the innovative idea, the crucial relationship-building, the essential judgment call, the vital creative leap.</p>
-
-      <p>The ultimate goal isn't just a workspace that makes people more productive; it's one that gives them their time, and their life, back.</p>
-    </div>
   </article>
   <script src="viz.js"></script>
 </body>
