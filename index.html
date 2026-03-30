@@ -1157,11 +1157,17 @@
   var aboutOverlay = document.getElementById('about-overlay');
   var aboutOpen = false;
   var aboutClosing = false;
+  var aboutCloseTimerId = null;
+  var noiseOutAnimId = null;
 
   function openAbout() {
+    // Cancel any in-progress close transition
+    if (aboutCloseTimerId) { clearTimeout(aboutCloseTimerId); aboutCloseTimerId = null; }
+    if (noiseOutAnimId) { cancelAnimationFrame(noiseOutAnimId); noiseOutAnimId = null; }
     aboutOpen = true;
     aboutClosing = false;
     pauseMainLoop();
+    clear();
     startSmileyAnim();
     aboutOverlay.classList.remove('closing');
     aboutOverlay.classList.add('visible');
@@ -1177,7 +1183,8 @@
     aboutOverlay.classList.add('closing');
     aboutToggle.classList.remove('active');
     preview.classList.remove('visible');
-    setTimeout(function() {
+    aboutCloseTimerId = setTimeout(function() {
+      aboutCloseTimerId = null;
       aboutOverlay.classList.remove('visible', 'closing');
       aboutOpen = false;
       aboutClosing = false;
@@ -1197,15 +1204,16 @@
           noiseT++;
         }
         if (noiseT < 40) {
-          requestAnimationFrame(noiseOut);
+          noiseOutAnimId = requestAnimationFrame(noiseOut);
         } else {
+          noiseOutAnimId = null;
           clear();
           render();
           animations[currentAnim].reset();
           resumeMainLoop();
         }
       }
-      requestAnimationFrame(noiseOut);
+      noiseOutAnimId = requestAnimationFrame(noiseOut);
     }, 450);
   }
 
