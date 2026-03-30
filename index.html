@@ -52,8 +52,7 @@
       height: 8px;
       border-radius: 50%;
       background: #1a1a1a;
-      transition: background 0.06s ease-out, box-shadow 0.06s ease-out;
-      will-change: background, box-shadow;
+      transition: background 0.06s ease-out;
     }
 
     .dot.on {
@@ -407,12 +406,15 @@
   function clear() { state.fill(0); }
 
   function render() {
+    var toAdd = [], toRemove = [];
     for (var i = 0; i < state.length; i++) {
       if (state[i] !== prev[i]) {
-        if (state[i]) dots[i].classList.add('on');
-        else dots[i].classList.remove('on');
+        if (state[i]) toAdd.push(i);
+        else toRemove.push(i);
       }
     }
+    for (var i = 0; i < toRemove.length; i++) dots[toRemove[i]].classList.remove('on');
+    for (var i = 0; i < toAdd.length; i++) dots[toAdd[i]].classList.add('on');
     prev.set(state);
   }
 
@@ -590,16 +592,18 @@
 
   // 2. Concentric rings expanding
   var ringPhase = 0;
-  function animRings() {
-    clear();
+  var ringDist = new Uint8Array(ROWS * COLS);
+  (function precomputeRingDist() {
     var cx = COLS / 2, cy = ROWS / 2;
     for (var r = 0; r < ROWS; r++) {
       for (var c = 0; c < COLS; c++) {
-        var dist = Math.sqrt((c - cx) * (c - cx) + (r - cy) * (r - cy));
-        var ring = Math.floor(dist) % 6;
-        var phase = (ring + ringPhase) % 6;
-        if (phase < 2) set(r, c, 1);
+        ringDist[r * COLS + c] = Math.floor(Math.sqrt((c - cx) * (c - cx) + (r - cy) * (r - cy))) % 6;
       }
+    }
+  })();
+  function animRings() {
+    for (var i = 0; i < state.length; i++) {
+      state[i] = ((ringDist[i] + ringPhase) % 6) < 2 ? 1 : 0;
     }
     ringPhase++;
     return ringPhase > 200;
@@ -634,6 +638,7 @@
 
   // 4. Game of Life
   var lifeState, lifeTick;
+  var lifeNext = new Uint8Array(ROWS * COLS);
   function animLifeInit() {
     lifeState = new Uint8Array(ROWS * COLS);
     for (var i = 0; i < lifeState.length; i++) lifeState[i] = Math.random() < 0.35 ? 1 : 0;
@@ -641,7 +646,7 @@
   }
   function animLife() {
     if (lifeTick === 0) animLifeInit();
-    var next = new Uint8Array(ROWS * COLS);
+    lifeNext.fill(0);
     for (var r = 0; r < ROWS; r++) {
       for (var c = 0; c < COLS; c++) {
         var n = 0;
@@ -653,10 +658,10 @@
           }
         }
         var alive = lifeState[r * COLS + c];
-        next[r * COLS + c] = (alive && (n === 2 || n === 3)) || (!alive && n === 3) ? 1 : 0;
+        lifeNext[r * COLS + c] = (alive && (n === 2 || n === 3)) || (!alive && n === 3) ? 1 : 0;
       }
     }
-    lifeState = next;
+    var tmp = lifeState; lifeState = lifeNext; lifeNext = tmp;
     state.set(lifeState);
     lifeTick++;
     return lifeTick > 200;
@@ -757,23 +762,36 @@
   animations[0].reset();
 
   var animPaused = false;
+  var mainLoopId = null;
 
   function loop(ts) {
-    if (!animPaused) {
-      if (ts - lastFrame >= FRAME_INTERVAL) {
-        lastFrame = ts;
-        var done = animations[currentAnim].fn();
-        render();
-        if (done) {
-          currentAnim = (currentAnim + 1) % animations.length;
-          animations[currentAnim].reset();
-        }
+    if (animPaused) { mainLoopId = null; return; }
+    if (ts - lastFrame >= FRAME_INTERVAL) {
+      lastFrame = ts;
+      var done = animations[currentAnim].fn();
+      render();
+      if (done) {
+        currentAnim = (currentAnim + 1) % animations.length;
+        animations[currentAnim].reset();
       }
     }
-    requestAnimationFrame(loop);
+    mainLoopId = requestAnimationFrame(loop);
   }
 
-  requestAnimationFrame(loop);
+  function startMainLoop() {
+    if (!mainLoopId) mainLoopId = requestAnimationFrame(loop);
+  }
+
+  function pauseMainLoop() {
+    animPaused = true;
+  }
+
+  function resumeMainLoop() {
+    animPaused = false;
+    startMainLoop();
+  }
+
+  startMainLoop();
 
   // --- Game selector & games ---
   var gameTrigger = document.getElementById('game-trigger');
@@ -831,7 +849,7 @@
 
   // --- Game lifecycle ---
   function startGame(name) {
-    animPaused = true;
+    pauseMainLoop();
     activeGame = name;
     clear();
     render();
@@ -842,12 +860,12 @@
   function stopGame() {
     if (gameLoopId) { clearInterval(gameLoopId); gameLoopId = null; }
     activeGame = null;
-    animPaused = false;
     gameHud.classList.remove('visible');
     clear();
     render();
     // Reset current animation so it restarts cleanly
     animations[currentAnim].reset();
+    resumeMainLoop();
   }
 
   // --- Keyboard handler ---
@@ -1142,12 +1160,13 @@
   function openAbout() {
     aboutOpen = true;
     aboutClosing = false;
-    animPaused = true;
+    pauseMainLoop();
     startSmileyAnim();
     aboutOverlay.classList.remove('closing');
     aboutOverlay.classList.add('visible');
     aboutToggle.classList.add('active');
-    preloadPreviews();
+    // Defer iframe preloading so it doesn't compete with smiley animation
+    setTimeout(preloadPreviews, 800);
   }
 
   function closeAbout() {
@@ -1179,10 +1198,10 @@
         if (noiseT < 40) {
           requestAnimationFrame(noiseOut);
         } else {
-          animPaused = false;
           clear();
           render();
           animations[currentAnim].reset();
+          resumeMainLoop();
         }
       }
       requestAnimationFrame(noiseOut);
@@ -1214,17 +1233,23 @@
 
   function preloadPreviews() {
     var links = aboutOverlay.querySelectorAll('a.about-word[href]');
+    var hrefs = [];
     for (var i = 0; i < links.length; i++) {
       var href = links[i].getAttribute('data-preview') || links[i].getAttribute('href');
-      if (!preloadedFrames[href]) {
-        var iframe = document.createElement('iframe');
-        iframe.src = href;
-        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-        iframe.style.cssText = 'width:1360px;height:850px;transform:scale(0.25);transform-origin:top left;border:none;pointer-events:none;position:absolute;top:0;left:0;display:none;';
-        preview.appendChild(iframe);
-        preloadedFrames[href] = iframe;
-      }
+      if (!preloadedFrames[href] && hrefs.indexOf(href) === -1) hrefs.push(href);
     }
+    // Stagger iframe creation to avoid network/parse contention
+    (function loadNext(idx) {
+      if (idx >= hrefs.length || !aboutOpen) return;
+      var iframe = document.createElement('iframe');
+      iframe.src = hrefs[idx];
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      iframe.setAttribute('loading', 'lazy');
+      iframe.style.cssText = 'width:1360px;height:850px;transform:scale(0.25);transform-origin:top left;border:none;pointer-events:none;position:absolute;top:0;left:0;display:none;';
+      preview.appendChild(iframe);
+      preloadedFrames[hrefs[idx]] = iframe;
+      setTimeout(function() { loadNext(idx + 1); }, 200);
+    })(0);
   }
 
   function cleanupPreviews() {
