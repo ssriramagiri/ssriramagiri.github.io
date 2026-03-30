@@ -338,7 +338,7 @@
   <a class="about-word" href="https://generative.vision" target="_blank" style="top:86%;left:42%;font-size:0.65rem;--o:0.65;--d:0.48s">GENERATIVE ENGINEERING</a>
   <a class="about-word" href="https://camion.energy" target="_blank" style="top:88%;right:18%;font-size:0.65rem;--o:0.65;--d:0.5s">CAMION</a>
   <a class="about-word" href="https://www.cemvision.tech/" target="_blank" style="top:92%;left:38%;font-size:0.65rem;--o:0.65;--d:0.52s">CEMVISION</a>
-  <a class="about-word" href="https://techcrunch.com/2026/03/30/starcloud-raises-170-million-series-ato-build-data-centers-in-space/" target="_blank" style="top:94%;right:22%;font-size:0.65rem;--o:0.65;--d:0.54s">STARCLOUD</a>
+  <a class="about-word" href="https://www.starcloud.com/starcloud-4" target="_blank" style="top:94%;right:22%;font-size:0.65rem;--o:0.65;--d:0.54s">STARCLOUD</a>
 </div>
 
 <div class="game-hud" id="game-hud">
@@ -1166,8 +1166,8 @@
     aboutOverlay.classList.remove('closing');
     aboutOverlay.classList.add('visible');
     aboutToggle.classList.add('active');
-    // Defer iframe preloading so it doesn't compete with smiley animation
-    setTimeout(preloadPreviews, 800);
+    // Start iframe preloading quickly after about opens
+    setTimeout(preloadPreviews, 150);
   }
 
   function closeAbout() {
@@ -1245,11 +1245,11 @@
       var iframe = document.createElement('iframe');
       iframe.src = hrefs[idx];
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      iframe.setAttribute('loading', 'lazy');
+      iframe.setAttribute('loading', 'eager');
       iframe.style.cssText = 'width:1360px;height:850px;transform:scale(0.25);transform-origin:top left;border:none;pointer-events:none;position:absolute;top:0;left:0;display:none;';
       preview.appendChild(iframe);
       preloadedFrames[hrefs[idx]] = iframe;
-      setTimeout(function() { loadNext(idx + 1); }, 200);
+      setTimeout(function() { loadNext(idx + 1); }, 50);
     })(0);
   }
 
