@@ -221,6 +221,32 @@
       transition: opacity 0.4s cubic-bezier(0.4, 0, 1, 1), transform 0.4s cubic-bezier(0.4, 0, 1, 1) !important;
       transition-delay: 0s !important;
     }
+    .about-copy {
+      max-width: 24rem;
+      line-height: 1.45;
+      text-align: right;
+      white-space: normal;
+    }
+    .about-copy p {
+      margin: 0 0 0.75rem;
+    }
+    .about-copy p:last-child {
+      margin-bottom: 0;
+    }
+    .about-list {
+      display: grid;
+      gap: 0.35rem;
+      margin-top: 0.7rem;
+    }
+    .about-list p {
+      display: grid;
+      grid-template-columns: 1fr 2.4ch;
+      gap: 0.65rem;
+      margin: 0;
+    }
+    .about-list span {
+      opacity: 0.7;
+    }
     .about-word.about-center {
       transform: translateX(-50%) translateY(12px);
     }
@@ -276,26 +302,58 @@
       }
       .game-hud { right: auto; left: 1.2rem; }
       .about-overlay.visible {
-        background: rgba(10, 10, 10, 0.7);
+        background: #0a0a0a;
         pointer-events: auto;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 0;
-        padding: 2.5rem 1.2rem;
+        display: block;
+        padding: 5.5rem 1.2rem 7rem;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
       .about-overlay .about-word {
         position: static !important;
+        display: block;
+        width: 100% !important;
+        padding: 0.9rem 0;
+        border-top: 1px solid rgba(232,232,232,0.16);
+        font-size: 0.72rem !important;
         white-space: normal;
-        text-shadow: 0 0 12px rgba(10,10,10,1), 0 0 24px rgba(10,10,10,0.7);
+        text-shadow: none;
+        transform: none !important;
       }
-      .about-overlay .about-word:nth-child(3n+2) {
-        align-self: flex-end;
+      .about-overlay.visible .about-word {
+        opacity: 1;
+        transform: none !important;
       }
-      .about-overlay .about-word:nth-child(3n) {
-        align-self: center;
+      .about-overlay > .about-word:first-child {
+        border-top: 0;
+      }
+      .about-copy {
+        line-height: 1.55;
+        max-width: 100%;
+        text-align: left;
+      }
+      .about-copy p {
+        margin-bottom: 0.9rem;
+      }
+      .about-list {
+        gap: 0.25rem;
+      }
+      .about-list p {
+        grid-template-columns: 2.4ch 1fr;
+        gap: 0.7rem;
+        margin: 0;
+        text-align: left;
+      }
+      .about-list p span:last-child {
+        order: -1;
+      }
+      .about-overlay > span.about-word {
+        margin-top: 0.8rem;
+        color: #fff;
+        letter-spacing: 0.04em;
+      }
+      .site-preview {
+        display: none;
       }
     }
   </style>
@@ -318,27 +376,30 @@
 <div class="about-overlay" id="about-overlay">
   <!-- Identity -->
   <a class="about-word" href="https://eqtventures.com" target="_blank" style="top:3%;left:6%;font-size:0.9rem;--o:1;--d:0.05s">BUILDING AND INVESTING AT EQT VENTURES</a>
-  <span class="about-word" style="top:14%;left:3%;font-size:0.65rem;--o:0.75;--d:0.15s">SELF-TAUGHT PROGRAMMER + DESIGNER</span>
 
 
-  <!-- Things I care about — word cloud scattered around left side + top-right -->
-  <span class="about-word" style="top:4%;right:5%;font-size:0.8rem;--o:1;--d:0.1s">THINGS I CARE ABOUT</span>
-  <span class="about-word" style="top:18%;right:3%;font-size:0.75rem;--o:0.75;--d:0.2s">TECHNOLOGY AS ABUNDANCE</span>
-  <span class="about-word" style="top:30%;right:6%;font-size:0.7rem;--o:0.75;--d:0.25s">EXTENDING COGNITION</span>
-  <span class="about-word" style="top:44%;right:3%;font-size:0.65rem;--o:0.75;--d:0.35s">RAISING THE BASELINE FOR 8 BILLION</span>
-  <span class="about-word" style="top:56%;right:5%;font-size:0.7rem;--o:0.75;--d:0.45s">MAKING THE WORLD MORE PROGRAMMABLE</span>
+  <div class="about-word about-copy" style="top:8%;right:5%;width:min(29vw,24rem);font-size:0.68rem;--o:0.82;--d:0.1s">
+    <p>I was born in India and I grew up building apps and jailbreaking shit. I studied math, and economics, and I use sci-fi to explore ideas about power, agency, and what becomes normal once a technology exists.</p>
+    <p>In venture, I've been part of leading our investments in teams building the next "everyday machines" like 1X, Nothing, Starcloud, Odyssey, etc, etc, etc. I'm drawn to companies that treat technology as:</p>
+    <div class="about-list">
+      <p><span>a route to abundance and a higher baseline human experience,</span><span>(1)</span></p>
+      <p><span>an extension of human cognition and agency, and</span><span>(2)</span></p>
+      <p><span>a way to probe what intelligence (and maybe consciousness) is, by building it.</span><span>(3)</span></p>
+    </div>
+  </div>
 
-  <!-- Portfolio — clustered together bottom center -->
-  <span class="about-word about-center" style="top:74%;left:50%;font-size:0.8rem;--o:1;--d:0.35s">PORTFOLIO</span>
-  <a class="about-word" href="https://1x.tech" target="_blank" style="top:80%;left:18%;font-size:0.65rem;--o:0.65;--d:0.38s">1X TECHNOLOGIES</a>
-  <a class="about-word" href="https://nothing.tech" target="_blank" data-preview="https://www.youtube.com/embed/MMVuPuFKM3U?autoplay=1&mute=1" style="top:82%;left:38%;font-size:0.65rem;--o:0.65;--d:0.4s">NOTHING</a>
-  <a class="about-word" href="https://odyssey.systems" target="_blank" style="top:80%;right:28%;font-size:0.65rem;--o:0.65;--d:0.42s">ODYSSEY</a>
-  <a class="about-word" href="https://exploration.space" target="_blank" style="top:82%;right:8%;font-size:0.65rem;--o:0.65;--d:0.44s">THE EXPLORATION COMPANY</a>
-  <a class="about-word" href="https://hume.ai" target="_blank" style="top:88%;left:22%;font-size:0.65rem;--o:0.65;--d:0.46s">HUME <span style="font-size:0.5rem;opacity:0.6">(ACQ. GOOGLE)</span></a>
-  <a class="about-word" href="https://generative.vision" target="_blank" style="top:86%;left:42%;font-size:0.65rem;--o:0.65;--d:0.48s">GENERATIVE ENGINEERING</a>
-  <a class="about-word" href="https://camion.energy" target="_blank" style="top:88%;right:18%;font-size:0.65rem;--o:0.65;--d:0.5s">CAMION</a>
-  <a class="about-word" href="https://www.cemvision.tech/" target="_blank" style="top:92%;left:38%;font-size:0.65rem;--o:0.65;--d:0.52s">CEMVISION</a>
-  <a class="about-word" href="https://www.starcloud.com/starcloud-4" target="_blank" style="top:94%;right:22%;font-size:0.65rem;--o:0.65;--d:0.54s">STARCLOUD</a>
+  <!-- Portfolio — left-side vertical field beside the matrix -->
+  <span class="about-word" style="top:22%;left:6%;font-size:0.8rem;--o:1;--d:0.28s">PORTFOLIO</span>
+  <a class="about-word" href="https://1x.tech" target="_blank" style="top:30%;left:9%;font-size:0.65rem;--o:0.65;--d:0.32s">1X TECHNOLOGIES</a>
+  <a class="about-word" href="https://nothing.tech" target="_blank" data-preview="https://www.youtube.com/embed/MMVuPuFKM3U?autoplay=1&mute=1" style="top:36%;left:15%;font-size:0.65rem;--o:0.65;--d:0.34s">NOTHING</a>
+  <a class="about-word" href="https://odyssey.systems" target="_blank" style="top:42%;left:7%;font-size:0.65rem;--o:0.65;--d:0.36s">ODYSSEY</a>
+  <a class="about-word" href="https://exploration.space" target="_blank" style="top:48%;left:18%;font-size:0.65rem;--o:0.65;--d:0.38s">THE EXPLORATION COMPANY</a>
+  <a class="about-word" href="https://hume.ai" target="_blank" style="top:54%;left:11%;font-size:0.65rem;--o:0.65;--d:0.4s">HUME <span style="font-size:0.5rem;opacity:0.6">(ACQ. GOOGLE)</span></a>
+  <a class="about-word" href="https://generative.vision" target="_blank" style="top:60%;left:17%;font-size:0.65rem;--o:0.65;--d:0.42s">GENERATIVE ENGINEERING</a>
+  <a class="about-word" href="https://camion.energy" target="_blank" style="top:66%;left:8%;font-size:0.65rem;--o:0.65;--d:0.44s">CAMION</a>
+  <a class="about-word" href="https://www.cemvision.tech/" target="_blank" style="top:72%;left:14%;font-size:0.65rem;--o:0.65;--d:0.46s">CEMVISION</a>
+  <a class="about-word" href="https://www.ineffable.ai" target="_blank" style="top:78%;left:6%;font-size:0.65rem;--o:0.65;--d:0.48s">INEFFABLE INTELLIGENCE</a>
+  <a class="about-word" href="https://www.starcloud.com/starcloud-4" target="_blank" style="top:84%;left:16%;font-size:0.65rem;--o:0.65;--d:0.5s">STARCLOUD</a>
 </div>
 
 <div class="game-hud" id="game-hud">
@@ -1172,8 +1233,6 @@
     aboutOverlay.classList.remove('closing');
     aboutOverlay.classList.add('visible');
     aboutToggle.classList.add('active');
-    // Start iframe preloading quickly after about opens
-    setTimeout(preloadPreviews, 150);
   }
 
   function closeAbout() {
@@ -1188,7 +1247,6 @@
       aboutOverlay.classList.remove('visible', 'closing');
       aboutOpen = false;
       aboutClosing = false;
-      cleanupPreviews();
       // Noise dissolve transition before resuming
       var noiseT = 0;
       var noiseLast = 0;
@@ -1235,37 +1293,26 @@
     }
   });
 
-  // --- Site preview on hover (preloaded) ---
+  // --- Site preview on hover (lazy cached) ---
   var preview = document.getElementById('site-preview');
   var previewTimeout = null;
-  var preloadedFrames = {};
+  var previewFrames = {};
 
-  function preloadPreviews() {
-    var links = aboutOverlay.querySelectorAll('a.about-word[href]');
-    var hrefs = [];
-    for (var i = 0; i < links.length; i++) {
-      var href = links[i].getAttribute('data-preview') || links[i].getAttribute('href');
-      if (!preloadedFrames[href] && hrefs.indexOf(href) === -1) hrefs.push(href);
-    }
-    // Stagger iframe creation to avoid network/parse contention
-    (function loadNext(idx) {
-      if (idx >= hrefs.length || !aboutOpen) return;
+  function getPreviewFrame(href) {
+    if (!previewFrames[href]) {
       var iframe = document.createElement('iframe');
-      iframe.src = hrefs[idx];
+      iframe.src = href;
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      iframe.setAttribute('loading', 'eager');
+      iframe.setAttribute('loading', 'lazy');
       iframe.style.cssText = 'width:1360px;height:850px;transform:scale(0.25);transform-origin:top left;border:none;pointer-events:none;position:absolute;top:0;left:0;display:none;';
       preview.appendChild(iframe);
-      preloadedFrames[hrefs[idx]] = iframe;
-      setTimeout(function() { loadNext(idx + 1); }, 50);
-    })(0);
+      previewFrames[href] = iframe;
+    }
+    return previewFrames[href];
   }
 
-  function cleanupPreviews() {
-    for (var key in preloadedFrames) {
-      if (preloadedFrames[key].parentNode) preloadedFrames[key].parentNode.removeChild(preloadedFrames[key]);
-    }
-    preloadedFrames = {};
+  function hidePreviewFrames() {
+    for (var key in previewFrames) previewFrames[key].style.display = 'none';
   }
 
   var portfolioLinks = aboutOverlay.querySelectorAll('a.about-word[href]');
@@ -1274,8 +1321,8 @@
       link.addEventListener('mouseenter', function() {
         var href = link.getAttribute('data-preview') || link.getAttribute('href');
         clearTimeout(previewTimeout);
-        for (var key in preloadedFrames) preloadedFrames[key].style.display = 'none';
-        if (preloadedFrames[href]) preloadedFrames[href].style.display = '';
+        hidePreviewFrames();
+        getPreviewFrame(href).style.display = '';
         var rect = link.getBoundingClientRect();
         var pw = 340, ph = 213;
         var x = rect.left;
