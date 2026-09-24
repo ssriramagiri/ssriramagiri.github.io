@@ -173,7 +173,6 @@
     this.g.appendChild(e);
     return e;
   };
-  PP.node = function (tag, attrs) { var e = el(tag, attrs); this.g.appendChild(e); return e; };
   PP.poly = function (list, cls, attrs) { return this.path(dPoly(this.pts(list), true), cls || 'k', attrs); };
   PP.line = function (list, cls, attrs) { return this.path(dPoly(this.pts(list), false), cls || 'l2', attrs); };
   PP.lines = function (lists, cls, closed, attrs) {
@@ -197,12 +196,6 @@
   };
   // Parallelogram o, o+u, o+u+v, o+v
   PP.quad = function (o, u, v, cls) { return this.poly([o, add(o, u), add(add(o, u), v), add(o, v)], cls); };
-  PP.gridLines = function (o, u, v, nu, nv) {
-    var out = [], i;
-    for (i = 1; i < nu; i++) out.push([add(o, mul(u, i / nu)), add(add(o, mul(u, i / nu)), v)]);
-    for (i = 1; i < nv; i++) out.push([add(o, mul(v, i / nv)), add(add(o, mul(v, i / nv)), u)]);
-    return out;
-  };
   PP.circle = function (c, a, b, r, cls, n) { return this.path(dPoly(this.pts(circle3(c, a, b, r, n || 32)), true), cls || 'k'); };
   PP.sphere = function (c, r, cls) {
     var p = this.P(c);
@@ -467,12 +460,7 @@
     pen.close();
   }
 
-  // Generic people, drawn simply so the products stay the focus.
-  FIG.stand = {
-    body: 'M-4.6 -80 C-6.8 -79 -7.6 -76 -7.6 -72 L-7.4 -56 L-5 -56 L-4.6 -40 L-5 -4 L-1 -4 L0 -40 L1 -4 L5 -4 L4.6 -40 L5 -56 L7.4 -56 L7.6 -72 C7.6 -76 6.8 -79 4.6 -80 Z',
-    head: ellipse2(0, -88.5, 5.2, 6.4, 0, 24),
-    feet: 'M-5.4 -4 L-6.8 -0.6 L-0.8 -0.4 L-1 -4 Z M1 -4 L0.8 -0.4 L6.8 -0.6 L5.4 -4 Z'
-  };
+  // A generic walking person, drawn simply so the products stay the focus.
   FIG.walk = {
     back: 'M-2 -52 L-7.6 -28 L-11.8 -4.4 L-7.4 -3.8 L-2.6 -28 L3 -48 Z',
     body: 'M-3.8 -80 C-6.4 -79.2 -7.4 -76.4 -7.2 -72.4 L-6.4 -52 L6.4 -52 L7.2 -72.4 C7.2 -76.2 6.2 -79.2 3.8 -80 Z',
@@ -931,6 +919,41 @@
     };
   }
 
+  // Nyx under its three main parachutes, as in the 2026 drop test (screen space).
+  function drawParachutes(pen, x, y, s) {
+    pen.open({ 'class': 'chutes' });
+    var domes = [[-17, 4, 0.82, -0.32], [0, -4, 1, 0], [17, 4, 0.82, 0.32]], cap = [x, y + 40 * s];
+    domes.forEach(function (d) {
+      var cx = x + d[0] * s, cy = y + d[1] * s, rx = 9.5 * s * d[2], ry = 7 * s * d[2];
+      var top = ellipse2(cx, cy, rx, ry, d[3], 16, Math.PI, TAU);
+      var lip = ellipse2(cx, cy, rx, ry * 0.3, d[3], 12, 0, Math.PI);
+      pen.lines2([[top[0], cap], [top[top.length - 1], cap]], 'l3');
+      pen.path(dPoly(top.concat(lip.slice().reverse()), true), 'k2');
+      var gores = [];
+      for (var g = 1; g < 5; g++) {
+        var a = Math.PI + g / 5 * Math.PI;
+        var px = cx + Math.cos(a) * rx * Math.cos(d[3]) - Math.sin(a) * ry * Math.sin(d[3]);
+        var py = cy + Math.cos(a) * rx * Math.sin(d[3]) + Math.sin(a) * ry * Math.cos(d[3]);
+        gores.push([[px, py], [cx + (px - cx) * 0.25, cy + ry * 0.2]]);
+      }
+      pen.lines2(gores, 'l4');
+      pen.path(dPoly(ellipse2(cx + Math.sin(d[3]) * ry * 0.72, cy - Math.cos(d[3]) * ry * 0.72, rx * 0.3, ry * 0.14, d[3], 10), true), 'l3');
+    });
+    var c = cap;
+    pen.path('M' + f1(c[0] - 3.2 * s) + ' ' + f1(c[1] + 6.6 * s) + ' C' + f1(c[0] - 3.2 * s) + ' ' + f1(c[1] + 1.4 * s) + ' ' + f1(c[0] - 1.6 * s) + ' ' + f1(c[1]) + ' ' + f1(c[0]) + ' ' + f1(c[1]) + ' C' + f1(c[0] + 1.6 * s) + ' ' + f1(c[1]) + ' ' + f1(c[0] + 3.2 * s) + ' ' + f1(c[1] + 1.4 * s) + ' ' + f1(c[0] + 3.2 * s) + ' ' + f1(c[1] + 6.6 * s) + ' Z', 'k');
+    pen.close();
+  }
+
+  function drawStars(pen, box, n, seed) {
+    var d = '';
+    for (var i = 0; i < n; i++) {
+      var x = box[0] + hash(seed + i * 3.1) * (box[2] - box[0]), y = box[1] + hash(seed + i * 7.7) * (box[3] - box[1]);
+      var r = hash(seed + i) > 0.8 ? 2.2 : 1.1;
+      d += 'M' + f1(x - r) + ' ' + f1(y) + 'L' + f1(x + r) + ' ' + f1(y) + 'M' + f1(x) + ' ' + f1(y - r) + 'L' + f1(x) + ' ' + f1(y + r);
+    }
+    pen.path(d, 'l3 stars');
+  }
+
   function drawPin(pen, p, icon, h) {
     var x = p[0], y = p[1] - (h || 26);
     pen.path(dPoly([[x, p[1]], [x, y + 7]], false), 'l3 dsh');
@@ -1352,8 +1375,7 @@
     // prompt bar and the frame strip, newest frame still generating
     pen.fig2([rrect2(4, 57, W - 8, 11, 5, 3)], m, 'l3', true);
     pen.fig2([[[10, 62.5], [40, 62.5]], [[43, 62.5], [60, 62.5]]], m, 'l3 dsh');
-    var cursor = pen.fig2([[[63, 59.6], [63, 65.4]]], m, 'l1 blink');
-    void cursor;
+    pen.fig2([[[63, 59.6], [63, 65.4]]], m, 'l1 blink');
     var strip = [];
     for (i = 0; i < 5; i++) strip.push(rrect2(4 + i * 24, H + 4, 20, 12, 1.2, 2));
     pen.fig2(strip, m, 'l3', true);
@@ -1593,6 +1615,7 @@
 
       // sky
       item(pen, null, 0.1);
+      drawStars(pen, [20, 10, 1600, 330], 46, 3);
       drawSun(pen, 112, 104, 22, anims);
       A.sun = [112, 104];
       pen.close();
@@ -1607,10 +1630,16 @@
       pen.close();
 
       item(pen, 'exploration', 0.3);
+      var nyxG = pen.open({ 'class': 'nyx-drift' });
       pen.at(600, 150, 1);
       drawNyx(pen, [0, 0, 0], unit([1, -0.28, 0.1]), 0.86);
       A.nyx = pen.P([46, -13, 34]);
       A.nyxNose = pen.P([98, -28, 10]);
+      A.nyxTail = pen.P([0, 0, 0]);
+      pen.close();
+      anims.push(function (t) { var u = Math.sin(t * 0.6) * 2.2; nyxG.setAttribute('transform', 'translate(' + f1(u * 0.97) + ' ' + f1(u * 0.23) + ')'); });
+      drawParachutes(pen, 1512, 452, 1.05);
+      A.chutes = [1512, 452];
       pen.close();
 
       // back row
@@ -1694,14 +1723,30 @@
       A.screen = pen.P([90, 0, 70]);
       A.odyssey = pen.P([90, 0, 124]);
       var wk = pen.P([168, 168, 0]);
+      pen.lines([[[40, 160, 0], [158, 160, 0]], [[40, 176, 0], [158, 176, 0]]], 'l3');
+      pen.lines([[[178, 160, 0], [300, 160, 0]], [[178, 176, 0], [300, 176, 0]]], 'l3 dsh');
       drawWalker(pen, wk[0], wk[1], 0.98);
-      A.rig = [wk[0] + 12.4 * 0.98, wk[1] - 110.4 * 0.98];
+      A.rig = [wk[0] + 14.2 * 0.98, wk[1] - 113 * 0.98];
+      pen.close();
+
+      item(pen, null, 0.8);
+      pen.at(1060, 790, 1);
+      drawTree(pen, [0, 0, 0], 46, 15, 2);
+      pen.at(1100, 830, 1);
+      drawTree(pen, [0, 0, 0], 36, 12, 5);
+      pen.at(598, 862, 1);
+      drawTree(pen, [0, 0, 0], 40, 13, 9);
+      pen.at(1180, 560, 0.8);
+      drawTree(pen, [0, 0, 0], 40, 13, 4);
       pen.close();
 
       // flows: sunlight into orbit, compute down to Earth, capture into models, cement into foundations
       pen.open({ 'class': 'pf-flows' });
       flows.push(new Flow(pen, [[A.sun[0] + 28, A.sun[1] - 6], [520, 40], A.plane], { n: 5, speed: 44 }));
+      flows.push(new Flow(pen, [[-20, 300], [300, 210], [A.nyxTail[0] - 6, A.nyxTail[1] + 4]], { n: 2, speed: 40 }));
       flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
+      flows.push(new Flow(pen, [A.dock, [1300, 230], [1470, 330], [A.chutes[0], A.chutes[1] - 12]], { n: 2, speed: 34 }));
+      flows.push(new Flow(pen, [[A.chutes[0], A.chutes[1] + 50], [1530, 560], [1560, 660]], { n: 1, speed: 24 }));
       flows.push(new Flow(pen, [A.spine, [1220, 410], A.dish], { n: 3, speed: 46 }));
       flows.push(new Flow(pen, [A.dish, [1190, 470], A.terminal], { n: 2, speed: 36 }));
       flows.push(new Flow(pen, [A.dish, [1320, 600], A.screen], { n: 2, speed: 36 }));
@@ -1740,6 +1785,7 @@
       pen.close();
 
       item(pen, null, 0.1);
+      drawStars(pen, [10, 20, 720, 600], 34, 11);
       drawSun(pen, 70, 96, 20, anims);
       A.sun = [70, 96];
       pen.close();
@@ -1754,10 +1800,14 @@
       pen.close();
 
       item(pen, 'exploration', 0.3);
+      var nyxG = pen.open({ 'class': 'nyx-drift' });
       pen.at(80, 420, 0.9);
       drawNyx(pen, [0, 0, 0], unit([1, -0.28, 0.1]), 0.8);
       A.nyx = pen.P([42, -12, 32]);
       A.nyxNose = pen.P([92, -26, 10]);
+      A.nyxTail = pen.P([0, 0, 0]);
+      pen.close();
+      anims.push(function (t) { var u = Math.sin(t * 0.6) * 2; nyxG.setAttribute('transform', 'translate(' + f1(u * 0.97) + ' ' + f1(u * 0.23) + ')'); });
       pen.close();
 
       // the labs
@@ -1781,8 +1831,19 @@
       A.screen = pen.P([90, 0, 70]);
       A.odyssey = pen.P([40, 0, 120]);
       var wk = pen.P([200, 40, 0]);
+      pen.lines([[[90, 32, 0], [190, 32, 0]], [[90, 48, 0], [190, 48, 0]]], 'l3');
+      pen.lines([[[210, 32, 0], [300, 32, 0]], [[210, 48, 0], [300, 48, 0]]], 'l3 dsh');
       drawWalker(pen, wk[0], wk[1], 0.94);
       A.rig = [wk[0] + 14.2 * 0.94, wk[1] - 113 * 0.94];
+      pen.close();
+
+      item(pen, null, 0.8);
+      pen.at(660, 1760, 1.1);
+      drawTree(pen, [0, 0, 0], 44, 14, 2);
+      pen.at(620, 1080, 0.9);
+      drawTree(pen, [0, 0, 0], 40, 13, 6);
+      pen.at(90, 1780, 1.0);
+      drawTree(pen, [0, 0, 0], 40, 13, 9);
       pen.close();
 
       // the home
@@ -1843,6 +1904,7 @@
 
       pen.open({ 'class': 'pf-flows' });
       flows.push(new Flow(pen, [[A.sun[0] + 26, A.sun[1] - 4], [300, 70], A.plane], { n: 4, speed: 40 }));
+      flows.push(new Flow(pen, [[-20, 560], [30, 470], [A.nyxTail[0] - 5, A.nyxTail[1] + 4]], { n: 1, speed: 30 }));
       flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
       flows.push(new Flow(pen, [A.spine, [580, 700], A.dish], { n: 3, speed: 44 }));
       flows.push(new Flow(pen, [A.dish, [560, 850], A.terminal], { n: 2, speed: 34 }));
@@ -1962,8 +2024,6 @@
     });
   };
 
-  api._anchors = function () { return state.anchors; };
-
   api.play = function () {
     if (!state.svg) return;
     state.svg.classList.remove('is-paused');
@@ -2019,9 +2079,4 @@
     if (st) { api.mount(st); api.play(); }
   }
 
-  window.PortfolioScene._lib = {
-    Pen: Pen, el: el, dPoly: dPoly, tpath: tpath, tpts: tpts, ellipse2: ellipse2, rrect2: rrect2, hatch2: hatch2,
-    circle3: circle3, add: add, sub: sub, mul: mul, dot: dot, cross: cross, unit: unit, mix: mix, hash: hash,
-    FIG: FIG, drawNeo: drawNeo, drawPerson: drawPerson, drawTree: drawTree, X: X, Y: Y, Z: Z, DEG: DEG, TAU: TAU, ISO: ISO, C30: C30
-  };
 })();
