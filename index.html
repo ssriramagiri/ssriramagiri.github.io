@@ -1175,6 +1175,7 @@
 
   // --- Game lifecycle ---
   function startGame(name) {
+    closePortfolio();
     pauseMainLoop();
     activeGame = name;
     clear();
