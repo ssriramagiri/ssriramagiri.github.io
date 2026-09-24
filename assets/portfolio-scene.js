@@ -1178,6 +1178,24 @@
     pen.fig2(lists, m, 'l3');
   }
 
+  // Detail view of the Nothing Phone (3) back, with a leader to the phone in hand.
+  function drawPhoneCallout(pen, cc, cr, ps, target, anims) {
+    pen.at(0, 0, 1);
+    var id = 'pf-clip-phone-' + Math.round(cc[0]) + '-' + Math.round(cc[1]);
+    var clip = el('clipPath', { id: id });
+    clip.appendChild(el('circle', { cx: cc[0], cy: cc[1], r: cr - 1.2 }));
+    pen.g.appendChild(clip);
+    pen.path(dPoly(ellipse2(cc[0], cc[1], cr, cr, 0, 72), true), 'k');
+    pen.open({ 'clip-path': 'url(#' + id + ')' });
+    phoneBack(pen, [ps, 0, 0, ps, cc[0] - 38 * ps, cc[1] - 36 * ps], anims);
+    pen.close();
+    pen.path(dPoly(ellipse2(cc[0], cc[1], cr + 4, cr + 4, 0, 72), true), 'l3 dsh');
+    var ang = Math.atan2(target[1] - cc[1], target[0] - cc[0]);
+    pen.path(dPoly([[cc[0] + Math.cos(ang) * (cr + 4), cc[1] + Math.sin(ang) * (cr + 4)], [target[0] - Math.cos(ang) * 6, target[1] - Math.sin(ang) * 6]], false), 'callout');
+    pen.path(dPoly(ellipse2(target[0], target[1], 6, 6, 0, 16), true), 'callout');
+    return [cc[0], cc[1] - cr - 4];
+  }
+
   function drawHumeCard(pen, x, y, anims) {
     pen.open({ 'class': 'hume-card' });
     var w = 96, h = 58;
@@ -1667,20 +1685,7 @@
       pen.close();
 
       item(pen, 'nothing', 0.9);
-      pen.at(0, 0, 1);
-      var cc = [612, 560], cr = 66, ps = 1.5;
-      var clip = el('clipPath', { id: 'pf-clip-phone' });
-      clip.appendChild(el('circle', { cx: cc[0], cy: cc[1], r: cr - 1.2 }));
-      pen.g.appendChild(clip);
-      pen.path(dPoly(ellipse2(cc[0], cc[1], cr, cr, 0, 72), true), 'k');
-      pen.open({ 'clip-path': 'url(#pf-clip-phone)' });
-      phoneBack(pen, [ps, 0, 0, ps, cc[0] - 38 * ps, cc[1] - 36 * ps], anims);
-      pen.close();
-      pen.path(dPoly(ellipse2(cc[0], cc[1], cr + 4, cr + 4, 0, 72), true), 'l3 dsh');
-      var ang = Math.atan2(A.phone[1] - cc[1], A.phone[0] - cc[0]);
-      pen.path(dPoly([[cc[0] + Math.cos(ang) * (cr + 4), cc[1] + Math.sin(ang) * (cr + 4)], [A.phone[0] - Math.cos(ang) * 6, A.phone[1] - Math.sin(ang) * 6]], false), 'callout');
-      pen.path(dPoly(ellipse2(A.phone[0], A.phone[1], 6, 6, 0, 16), true), 'callout');
-      A.nothing = [cc[0], cc[1] - cr - 4];
+      A.nothing = drawPhoneCallout(pen, [612, 560], 66, 1.5, A.phone, anims);
       pen.close();
 
       item(pen, 'odyssey', 0.95);
@@ -1722,10 +1727,153 @@
     }
   };
 
+  // Portrait composition for phones: orbit at the top, then the labs, the home, and the industrial base.
+  LAYOUTS.tall = {
+    w: 720,
+    h: 2620,
+    fade: [360, 1400, 820, 2.2],
+    build: function (pen, anims, flows) {
+      var A = {};
+      var gg = item(pen, null, 0);
+      gg.setAttribute('mask', 'url(#pf-fade)');
+      groundGrid(pen, 360, -700, 3800, 40, 'l4');
+      pen.close();
+
+      item(pen, null, 0.1);
+      drawSun(pen, 70, 96, 20, anims);
+      A.sun = [70, 96];
+      pen.close();
+
+      item(pen, 'starcloud', 0.2);
+      pen.at(470, 520, 0.66);
+      drawStarcloud(pen, anims);
+      A.starcloud = pen.P([61, 0, 20]);
+      A.spine = pen.P([0, 0, -64]);
+      A.plane = pen.P([-14, -260, 250]);
+      A.dock = pen.P([0, -30, 120]);
+      pen.close();
+
+      item(pen, 'exploration', 0.3);
+      pen.at(80, 420, 0.9);
+      drawNyx(pen, [0, 0, 0], unit([1, -0.28, 0.1]), 0.8);
+      A.nyx = pen.P([42, -12, 32]);
+      A.nyxNose = pen.P([92, -26, 10]);
+      pen.close();
+
+      // the labs
+      item(pen, null, 0.5);
+      pen.at(640, 900, 1.05);
+      var gs = drawGroundStation(pen);
+      A.dish = gs.focus;
+      pen.close();
+
+      item(pen, 'ineffable', 0.6);
+      pen.at(372, 880, 1.06);
+      var inf = drawIneffable(pen, anims);
+      A.terminal = inf.terminal;
+      drawLoop(pen, [60, 42, 126], 48, anims);
+      A.ineffable = pen.P([12, 42, 126]);
+      pen.close();
+
+      item(pen, 'odyssey', 0.65);
+      pen.at(36, 1180, 0.96);
+      drawOdyssey(pen, anims);
+      A.screen = pen.P([90, 0, 70]);
+      A.odyssey = pen.P([40, 0, 120]);
+      var wk = pen.P([200, 40, 0]);
+      drawWalker(pen, wk[0], wk[1], 0.94);
+      A.rig = [wk[0] + 14.2 * 0.94, wk[1] - 113 * 0.94];
+      pen.close();
+
+      // the home
+      item(pen, '1x', 0.75);
+      pen.at(400, 1590, 1.36);
+      drawHome(pen, anims);
+      A.person = pen.P([30, 78, 18]);
+      drawSeated(pen, A.person[0] + 1, A.person[1] + 34, 1.13);
+      var neoAt = pen.P([104, 36, 0]);
+      drawNeo(pen, neoAt[0], neoAt[1], 1.24, false);
+      A.neo = [neoAt[0] + 6, neoAt[1] - 118];
+      A.phone = [A.person[0] + 17, A.person[1] - 25];
+      A.homeSlab = pen.P([0, 150, -4]);
+      pen.close();
+
+      item(pen, 'hume', 0.85);
+      pen.at(0, 0, 1);
+      drawHumeCard(pen, 318, 1500, anims);
+      A.hume = [366, 1500];
+      pen.close();
+
+      item(pen, 'nothing', 0.9);
+      A.nothing = drawPhoneCallout(pen, [116, 1520], 70, 1.58, A.phone, anims);
+      pen.close();
+
+      // the base: materials, energy, engineering
+      item(pen, null, 0.45);
+      pen.at(612, 2150, 0.7);
+      drawTurbine(pen, anims);
+      A.turbine = pen.P([0, 0, 0]);
+      pen.close();
+
+      item(pen, 'cemvision', 0.4);
+      pen.at(200, 2060, 0.9);
+      drawCemvision(pen, anims);
+      A.cemvision = pen.P([30, 38, 60]);
+      A.bags = pen.P([170, 60, 12]);
+      A.kiln = pen.P([150, 40, 0]);
+      pen.close();
+
+      item(pen, 'camion', 0.55);
+      pen.at(430, 2420, 0.8);
+      var cm = drawCamion(pen, anims);
+      A.camion = pen.P([40, 20, 38]);
+      A.slab = pen.P([0, 96, 0]);
+      pen.close();
+      item(pen, 'camion', 0.8);
+      drawPin(pen, cm.pins[0], 'sun', 34);
+      drawPin(pen, cm.pins[1], 'battery', 28);
+      drawPin(pen, cm.pins[2], 'plug', 28);
+      pen.close();
+
+      item(pen, 'geneng', 0.7);
+      pen.at(22, 2400, 0.96);
+      drawGenEng(pen);
+      A.geneng = pen.P([100, -20, 164]);
+      pen.close();
+
+      pen.open({ 'class': 'pf-flows' });
+      flows.push(new Flow(pen, [[A.sun[0] + 26, A.sun[1] - 4], [300, 70], A.plane], { n: 4, speed: 40 }));
+      flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
+      flows.push(new Flow(pen, [A.spine, [580, 700], A.dish], { n: 3, speed: 44 }));
+      flows.push(new Flow(pen, [A.dish, [560, 850], A.terminal], { n: 2, speed: 34 }));
+      flows.push(new Flow(pen, [A.dish, [520, 1140], A.screen], { n: 2, speed: 34 }));
+      flows.push(new Flow(pen, [A.rig, [260, 1150], A.screen], { n: 2, speed: 30 }));
+      flows.push(new Flow(pen, [A.terminal, [650, 1300], A.neo], { n: 3, speed: 34 }));
+      flows.push(new Flow(pen, [A.turbine, [430, 2080], A.kiln], { n: 2, speed: 30 }));
+      flows.push(new Flow(pen, [A.bags, [380, 2260], A.slab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.bags, [330, 1960], A.homeSlab], { n: 2, speed: 26 }));
+      pen.close();
+      return A;
+    },
+    pills: {
+      exploration: { at: 'nyx', dx: 60, dy: -84 },
+      starcloud: { at: 'starcloud', dx: 33, dy: 62, pos: 'below' },
+      ineffable: { at: 'ineffable', dx: -144, dy: -78 },
+      odyssey: { at: 'odyssey', dx: 101, dy: -44 },
+      hume: { at: 'hume', dx: 154, dy: -12 },
+      '1x': { at: 'neo', dx: 220, dy: -12, pos: 'left' },
+      nothing: { at: 'nothing', dx: 54, dy: -14 },
+      cemvision: { at: 'cemvision', dx: -14, dy: -80 },
+      camion: { at: 'camion', dx: 96, dy: -164 },
+      geneng: { at: 'geneng', dx: 60, dy: -36 }
+    }
+  };
+
   var state = { stage: null, svg: null, layout: null, anims: [], flows: [], raf: 0, t0: 0, playing: false, anchors: null };
 
   function pickLayout() {
-    return 'wide';
+    var w = window.innerWidth, h = window.innerHeight;
+    return (w <= 600 || w / h < 0.9) ? 'tall' : 'wide';
   }
 
   function build(stage, name) {
@@ -1768,6 +1916,7 @@
     state.layout = name;
     stage.style.setProperty('--ar', (L.w / L.h).toFixed(4));
     stage.classList.toggle('is-tall', name === 'tall');
+    if (stage.parentNode) stage.parentNode.classList.toggle('is-tall', name === 'tall');
     placePills(stage, L);
     tick(performance.now(), true);
   }

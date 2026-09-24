@@ -528,6 +528,24 @@
       opacity: 1;
       transition-delay: var(--d, 0s), 0s, 0s, 0s;
     }
+    .portfolio-overlay.is-tall {
+      display: block;
+      padding: 5.4rem 0 6.8rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .portfolio-stage.is-tall {
+      width: min(100%, 36rem);
+      margin: 0 auto;
+    }
+    .portfolio-stage.is-tall .portfolio-pill {
+      width: max-content;
+      max-width: 46cqw;
+      padding: 0.38em 0.7em 0.42em;
+      font-size: clamp(7px, 2.1cqw, 9.5px);
+      white-space: normal;
+    }
 
     @media (max-width: 600px) {
       .flipdot-container { padding: 8px; }
@@ -595,20 +613,6 @@
       }
       .site-preview {
         display: none;
-      }
-      .portfolio-overlay {
-        display: block;
-        padding: 0;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      .portfolio-stage {
-        width: 100%;
-        margin: 0 auto;
-      }
-      .portfolio-pill {
-        font-size: clamp(7.5px, 2.35cqw, 10px);
-        padding: 0.4em 0.75em 0.45em;
       }
     }
   </style>
