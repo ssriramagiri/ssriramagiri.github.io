@@ -514,6 +514,11 @@
       display: block;
       opacity: 0.62;
     }
+    .portfolio-pill.wrap {
+      width: max-content;
+      max-width: 17.5em;
+      white-space: normal;
+    }
     .portfolio-pill.below { transform: translate(-50%, 0); }
     .portfolio-pill.left { transform: translate(-100%, -50%); }
     .portfolio-pill.right { transform: translate(0, -50%); }
@@ -529,11 +534,16 @@
       transition-delay: var(--d, 0s), 0s, 0s, 0s;
     }
     .portfolio-overlay.is-tall {
+      --fade-top: 0rem;
+      --fade-bottom: 5.4rem;
       display: block;
-      padding: 5.4rem 0 6.8rem;
+      padding: 1.6rem 0 7.2rem;
       overflow-x: hidden;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      /* The scene fades out under the fixed nav and site id, so their text never sits on the drawing. */
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--fade-top), #000 calc(var(--fade-top) + 1.2rem), #000 calc(100% - var(--fade-bottom) - 1.4rem), transparent calc(100% - var(--fade-bottom)), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, transparent var(--fade-top), #000 calc(var(--fade-top) + 1.2rem), #000 calc(100% - var(--fade-bottom) - 1.4rem), transparent calc(100% - var(--fade-bottom)), transparent 100%);
     }
     .portfolio-stage.is-tall {
       width: min(100%, 36rem);
@@ -545,6 +555,9 @@
       padding: 0.38em 0.7em 0.42em;
       font-size: clamp(7px, 2.1cqw, 9.5px);
       white-space: normal;
+    }
+    .portfolio-stage.is-tall .portfolio-pill.wrap {
+      max-width: min(46cqw, 17.5em);
     }
 
     @media (max-width: 600px) {
@@ -613,6 +626,11 @@
       }
       .site-preview {
         display: none;
+      }
+      .portfolio-overlay.is-tall {
+        --fade-top: 4.4rem;
+        --fade-bottom: 4.2rem;
+        padding: 5.8rem 0 6rem;
       }
     }
   </style>

@@ -1623,7 +1623,7 @@
       item(pen, 'starcloud', 0.2);
       pen.at(1066, 300, 0.74);
       drawStarcloud(pen, anims);
-      A.starcloud = pen.P([-14, -500, -20]);
+      A.starcloud = pen.P([1, -13, 80]);
       A.spine = pen.P([0, 0, -64]);
       A.plane = pen.P([-14, -420, 250]);
       A.dock = pen.P([0, -30, 120]);
@@ -1668,6 +1668,7 @@
       pen.at(1010, 468, 1.02);
       var inf = drawIneffable(pen, anims);
       A.terminal = inf.terminal;
+      A.labCorner = pen.P([120, 0, 0]);
       drawLoop(pen, [60, 42, 126], 48, anims);
       A.ineffable = pen.P([60, 42, 150]);
       pen.close();
@@ -1675,9 +1676,9 @@
       item(pen, 'camion', 0.55);
       pen.at(452, 726, 0.86);
       var cm = drawCamion(pen, anims);
-      A.camion = pen.P([90, 30, 40]);
-      A.roof = pen.P([100, 30, 38]);
+      A.camion = pen.P([120, 96, 0]);
       A.slab = pen.P([0, 96, 0]);
+      A.slabFront = pen.P([170, 96, 0]);
       pen.close();
       item(pen, 'camion', 0.8);
       drawPin(pen, cm.pins[0], 'sun', 34);
@@ -1689,11 +1690,10 @@
       item(pen, 'geneng', 0.7);
       pen.at(96, 690, 1.12);
       drawGenEng(pen);
-      A.geneng = pen.P([96, -20, 124]);
-      A.robot = pen.P([160, 62, 40]);
+      A.geneng = pen.P([153, 77, 0]);
       pen.close();
 
-      var hx = 800, hy = 700, hs = 1.2;
+      var hx = 800, hy = 735, hs = 1.2;
       item(pen, '1x', 0.75);
       pen.at(hx, hy, hs);
       drawHome(pen, anims);
@@ -1704,24 +1704,23 @@
       A.neo = [neoAt[0] - 2, neoAt[1] - 110];
       A.phone = [A.person[0] + 15, A.person[1] - 22];
       A.homeSlab = pen.P([0, 150, -4]);
-      A.homeFloor = pen.P([200, 150, -4]);
       pen.close();
 
       item(pen, 'hume', 0.85);
       pen.at(0, 0, 1);
-      drawHumeCard(pen, 744, 586, anims);
-      A.hume = [792, 586];
+      drawHumeCard(pen, 744, 621, anims);
+      A.hume = [792, 621];
       pen.close();
 
       item(pen, 'nothing', 0.9);
-      A.nothing = drawPhoneCallout(pen, [612, 560], 66, 1.5, A.phone, anims);
+      A.nothing = drawPhoneCallout(pen, [600, 570], 62, 1.4, A.phone, anims);
       pen.close();
 
       item(pen, 'odyssey', 0.95);
       pen.at(1170, 700, 1.02);
       drawOdyssey(pen, anims);
       A.screen = pen.P([90, 0, 70]);
-      A.odyssey = pen.P([90, 0, 124]);
+      A.odyssey = pen.P([176, 0, 18]);
       var wk = pen.P([168, 168, 0]);
       pen.lines([[[40, 160, 0], [158, 160, 0]], [[40, 176, 0], [158, 176, 0]]], 'l3');
       pen.lines([[[178, 160, 0], [300, 160, 0]], [[178, 176, 0], [300, 176, 0]]], 'l3 dsh');
@@ -1730,20 +1729,18 @@
       pen.close();
 
       item(pen, null, 0.8);
-      pen.at(1060, 790, 1);
+      pen.at(1060, 800, 1);
       drawTree(pen, [0, 0, 0], 46, 15, 2);
-      pen.at(1100, 830, 1);
+      pen.at(1100, 840, 1);
       drawTree(pen, [0, 0, 0], 36, 12, 5);
-      pen.at(664, 904, 1);
+      pen.at(724, 978, 1);
       drawTree(pen, [0, 0, 0], 40, 13, 9);
-      pen.at(1180, 560, 0.8);
-      drawTree(pen, [0, 0, 0], 40, 13, 4);
       pen.close();
 
       // flows: sunlight into orbit, compute down to Earth, capture into models, cement into foundations
       pen.open({ 'class': 'pf-flows' });
-      flows.push(new Flow(pen, [[A.sun[0] + 28, A.sun[1] - 6], [520, 40], A.plane], { n: 5, speed: 44 }));
-      flows.push(new Flow(pen, [[-20, 300], [300, 210], [A.nyxTail[0] - 6, A.nyxTail[1] + 4]], { n: 2, speed: 40 }));
+      flows.push(new Flow(pen, [[A.sun[0] + 28, A.sun[1] - 6], [560, 24], A.plane], { n: 5, speed: 44 }));
+      flows.push(new Flow(pen, [[-20, 250], [280, 180], [A.nyxTail[0] - 6, A.nyxTail[1] + 4]], { n: 2, speed: 40 }));
       flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
       flows.push(new Flow(pen, [A.dock, [1300, 230], [1470, 330], [A.chutes[0], A.chutes[1] - 12]], { n: 2, speed: 34 }));
       flows.push(new Flow(pen, [[A.chutes[0], A.chutes[1] + 50], [1530, 560], [1560, 660]], { n: 1, speed: 24 }));
@@ -1751,32 +1748,33 @@
       flows.push(new Flow(pen, [A.dish, [1190, 470], A.terminal], { n: 2, speed: 36 }));
       flows.push(new Flow(pen, [A.dish, [1320, 600], A.screen], { n: 2, speed: 36 }));
       flows.push(new Flow(pen, [A.rig, [1330, 740], A.screen], { n: 2, speed: 30 }));
-      flows.push(new Flow(pen, [A.ineffable, [940, 600], A.neo], { n: 3, speed: 32 }));
+      flows.push(new Flow(pen, [A.labCorner, [1150, 650], [1060, 705], A.neo], { n: 3, speed: 32 }));
       flows.push(new Flow(pen, [A.turbine, [380, 500], A.kiln], { n: 2, speed: 30 }));
       flows.push(new Flow(pen, [A.bags, [410, 620], A.slab], { n: 2, speed: 26 }));
-      flows.push(new Flow(pen, [A.slab, [700, 900], A.homeSlab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.slabFront, [580, 850], A.homeSlab], { n: 2, speed: 26 }));
       pen.close();
       return A;
     },
+    // Each pill attaches at `to` (bottom centre by default; `pos` picks another edge).
     pills: {
-      starcloud: { at: 'starcloud', dx: 23, dy: 118, pos: 'below' },
-      exploration: { at: 'nyx', dx: -31, dy: -58 },
-      cemvision: { at: 'cemvision', dx: -10, dy: -44 },
-      camion: { at: 'camion', dx: 43, dy: -71 },
-      ineffable: { at: 'ineffable', dx: -78, dy: 5, pos: 'left' },
-      geneng: { at: 'geneng', dx: -9, dy: -32 },
-      '1x': { at: 'neo', dx: 99, dy: -42 },
-      hume: { at: 'hume', dx: 0, dy: -14 },
-      nothing: { at: 'nothing', dx: 28, dy: -16 },
-      odyssey: { at: 'odyssey', dx: 30, dy: -33 }
+      starcloud: { at: 'starcloud', to: [1040, 262], pos: 'left' },
+      exploration: { at: 'nyx', to: [620, 102] },
+      cemvision: { at: 'cemvision', to: [217, 335] },
+      camion: { at: 'camion', to: [520, 878], pos: 'below' },
+      ineffable: { at: 'ineffable', to: [948, 372], pos: 'left' },
+      geneng: { at: 'geneng', to: [200, 846], pos: 'below' },
+      '1x': { at: 'neo', to: [902, 624], pos: 'right' },
+      hume: { at: 'hume', to: [806, 584], wrap: true },
+      nothing: { at: 'nothing', to: [625, 494] },
+      odyssey: { at: 'odyssey', to: [1450, 800], pos: 'below' }
     }
   };
 
   // Portrait composition for phones: orbit at the top, then the labs, the home, and the industrial base.
   LAYOUTS.tall = {
     w: 720,
-    h: 2620,
-    fade: [360, 1400, 820, 2.2],
+    h: 2860,
+    fade: [360, 1480, 820, 2.3],
     build: function (pen, anims, flows) {
       var A = {};
       var gg = item(pen, null, 0);
@@ -1838,17 +1836,17 @@
       pen.close();
 
       item(pen, null, 0.8);
-      pen.at(660, 1760, 1.1);
+      pen.at(672, 1900, 1.1);
       drawTree(pen, [0, 0, 0], 44, 14, 2);
       pen.at(620, 1080, 0.9);
       drawTree(pen, [0, 0, 0], 40, 13, 6);
-      pen.at(90, 1780, 1.0);
+      pen.at(84, 1950, 1.0);
       drawTree(pen, [0, 0, 0], 40, 13, 9);
       pen.close();
 
       // the home
       item(pen, '1x', 0.75);
-      pen.at(400, 1590, 1.36);
+      pen.at(400, 1692, 1.36);
       drawHome(pen, anims);
       A.person = pen.P([30, 78, 18]);
       drawSeated(pen, A.person[0] + 1, A.person[1] + 34, 1.13);
@@ -1861,23 +1859,23 @@
 
       item(pen, 'hume', 0.85);
       pen.at(0, 0, 1);
-      drawHumeCard(pen, 318, 1500, anims);
-      A.hume = [366, 1500];
+      drawHumeCard(pen, 318, 1602, anims);
+      A.hume = [366, 1602];
       pen.close();
 
       item(pen, 'nothing', 0.9);
-      A.nothing = drawPhoneCallout(pen, [116, 1520], 70, 1.58, A.phone, anims);
+      A.nothing = drawPhoneCallout(pen, [98, 1522], 60, 1.36, A.phone, anims);
       pen.close();
 
       // the base: materials, energy, engineering
       item(pen, null, 0.45);
-      pen.at(612, 2150, 0.7);
+      pen.at(612, 2300, 0.7);
       drawTurbine(pen, anims);
       A.turbine = pen.P([0, 0, 0]);
       pen.close();
 
       item(pen, 'cemvision', 0.4);
-      pen.at(200, 2060, 0.9);
+      pen.at(200, 2210, 0.9);
       drawCemvision(pen, anims);
       A.cemvision = pen.P([30, 38, 60]);
       A.bags = pen.P([170, 60, 12]);
@@ -1885,9 +1883,9 @@
       pen.close();
 
       item(pen, 'camion', 0.55);
-      pen.at(430, 2420, 0.8);
+      pen.at(430, 2630, 0.8);
       var cm = drawCamion(pen, anims);
-      A.camion = pen.P([40, 20, 38]);
+      A.camion = pen.P([120, 96, 0]);
       A.slab = pen.P([0, 96, 0]);
       pen.close();
       item(pen, 'camion', 0.8);
@@ -1897,7 +1895,7 @@
       pen.close();
 
       item(pen, 'geneng', 0.7);
-      pen.at(22, 2400, 0.96);
+      pen.at(22, 2610, 0.96);
       drawGenEng(pen);
       A.geneng = pen.P([100, -20, 164]);
       pen.close();
@@ -1910,23 +1908,23 @@
       flows.push(new Flow(pen, [A.dish, [560, 850], A.terminal], { n: 2, speed: 34 }));
       flows.push(new Flow(pen, [A.dish, [520, 1140], A.screen], { n: 2, speed: 34 }));
       flows.push(new Flow(pen, [A.rig, [260, 1150], A.screen], { n: 2, speed: 30 }));
-      flows.push(new Flow(pen, [A.terminal, [650, 1300], A.neo], { n: 3, speed: 34 }));
-      flows.push(new Flow(pen, [A.turbine, [430, 2080], A.kiln], { n: 2, speed: 30 }));
-      flows.push(new Flow(pen, [A.bags, [380, 2260], A.slab], { n: 2, speed: 26 }));
-      flows.push(new Flow(pen, [A.bags, [330, 1960], A.homeSlab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.terminal, [704, 1290], [700, 1480], A.neo], { n: 3, speed: 34 }));
+      flows.push(new Flow(pen, [A.turbine, [430, 2230], A.kiln], { n: 2, speed: 30 }));
+      flows.push(new Flow(pen, [A.bags, [404, 2460], A.slab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.bags, [360, 2050], A.homeSlab], { n: 2, speed: 26 }));
       pen.close();
       return A;
     },
     pills: {
       exploration: { at: 'nyx', dx: 60, dy: -84 },
-      starcloud: { at: 'starcloud', dx: 33, dy: 62, pos: 'below' },
+      starcloud: { at: 'starcloud', to: [440, 520], pos: 'left' },
       ineffable: { at: 'ineffable', dx: -144, dy: -78 },
       odyssey: { at: 'odyssey', dx: 101, dy: -44 },
-      hume: { at: 'hume', dx: 154, dy: -12 },
-      '1x': { at: 'neo', dx: 220, dy: -12, pos: 'left' },
-      nothing: { at: 'nothing', dx: 54, dy: -14 },
+      nothing: { at: 'nothing', to: [160, 1428] },
+      '1x': { at: 'neo', to: [530, 1428] },
+      hume: { at: 'hume', to: [330, 1524], wrap: true },
       cemvision: { at: 'cemvision', dx: -14, dy: -80 },
-      camion: { at: 'camion', dx: 96, dy: -164 },
+      camion: { at: 'camion', to: [470, 2778], pos: 'below' },
       geneng: { at: 'geneng', dx: 60, dy: -36 }
     }
   };
@@ -1969,7 +1967,7 @@
     Object.keys(L.pills).forEach(function (id) {
       var cfg = L.pills[id], a = state.anchors[cfg.at];
       if (!a) return;
-      var b = [a[0] + (cfg.dx || 0), a[1] + (cfg.dy || 0)];
+      var b = pillPoint(cfg, a);
       pen.path(dPoly([a, b], false), 'leader');
       pen.path(dPoly(ellipse2(a[0], a[1], 1.8, 1.8, 0, 10), true), 'anchor');
     });
@@ -1983,16 +1981,21 @@
     tick(performance.now(), true);
   }
 
+  function pillPoint(cfg, a) {
+    return cfg.to || [a[0] + (cfg.dx || 0), a[1] + (cfg.dy || 0)];
+  }
+
   function placePills(stage, L) {
     var pills = stage.querySelectorAll('.portfolio-pill');
     for (var i = 0; i < pills.length; i++) {
       var p = pills[i], cfg = L.pills[p.getAttribute('data-id')];
       if (!cfg) continue;
-      var a = state.anchors[cfg.at] || [0, 0];
-      p.style.left = ((a[0] + (cfg.dx || 0)) / L.w * 100).toFixed(3) + '%';
-      p.style.top = ((a[1] + (cfg.dy || 0)) / L.h * 100).toFixed(3) + '%';
-      p.classList.remove('below', 'left', 'right');
+      var b = pillPoint(cfg, state.anchors[cfg.at] || [0, 0]);
+      p.style.left = (b[0] / L.w * 100).toFixed(3) + '%';
+      p.style.top = (b[1] / L.h * 100).toFixed(3) + '%';
+      p.classList.remove('below', 'left', 'right', 'wrap');
       if (cfg.pos) p.classList.add(cfg.pos);
+      if (cfg.wrap) p.classList.add('wrap');
       p.style.setProperty('--d', (0.9 + i * 0.06).toFixed(2) + 's');
     }
   }
