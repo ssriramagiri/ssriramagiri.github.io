@@ -442,7 +442,7 @@
     pen.fig(F.mug, m, 'k');
     pen.fig(F.mugHandle, m, 'l2');
     pen.fig2([F.mugRim], m, 'l2', true);
-    pen.fig(F.steam, m, 'l3 steam');
+    live(pen.fig(F.steam, m, 'l3'), { css: 'pf-steam', pad: 1 });
     pen.fig(F.farHand, m, 'k');
     pen.fig(F.torso + F.torsoClose, m, 'f');
     pen.fig(F.torso, m, 'l1');
@@ -455,7 +455,7 @@
     pen.fig(F.neck, m, 'k');
     pen.fig(F.head, m, 'k');
     pen.fig(F.seam, m, 'l3');
-    pen.fig2([F.ring], m, 'l1 glow', true);
+    live(pen.fig2([F.ring], m, 'l1 glow', true), { css: 'pf-pulse', pad: 4 });
     pen.fig2(F.eyes, m, 'wf', true);
     pen.close();
   }
@@ -533,9 +533,7 @@
       var a = i / 48 * TAU, r0 = r * 1.55, r1 = r * (i % 4 === 0 ? 1.85 : 1.7);
       ticks.push([[cx + Math.cos(a) * r0, cy + Math.sin(a) * r0], [cx + Math.cos(a) * r1, cy + Math.sin(a) * r1]]);
     }
-    var tk = pen.lines2(ticks, 'l3');
-    tk.setAttribute('class', 'l3 spin-slow');
-    tk.style.transformOrigin = cx + 'px ' + cy + 'px';
+    live(pen.lines2(ticks, 'l3'), { css: 'pf-spin', pad: 1 });
     pen.lines2([[[cx - r * 2.3, cy], [cx - r * 1.95, cy]], [[cx + r * 1.95, cy], [cx + r * 2.3, cy]], [[cx, cy - r * 2.3], [cx, cy - r * 1.95]], [[cx, cy + r * 1.95], [cx, cy + r * 2.3]]], 'l2');
     pen.close();
   }
@@ -672,18 +670,20 @@
     pen.circle([sx + 3.5, sy, 236], X, Z, 3, 'l3', 16);
     pen.close();
     // the next container arriving to dock
-    var ar = pen.open({ 'class': 'arrive' });
+    var arW = pen.open(), ar = pen.open({ 'class': 'arrive' });
     drawContainer(pen, 1, -W / 2, 8 + 5 * (W + 8), L, W, true);
+    pen.close();
     pen.close();
     var p0 = pen.P([150, 0, 8 + 5 * (W + 8)]), p1 = pen.P([1, 0, 8 + 5 * (W + 8)]);
     pen.path(dPoly([pen.P([L + 150, 0, 8 + 5 * (W + 8) + W / 2]), pen.P([L + 4, 0, 8 + 5 * (W + 8) + W / 2])], false), 'l3 dsh');
     function slide(t) {
-      var u = (t * 0.07) % 1, e = u < 0.7 ? 1 - Math.pow(1 - u / 0.7, 3) : 1;
-      var k = 1 - e;
-      ar.setAttribute('transform', 'translate(' + f1((p0[0] - p1[0]) * k) + ' ' + f1((p0[1] - p1[1]) * k) + ')');
-      ar.style.opacity = u > 0.94 ? (1 - (u - 0.94) / 0.06).toFixed(2) : (u < 0.08 ? (u / 0.08).toFixed(2) : 1);
+      var u = (t * 0.07) % 1, k = u < 0.7 ? Math.pow(1 - u / 0.7, 3) : 0;
+      var o = String(Math.round((u > 0.94 ? 1 - (u - 0.94) / 0.06 : (u < 0.08 ? u / 0.08 : 1)) * 50) / 50);
+      nudge(ar, (p0[0] - p1[0]) * k, (p0[1] - p1[1]) * k);
+      if (ar._pfO !== o) { ar._pfO = o; ar.style.opacity = o; }
     }
     slide(0.62 / 0.07);
+    live(arW, { draw: slide, pad: 3 });
     anims.push(slide);
   }
 
@@ -702,6 +702,7 @@
     pen.lines([[[-24, 6, H + 5], [2, 6, H + 5]], [[8, -4, H + 1], [8, 4, H + 1]]], 'l3');
     pen.revolve([8, 0, H + 3], X, [[0, 5.4], [2, 5.4], [6, 4], [10, 0]]);
     var hub = pen.P([13, 0, H + 3]);
+    var rg = pen.open({ 'class': 'rotor' });
     var rotor = pen.path('', 'k');
     var M = [C30 * pen.s, -0.5 * pen.s, 0, pen.s, hub[0], hub[1]];
     function blade(a) {
@@ -717,6 +718,8 @@
     draw(0.4);
     anims.push(draw);
     pen.path(dPoly(ellipse2(hub[0], hub[1], 2.2, 2.2, 0, 12), true), 'k');
+    pen.close();
+    live(rg, { draw: draw, pad: 2 });
     pen.close();
   }
 
@@ -761,14 +764,16 @@
     pen.poly([add(c0, [0, -3, 0]), add(c1, [0, -3, 0]), add(c1, [0, 3, 0]), add(c0, [0, 3, 0])], 'k2');
     pen.line([c1, add(c1, [0, 0, -28])], 'l2');
     var belt = pen.path('', 'l1 belt'), PB = pen.snap();
-    anims.push(function (t) {
+    function beltAt(t) {
       var d = '';
       for (var j = 0; j < 9; j++) {
         var u = ((t * 0.08 + j / 9) % 1), q = PB(mix(add(c0, [0, 0, 0.8]), add(c1, [0, 0, 0.8]), u));
         d += 'M' + f1(q[0] - 1.2) + ' ' + f1(q[1]) + 'L' + f1(q[0] + 1.2) + ' ' + f1(q[1] - 0.4);
       }
       belt.setAttribute('d', d);
-    });
+    }
+    live(belt, { draw: beltAt, pad: 2 });
+    anims.push(beltAt);
     // hall: back wall and floor seen through the section cut
     var XC = 62, RZ = 49;
     function sideTop(y) { return topAt(LX) + 4 * Math.sin(y * 0.06); }
@@ -1176,6 +1181,7 @@
       lit.setAttribute('d', d);
     }
     glyph(0.6);
+    live(lit, { draw: glyph, pad: 2 });
     anims.push(function (t) { if (Math.floor(t * 8) !== glyph.f) { glyph.f = Math.floor(t * 8); glyph(glyph.f / 8); } });
     // cameras
     [[15, 38.5], [37.8, 38.5]].forEach(function (p) {
@@ -1236,6 +1242,7 @@
       bars.setAttribute('d', d);
     }
     wave(0.3);
+    live(bars, { draw: wave, pad: 2 });
     anims.push(function (t) { if (Math.floor(t * 14) !== wave.f) { wave.f = Math.floor(t * 14); wave(wave.f / 14); } });
     var rows = [['Calmness', 0.27], ['Interest', 0.19], ['Amusement', 0.13]];
     rows.forEach(function (r, i) {
@@ -1370,12 +1377,12 @@
     var fg = toV(84, 54, 0.46);
     pen.fig2([ellipse2(fg[0], fg[1] - 9.4, 1.4, 1.6, 0, 10)], m, 'l2', true);
     pen.fig2([[[fg[0], fg[1] - 7.8], [fg[0], fg[1] - 3.4], [fg[0] - 1.4, fg[1]]], [[fg[0], fg[1] - 3.4], [fg[0] + 1.4, fg[1]]]], m, 'l2');
-    pen.fig2([ellipse2(10, 9, 1.2, 1.2, 0, 8)], m, 'wf blink', true);
+    live(pen.fig2([ellipse2(10, 9, 1.2, 1.2, 0, 8)], m, 'wf', true), { css: 'pf-blink', pad: 1 });
     pen.fig2([[[13.4, 9], [22, 9]]], m, 'l3');
     // prompt bar and the frame strip, newest frame still generating
     pen.fig2([rrect2(4, 57, W - 8, 11, 5, 3)], m, 'l3', true);
     pen.fig2([[[10, 62.5], [40, 62.5]], [[43, 62.5], [60, 62.5]]], m, 'l3 dsh');
-    pen.fig2([[[63, 59.6], [63, 65.4]]], m, 'l1 blink');
+    live(pen.fig2([[[63, 59.6], [63, 65.4]]], m, 'l1'), { css: 'pf-blink', pad: 1 });
     var strip = [];
     for (i = 0; i < 5; i++) strip.push(rrect2(4 + i * 24, H + 4, 20, 12, 1.2, 2));
     pen.fig2(strip, m, 'l3', true);
@@ -1384,7 +1391,7 @@
     pen.fig2(fr, m, 'l4');
     var gen = pen.path('', 'l2');
     var mm = [m[0] * pen.s, m[1] * pen.s, m[2] * pen.s, m[3] * pen.s, pen.ox + m[4] * pen.s, pen.oy + m[5] * pen.s];
-    anims.push(function (t) {
+    function genAt(t) {
       var u = (t * 0.4) % 1, bx = 100, d = '';
       var segs = [[[bx + 2, H + 14], [bx + 10, H + 7.6]], [[bx + 10, H + 7.6], [bx + 18, H + 14]], [[bx + 3, H + 7.6], [bx + 17, H + 7.6]]];
       segs.forEach(function (sg, j) {
@@ -1394,7 +1401,9 @@
         d += dPoly(p, false);
       });
       gen.setAttribute('d', d);
-    });
+    }
+    live(gen, { draw: genAt, pad: 2 });
+    anims.push(genAt);
     pen.close();
   }
 
@@ -1458,14 +1467,13 @@
     var tB = pen.P(circle3(c, X, Y, R + 12, 1, Math.PI * 0.5, Math.PI * 0.5)[0]);
     pen.text('action', [1, 0, 0, 1, (tA[0] - pen.ox) / pen.s, (tA[1] - 3 - pen.oy) / pen.s], 'tx', 6, 'middle');
     pen.text('observation, reward', [1, 0, 0, 1, (tB[0] - pen.ox) / pen.s, (tB[1] + 9 - pen.oy) / pen.s], 'tx', 6, 'middle');
-    var dots = pen.path('', 'wf'), PL = pen.snap();
+    var PL = pen.snap(), host = dotHost(pen), dots = [];
+    for (var i = 0; i < 6; i++) dots.push(new Dot(host, 1.3, false));
     anims.push(function (t) {
-      var d = '';
       for (var i = 0; i < 6; i++) {
         var a = Math.PI + ((t * 0.18 + i / 6) % 1) * TAU, p = PL(add(c, [Math.cos(a) * R, Math.sin(a) * R, 0]));
-        d += dPoly(ellipse2(p[0], p[1], 1.3, 1.3, 0, 8), true);
+        dots[i].at(p[0], p[1], 1);
       }
-      dots.setAttribute('d', d);
     });
     pen.close();
   }
@@ -1511,7 +1519,6 @@
     '.tx{fill:rgba(232,232,232,.62);font-family:"Berkeley Mono","SF Mono","Fira Code",monospace;letter-spacing:.02em}',
     '.tx-hi{fill:rgba(232,232,232,.9)}',
     '.flow{fill:none;stroke:rgba(232,232,232,.4);stroke-width:.75;stroke-dasharray:1.4 3.2;stroke-linecap:round}',
-    '.flow-dot{fill:#fff;filter:drop-shadow(0 0 1.4px rgba(255,255,255,.9))}',
     '.leader{fill:none;stroke:rgba(232,232,232,.45);stroke-width:.7}',
     '.anchor{fill:#e8e8e8}',
     '.tube-o{fill:none;stroke:#e8e8e8;stroke-width:2.6;stroke-linecap:round}',
@@ -1520,18 +1527,23 @@
     '.pf-item{opacity:0;transform:translateY(5px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.16,1,.3,1)}',
     '.is-built .pf-item{opacity:1;transform:none;transition-delay:var(--d,0s)}',
     '.pf-dim .pf-item:not(.is-on){opacity:.28;transition-delay:0s}',
-    '.pf-dim .pf-flows{opacity:.3}',
-    '.pf-flows{transition:opacity .4s ease}',
-    '.spin-slow{animation:pf-spin 80s linear infinite}',
-    '.blink{animation:pf-blink 1.1s steps(1) infinite}',
-    '.steam{animation:pf-steam 3s ease-in-out infinite}',
-    '.neo .glow{animation:pf-pulse 3.2s ease-in-out infinite}',
+    '.pf-dim .pf-flows,.pf-dim .pf-flowdots{opacity:.3}',
+    '.pf-flows,.pf-flowdots{transition:opacity .4s ease}',
+    '.pf-scene{will-change:transform}',
+    '.pf-live,.pf-flowdots,.pf-dotbox{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}',
+    '.pf-sprite{position:absolute;overflow:visible;will-change:transform}',
+    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform}',
+    '.flow-dot{fill:#fff;filter:drop-shadow(0 0 1.4px rgba(255,255,255,.9))}',
+    '.pf-spin{animation:pf-spin 80s linear infinite}',
+    '.pf-blink{animation:pf-blink 1.1s steps(1) infinite}',
+    '.pf-steam{animation:pf-steam 3s ease-in-out infinite}',
+    '.pf-pulse{animation:pf-pulse 3.2s ease-in-out infinite}',
     '.is-paused *{animation-play-state:paused!important}',
     '@keyframes pf-spin{to{transform:rotate(360deg)}}',
     '@keyframes pf-blink{0%,55%{opacity:1}56%,100%{opacity:0}}',
     '@keyframes pf-steam{0%,100%{opacity:.15}50%{opacity:.8}}',
     '@keyframes pf-pulse{0%,100%{opacity:1}50%{opacity:.55}}',
-    '@media (prefers-reduced-motion:reduce){.pf-item{transition:none}.spin-slow,.blink,.steam,.neo .glow{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.pf-item{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
   ].join('');
 
   function curve(pts, n) {
@@ -1554,6 +1566,130 @@
     return out;
   }
 
+  /* ---------- live layers ---------- */
+
+  // Parts that change after the scene is built are lifted out of the main drawing into small layers
+  // of their own, so an animation frame never repaints the static line work underneath.
+  var LIVE = { list: [], dots: null, L: null, k: 1 };
+
+  // opt.draw(t) redraws the part for time t, and is sampled to find how far the part reaches.
+  // opt.css names a compositor animation for the lifted layer. opt.pad grows it for strokes and glows.
+  function live(node, opt) {
+    var h = { node: node, opt: opt || {}, sprite: null, box: null };
+    LIVE.list.push(h);
+    return h;
+  }
+
+  // Moves a group, in steps of 0.05 units so a slow drift repaints only when it visibly could.
+  function nudge(g, dx, dy) {
+    var v = 'translate(' + (Math.round(dx * 20) / 20) + ' ' + (Math.round(dy * 20) / 20) + ')';
+    if (g._pfT !== v) { g._pfT = v; g.setAttribute('transform', v); }
+  }
+
+  // Dots placed in scene units and moved by the compositor. Dots that belong to a product share its
+  // fade-in and hover highlight; flow dots share the flows' dimming.
+  function dotHost(pen) {
+    for (var g = pen && pen.g; g && g.getAttribute; g = g.parentNode) {
+      if (/\bpf-item\b/.test(g.getAttribute('class') || '')) {
+        if (!g._pfDots) {
+          var d = document.createElement('div');
+          d.className = 'pf-dotbox ' + g.getAttribute('class');
+          if (g.getAttribute('data-id')) d.setAttribute('data-id', g.getAttribute('data-id'));
+          d.style.cssText = g.style.cssText;
+          LIVE.dots.parentNode.insertBefore(d, LIVE.dots);
+          g._pfDots = d;
+        }
+        return g._pfDots;
+      }
+    }
+    return LIVE.dots;
+  }
+  // Each dot is its own tiny SVG in scene units, drawn exactly as before, so only its own few pixels
+  // repaint when it changes size. Offsets are in pixels from the stage's measured scale: a percentage
+  // of the dot's own width would multiply the browser's rounding of that width into visible drift.
+  function Dot(host, r, glow) {
+    var L = LIVE.L, S = glow ? 7 : r + 1;
+    var s = el('svg', { viewBox: [-S, -S, 2 * S, 2 * S].join(' '), 'class': 'pf-dot', 'aria-hidden': 'true', focusable: 'false' });
+    s.style.width = (2 * S / L.w * 100).toFixed(4) + '%';
+    s.style.height = (2 * S / L.h * 100).toFixed(4) + '%';
+    this.p = el('path', { 'class': glow ? 'flow-dot' : 'wf' });
+    s.appendChild(this.p);
+    host.appendChild(s);
+    this.e = s;
+    this.S = S;
+    this.r = r;
+    this.q = -1;
+  }
+  // Size moves in steps of 0.05 units, far below what shows, so a dot repaints a few times a second.
+  Dot.prototype.at = function (x, y, s) {
+    var k = LIVE.k, S = this.S, q = Math.round(this.r * s * 20);
+    this.e.style.transform = 'translate(' + ((x - S) * k).toFixed(2) + 'px,' + ((y - S) * k).toFixed(2) + 'px)';
+    if (q !== this.q) { this.q = q; this.p.setAttribute('d', dPoly(ellipse2(0, 0, q / 20, q / 20, 0, 8), true)); }
+  };
+
+  // Everything drawn after a lifted part was painted over it. Those shapes, drawn in black with the
+  // same strokes, become a mask on the part's layer, so it never paints over them.
+  function occluders(h, svg, box) {
+    var out = [], all = svg.querySelectorAll('path');
+    for (var i = 0; i < all.length; i++) {
+      var c = all[i];
+      if (!(h.node.compareDocumentPosition(c) & 4)) continue;
+      if (LIVE.list.some(function (o) { return o.node.contains(c); })) continue;
+      var r = c.getBBox();
+      if (r.x > box[0] + box[2] || r.y > box[1] + box[3] || r.x + r.width < box[0] || r.y + r.height < box[1]) continue;
+      var cs = getComputedStyle(c), fill = cs.fill !== 'none', stroke = cs.stroke !== 'none' && parseFloat(cs.strokeWidth) > 0;
+      if (!fill && !stroke) continue;
+      var st = 'fill:' + (fill ? '#000' : 'none') + ';stroke:' + (stroke ? '#000' : 'none');
+      if (stroke) {
+        st += ';stroke-width:' + cs.strokeWidth + ';stroke-linecap:' + cs.strokeLinecap + ';stroke-linejoin:' + cs.strokeLinejoin;
+        if (cs.strokeDasharray && cs.strokeDasharray !== 'none') st += ';stroke-dasharray:' + cs.strokeDasharray;
+      }
+      out.push(el('path', { d: c.getAttribute('d'), 'fill-rule': c.getAttribute('fill-rule'), style: st }));
+    }
+    return out;
+  }
+
+  function liftLive(layer, svg, L) {
+    var mid = 0;
+    LIVE.list.forEach(function (h) {
+      var n = h.node, o = h.opt, b = null, i;
+      function grow() {
+        var r = n.getBBox();
+        if (r.width <= 0 && r.height <= 0) return;
+        b = b ? [Math.min(b[0], r.x), Math.min(b[1], r.y), Math.max(b[2], r.x + r.width), Math.max(b[3], r.y + r.height)] : [r.x, r.y, r.x + r.width, r.y + r.height];
+      }
+      n.removeAttribute('transform');
+      if (o.draw) for (i = 0; i <= 40; i++) { o.draw(i * 0.37); grow(); }
+      else grow();
+      if (!b) return;
+      var p = o.pad || 3;
+      var box = h.box = [f1(b[0] - p), f1(b[1] - p), f1(b[2] - b[0] + 2 * p), f1(b[3] - b[1] + 2 * p)];
+      var s = el('svg', { viewBox: box.join(' '), 'class': 'pf-sprite' + (o.css ? ' ' + o.css : ''), 'aria-hidden': 'true', focusable: 'false' });
+      s.style.left = (box[0] / L.w * 100).toFixed(4) + '%';
+      s.style.top = (box[1] / L.h * 100).toFixed(4) + '%';
+      s.style.width = (box[2] / L.w * 100).toFixed(4) + '%';
+      s.style.height = (box[3] / L.h * 100).toFixed(4) + '%';
+      var host = s, chain = [];
+      for (var g = n.parentNode; g && g !== svg; g = g.parentNode) chain.unshift(g);
+      chain.forEach(function (a) { var c = a.cloneNode(false); c.removeAttribute('id'); host.appendChild(c); host = c; });
+      var occ = o.css === 'pf-spin' ? [] : occluders(h, svg, box);
+      if (occ.length) {
+        var id = 'pf-occ-' + (++mid), mk = el('mask', { id: id, maskUnits: 'userSpaceOnUse', x: box[0], y: box[1], width: box[2], height: box[3] });
+        mk.appendChild(el('rect', { x: box[0], y: box[1], width: box[2], height: box[3], fill: '#fff' }));
+        occ.forEach(function (m) { mk.appendChild(m); });
+        s.insertBefore(mk, s.firstChild);
+        host = host.appendChild(el('g', { mask: 'url(#' + id + ')' }));
+      }
+      host.appendChild(n);
+      layer.insertBefore(s, firstDotBox(layer));
+      h.sprite = s;
+    });
+  }
+  function firstDotBox(layer) {
+    for (var c = layer.firstChild; c; c = c.nextSibling) if (c.nodeName === 'DIV') return c;
+    return null;
+  }
+
   function Flow(pen, pts, opt) {
     opt = opt || {};
     var path = opt.smooth === false ? pts : curve(pts, 14);
@@ -1563,10 +1699,10 @@
     this.len = len;
     this.total = len[len.length - 1];
     pen.path(dPoly(path, false), 'flow');
-    this.dots = pen.path('', 'flow-dot');
     this.n = opt.n || Math.max(2, Math.round(this.total / 90));
     this.speed = opt.speed || 38;
-    this.r = opt.r || 1.6;
+    this.dots = [];
+    for (i = 0; i < this.n; i++) this.dots.push(new Dot(LIVE.dots, opt.r || 1.6, true));
   }
   Flow.prototype.at = function (d) {
     var len = this.len, i = 1;
@@ -1575,14 +1711,11 @@
     return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
   };
   Flow.prototype.tick = function (t) {
-    var d = '';
     for (var i = 0; i < this.n; i++) {
       var u = ((t * this.speed / this.total) + i / this.n) % 1;
-      var p = this.at(u * this.total), fade = Math.sin(u * Math.PI);
-      var r = this.r * (0.55 + 0.45 * fade);
-      d += dPoly(ellipse2(p[0], p[1], r, r, 0, 8), true);
+      var p = this.at(u * this.total);
+      this.dots[i].at(p[0], p[1], 0.55 + 0.45 * Math.sin(u * Math.PI));
     }
-    this.dots.setAttribute('d', d);
   };
 
   function groundGrid(pen, ox, oy, size, step, cls) {
@@ -1630,14 +1763,17 @@
       pen.close();
 
       item(pen, 'exploration', 0.3);
-      var nyxG = pen.open({ 'class': 'nyx-drift' });
+      var nyxW = pen.open(), nyxG = pen.open({ 'class': 'nyx-drift' });
       pen.at(600, 150, 1);
       drawNyx(pen, [0, 0, 0], unit([1, -0.28, 0.1]), 0.86);
       A.nyx = pen.P([46, -13, 34]);
       A.nyxNose = pen.P([98, -28, 10]);
       A.nyxTail = pen.P([0, 0, 0]);
       pen.close();
-      anims.push(function (t) { var u = Math.sin(t * 0.6) * 2.2; nyxG.setAttribute('transform', 'translate(' + f1(u * 0.97) + ' ' + f1(u * 0.23) + ')'); });
+      pen.close();
+      var nyxAt = function (t) { var u = Math.sin(t * 0.6) * 2.2; nudge(nyxG, u * 0.97, u * 0.23); };
+      live(nyxW, { draw: nyxAt, pad: 3 });
+      anims.push(nyxAt);
       drawParachutes(pen, 1512, 452, 1.05);
       A.chutes = [1512, 452];
       pen.close();
@@ -1798,14 +1934,17 @@
       pen.close();
 
       item(pen, 'exploration', 0.3);
-      var nyxG = pen.open({ 'class': 'nyx-drift' });
+      var nyxW = pen.open(), nyxG = pen.open({ 'class': 'nyx-drift' });
       pen.at(80, 420, 0.9);
       drawNyx(pen, [0, 0, 0], unit([1, -0.28, 0.1]), 0.8);
       A.nyx = pen.P([42, -12, 32]);
       A.nyxNose = pen.P([92, -26, 10]);
       A.nyxTail = pen.P([0, 0, 0]);
       pen.close();
-      anims.push(function (t) { var u = Math.sin(t * 0.6) * 2; nyxG.setAttribute('transform', 'translate(' + f1(u * 0.97) + ' ' + f1(u * 0.23) + ')'); });
+      pen.close();
+      var nyxAt = function (t) { var u = Math.sin(t * 0.6) * 2; nudge(nyxG, u * 0.97, u * 0.23); };
+      live(nyxW, { draw: nyxAt, pad: 3 });
+      anims.push(nyxAt);
       pen.close();
 
       // the labs
@@ -1939,6 +2078,7 @@
   function build(stage, name) {
     var L = LAYOUTS[name];
     if (state.svg) state.svg.remove();
+    if (state.layer) state.layer.remove();
     state.anims = [];
     state.flows = [];
     var svg = el('svg', { viewBox: '0 0 ' + L.w + ' ' + L.h, 'class': 'pf-scene', 'aria-hidden': 'true', focusable: 'false' });
@@ -1959,6 +2099,14 @@
     defs.appendChild(mask);
     svg.appendChild(defs);
     stage.insertBefore(svg, stage.firstChild);
+    var layer = document.createElement('div');
+    layer.className = 'pf-live';
+    LIVE.list = [];
+    LIVE.L = L;
+    LIVE.dots = document.createElement('div');
+    LIVE.dots.className = 'pf-flowdots';
+    layer.appendChild(LIVE.dots);
+    stage.insertBefore(layer, svg.nextSibling);
     var pen = new Pen(svg);
     state.anchors = L.build(pen, state.anims, state.flows);
     pen.at(0, 0, 1);
@@ -1972,12 +2120,21 @@
       pen.path(dPoly(ellipse2(a[0], a[1], 1.8, 1.8, 0, 10), true), 'anchor');
     });
     pen.close();
+    liftLive(layer, svg, L);
     state.svg = svg;
+    state.layer = layer;
     state.layout = name;
     stage.style.setProperty('--ar', (L.w / L.h).toFixed(4));
     stage.classList.toggle('is-tall', name === 'tall');
     if (stage.parentNode) stage.parentNode.classList.toggle('is-tall', name === 'tall');
     placePills(stage, L);
+    measure();
+  }
+
+  function measure() {
+    if (!state.stage || !LIVE.L) return;
+    var w = state.stage.getBoundingClientRect().width;
+    if (w > 0) LIVE.k = w / LIVE.L.w;
     tick(performance.now(), true);
   }
 
@@ -2018,18 +2175,21 @@
       if (!state.t0) state.t0 = performance.now();
       build(stage, name);
       bindHover(stage);
-    }
+      if (window.ResizeObserver && !stage._pfSized) {
+        stage._pfSized = true;
+        new ResizeObserver(measure).observe(stage);
+      }
+    } else measure();
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        state.svg.classList.add('is-built');
-        stage.classList.add('is-ready');
+        stage.classList.add('is-built', 'is-ready');
       });
     });
   };
 
   api.play = function () {
     if (!state.svg) return;
-    state.svg.classList.remove('is-paused');
+    state.stage.classList.remove('is-paused');
     if (reduceMotion || state.playing) return;
     state.playing = true;
     state.raf = requestAnimationFrame(tick);
@@ -2038,16 +2198,13 @@
   api.pause = function () {
     state.playing = false;
     cancelAnimationFrame(state.raf);
-    if (state.svg) state.svg.classList.add('is-paused');
+    if (state.stage) state.stage.classList.add('is-paused');
   };
 
   api.relayout = function () {
     if (!state.stage || !state.svg) return;
     var name = pickLayout();
-    if (name !== state.layout) {
-      build(state.stage, name);
-      state.svg.classList.add('is-built');
-    }
+    if (name !== state.layout) build(state.stage, name);
   };
 
   function bindHover(stage) {
@@ -2059,14 +2216,14 @@
         var id = p.getAttribute('data-id');
         function on() {
           if (!state.svg) return;
-          state.svg.classList.add('pf-dim');
-          var items = state.svg.querySelectorAll('.pf-item[data-id="' + id + '"]');
+          stage.classList.add('pf-dim');
+          var items = stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
           for (var j = 0; j < items.length; j++) items[j].classList.add('is-on');
         }
         function off() {
           if (!state.svg) return;
-          state.svg.classList.remove('pf-dim');
-          var items = state.svg.querySelectorAll('.pf-item.is-on');
+          stage.classList.remove('pf-dim');
+          var items = stage.querySelectorAll('.pf-item.is-on');
           for (var j = 0; j < items.length; j++) items[j].classList.remove('is-on');
         }
         p.addEventListener('mouseenter', on);
