@@ -423,9 +423,141 @@
       opacity: 1;
       transform: translateY(0);
     }
-    #about-toggle.active::before {
+    #about-toggle.active::before,
+    #portfolio-toggle.active::before {
       content: '▶';
       animation: none;
+    }
+
+    body { transition: background-color 0.6s ease; }
+    body.portfolio-open { background: #000; }
+    .flipdot-container { transition: opacity 0.6s ease; }
+    body.portfolio-open .flipdot-container { opacity: 0.1; }
+
+    .portfolio-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 2rem 5rem;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+    }
+    .portfolio-overlay.visible {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.6s ease;
+    }
+    .portfolio-stage {
+      position: relative;
+      flex: none;
+      width: min(100%, calc((100vh - 6.5rem) * var(--ar, 1.6)));
+      aspect-ratio: var(--ar, 1.6);
+      container-type: inline-size;
+    }
+    .portfolio-stage > svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    .portfolio-pills {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .portfolio-pill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: block;
+      transform: translate(-50%, -100%);
+      padding: 0.42em 0.85em 0.48em;
+      border: 1px solid rgba(232,232,232,0.55);
+      border-radius: 0.95em;
+      background: rgba(0,0,0,0.86);
+      color: #e8e8e8;
+      font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', monospace;
+      font-size: clamp(7px, 0.66cqw, 10.5px);
+      line-height: 1.35;
+      text-align: center;
+      text-decoration: none;
+      white-space: nowrap;
+      pointer-events: auto;
+      opacity: 0;
+      transition: opacity 0.5s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+    .portfolio-pill b {
+      display: block;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+    }
+    .portfolio-pill i {
+      font-style: normal;
+      font-size: 0.8em;
+      opacity: 0.6;
+    }
+    .portfolio-pill span {
+      display: block;
+      opacity: 0.62;
+    }
+    .portfolio-pill.wrap {
+      width: max-content;
+      max-width: 17.5em;
+      white-space: normal;
+    }
+    .portfolio-pill.below { transform: translate(-50%, 0); }
+    .portfolio-pill.left { transform: translate(-100%, -50%); }
+    .portfolio-pill.right { transform: translate(0, -50%); }
+    .portfolio-pill:hover,
+    .portfolio-pill:focus-visible {
+      background: #e8e8e8;
+      border-color: #e8e8e8;
+      color: #0a0a0a;
+      outline: none;
+    }
+    .portfolio-stage.is-ready .portfolio-pill {
+      opacity: 1;
+      transition-delay: var(--d, 0s), 0s, 0s, 0s;
+    }
+    .portfolio-overlay.is-tall {
+      --fade-top: 0rem;
+      --fade-bottom: 5.4rem;
+      display: block;
+      padding: 1.6rem 0 7.2rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      /* The scene fades out under the fixed nav and site id, so their text never sits on the drawing. */
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--fade-top), #000 calc(var(--fade-top) + 1.2rem), #000 calc(100% - var(--fade-bottom) - 1.4rem), transparent calc(100% - var(--fade-bottom)), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, transparent var(--fade-top), #000 calc(var(--fade-top) + 1.2rem), #000 calc(100% - var(--fade-bottom) - 1.4rem), transparent calc(100% - var(--fade-bottom)), transparent 100%);
+    }
+    .portfolio-stage.is-tall {
+      width: min(100%, 36rem);
+      margin: 0 auto;
+    }
+    .portfolio-stage.is-tall .portfolio-pill {
+      width: max-content;
+      max-width: 46cqw;
+      padding: 0.38em 0.7em 0.42em;
+      font-size: clamp(7px, 2.1cqw, 9.5px);
+      white-space: normal;
+    }
+    .portfolio-stage.is-tall .portfolio-pill.wrap {
+      max-width: min(46cqw, 17.5em);
     }
 
     @media (max-width: 600px) {
@@ -495,6 +627,11 @@
       .site-preview {
         display: none;
       }
+      .portfolio-overlay.is-tall {
+        --fade-top: 4.4rem;
+        --fade-bottom: 4.2rem;
+        padding: 5.8rem 0 6rem;
+      }
     }
   </style>
 </head>
@@ -507,6 +644,7 @@
 <nav>
   <ul class="nav-overlay">
     <li><a href="#" id="about-toggle">About</a></li>
+    <li><a href="#portfolio" id="portfolio-toggle">Portfolio</a></li>
     <li><a href="/mechanical-slavery-of-knowledge-work/">The Mechanical Slavery of Knowledge Work</a></li>
   </ul>
 </nav>
@@ -527,19 +665,23 @@
       <p><span>a way to probe what intelligence (and maybe consciousness) is, by building it.</span><span>(3)</span></p>
     </div>
   </div>
+</div>
 
-  <!-- Portfolio — left-side vertical field beside the matrix -->
-  <span class="about-word" style="top:22%;left:6%;font-size:0.8rem;--o:1;--d:0.28s">PORTFOLIO</span>
-  <a class="about-word" href="https://1x.tech" target="_blank" style="top:30%;left:9%;font-size:0.65rem;--o:0.65;--d:0.32s">1X TECHNOLOGIES</a>
-  <a class="about-word" href="https://nothing.tech" target="_blank" data-preview="https://www.youtube.com/embed/MMVuPuFKM3U?autoplay=1&mute=1" style="top:36%;left:15%;font-size:0.65rem;--o:0.65;--d:0.34s">NOTHING</a>
-  <a class="about-word" href="https://odyssey.systems" target="_blank" style="top:42%;left:7%;font-size:0.65rem;--o:0.65;--d:0.36s">ODYSSEY</a>
-  <a class="about-word" href="https://exploration.space" target="_blank" style="top:48%;left:18%;font-size:0.65rem;--o:0.65;--d:0.38s">THE EXPLORATION COMPANY</a>
-  <a class="about-word" href="https://hume.ai" target="_blank" style="top:54%;left:11%;font-size:0.65rem;--o:0.65;--d:0.4s">HUME <span style="font-size:0.5rem;opacity:0.6">(ACQ. GOOGLE)</span></a>
-  <a class="about-word" href="https://generative.vision" target="_blank" style="top:60%;left:17%;font-size:0.65rem;--o:0.65;--d:0.42s">GENERATIVE ENGINEERING</a>
-  <a class="about-word" href="https://camion.energy" target="_blank" style="top:66%;left:8%;font-size:0.65rem;--o:0.65;--d:0.44s">CAMION</a>
-  <a class="about-word" href="https://www.cemvision.tech/" target="_blank" style="top:72%;left:14%;font-size:0.65rem;--o:0.65;--d:0.46s">CEMVISION</a>
-  <a class="about-word" href="https://www.ineffable.ai" target="_blank" style="top:78%;left:6%;font-size:0.65rem;--o:0.65;--d:0.48s">INEFFABLE INTELLIGENCE</a>
-  <a class="about-word" href="https://www.starcloud.com/starcloud-4" target="_blank" style="top:84%;left:16%;font-size:0.65rem;--o:0.65;--d:0.5s">STARCLOUD</a>
+<div class="portfolio-overlay" id="portfolio-overlay" aria-hidden="true">
+  <div class="portfolio-stage" id="portfolio-stage">
+    <div class="portfolio-pills">
+      <a class="portfolio-pill" data-id="1x" href="https://1x.tech" target="_blank" rel="noopener"><b>1X TECHNOLOGIES</b><span>A humanoid robot for the home</span></a>
+      <a class="portfolio-pill" data-id="nothing" href="https://nothing.tech" target="_blank" rel="noopener" data-preview="https://www.youtube.com/embed/MMVuPuFKM3U?autoplay=1&mute=1"><b>NOTHING</b><span>Transparent phones and audio</span></a>
+      <a class="portfolio-pill" data-id="odyssey" href="https://odyssey.systems" target="_blank" rel="noopener"><b>ODYSSEY</b><span>AI that learns to simulate the world</span></a>
+      <a class="portfolio-pill" data-id="exploration" href="https://exploration.space" target="_blank" rel="noopener"><b>THE EXPLORATION COMPANY</b><span>Reusable capsules to orbit and back</span></a>
+      <a class="portfolio-pill" data-id="hume" href="https://hume.ai" target="_blank" rel="noopener"><b>HUME <i>(ACQ. GOOGLE)</i></b><span>Voice AI that reads tone, not just words</span></a>
+      <a class="portfolio-pill" data-id="geneng" href="https://generative.vision" target="_blank" rel="noopener"><b>GENERATIVE ENGINEERING</b><span>AI that generates and tests designs</span></a>
+      <a class="portfolio-pill" data-id="camion" href="https://camion.energy" target="_blank" rel="noopener"><b>CAMION <i>(ACQ. DEEPKI)</i></b><span>Finds where solar and storage pay off</span></a>
+      <a class="portfolio-pill" data-id="cemvision" href="https://www.cemvision.tech/" target="_blank" rel="noopener"><b>CEMVISION</b><span>Low-carbon cement from industrial waste</span></a>
+      <a class="portfolio-pill" data-id="ineffable" href="https://www.ineffable.ai" target="_blank" rel="noopener"><b>INEFFABLE INTELLIGENCE</b><span>AI that learns from its own experience</span></a>
+      <a class="portfolio-pill" data-id="starcloud" href="https://www.starcloud.com/starcloud-4" target="_blank" rel="noopener"><b>STARCLOUD</b><span>Data centers in orbit, run on sunlight</span></a>
+    </div>
+  </div>
 </div>
 
 <div class="game-hud" id="game-hud">
@@ -1051,6 +1193,7 @@
 
   // --- Game lifecycle ---
   function startGame(name) {
+    closePortfolio();
     pauseMainLoop();
     activeGame = name;
     clear();
@@ -1419,7 +1562,10 @@
     e.preventDefault();
     if (activeGame) return;
     if (aboutOpen) closeAbout();
-    else openAbout();
+    else {
+      closePortfolio();
+      openAbout();
+    }
   });
 
   aboutOverlay.addEventListener('click', function(e) {
@@ -1432,6 +1578,73 @@
       closeAbout();
     }
   });
+
+  // --- Portfolio overlay ---
+  var portfolioToggle = document.getElementById('portfolio-toggle');
+  var portfolioOverlay = document.getElementById('portfolio-overlay');
+  var portfolioStage = document.getElementById('portfolio-stage');
+  var portfolioOpen = false;
+
+  function openPortfolio() {
+    if (portfolioOpen || activeGame) return;
+    if (aboutOpen) closeAbout();
+    portfolioOpen = true;
+    document.body.classList.add('portfolio-open');
+    portfolioOverlay.classList.add('visible');
+    portfolioOverlay.setAttribute('aria-hidden', 'false');
+    portfolioToggle.classList.add('active');
+    if (window.PortfolioScene) {
+      window.PortfolioScene.mount(portfolioStage);
+      window.PortfolioScene.play();
+    }
+    if (location.hash !== '#portfolio') history.replaceState(null, '', '#portfolio');
+  }
+
+  function closePortfolio() {
+    if (!portfolioOpen) return;
+    portfolioOpen = false;
+    document.body.classList.remove('portfolio-open');
+    portfolioOverlay.classList.remove('visible');
+    portfolioOverlay.setAttribute('aria-hidden', 'true');
+    portfolioToggle.classList.remove('active');
+    preview.classList.remove('visible');
+    if (window.PortfolioScene) window.PortfolioScene.pause();
+    if (location.hash === '#portfolio') history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  portfolioToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (activeGame) return;
+    if (portfolioOpen) closePortfolio();
+    else openPortfolio();
+  });
+
+  portfolioOverlay.addEventListener('click', function(e) {
+    if (e.target === portfolioOverlay) closePortfolio();
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (portfolioOpen && e.key === 'Escape') {
+      e.preventDefault();
+      closePortfolio();
+    }
+  });
+
+  window.addEventListener('hashchange', function() {
+    if (location.hash === '#portfolio') openPortfolio();
+    else closePortfolio();
+  });
+
+  var portfolioResizeId = null;
+  window.addEventListener('resize', function() {
+    if (!window.PortfolioScene) return;
+    clearTimeout(portfolioResizeId);
+    portfolioResizeId = setTimeout(function() { window.PortfolioScene.relayout(); }, 150);
+  });
+
+  if (location.hash === '#portfolio') {
+    document.addEventListener('DOMContentLoaded', openPortfolio);
+  }
 
   // --- Site preview on hover (lazy cached) ---
   var preview = document.getElementById('site-preview');
@@ -1455,8 +1668,8 @@
     for (var key in previewFrames) previewFrames[key].style.display = 'none';
   }
 
-  var portfolioLinks = aboutOverlay.querySelectorAll('a.about-word[href]');
-  for (var i = 0; i < portfolioLinks.length; i++) {
+  var previewLinks = document.querySelectorAll('#about-overlay a.about-word[href], .portfolio-pill[href]');
+  for (var i = 0; i < previewLinks.length; i++) {
     (function(link) {
       link.addEventListener('mouseenter', function() {
         var href = link.getAttribute('data-preview') || link.getAttribute('href');
@@ -1479,11 +1692,12 @@
           preview.classList.remove('visible');
         }, 150);
       });
-    })(portfolioLinks[i]);
+    })(previewLinks[i]);
   }
 
 })();
 </script>
+<script src="/assets/portfolio-scene.js" defer></script>
 
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "0fcdd3f103b543bcada607cfba6801d5"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
