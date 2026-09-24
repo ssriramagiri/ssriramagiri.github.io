@@ -2146,6 +2146,7 @@
     var pills = stage.querySelectorAll('.portfolio-pill');
     for (var i = 0; i < pills.length; i++) {
       var p = pills[i], cfg = L.pills[p.getAttribute('data-id')];
+      p.style.display = cfg ? '' : 'none';
       if (!cfg) continue;
       var b = pillPoint(cfg, state.anchors[cfg.at] || [0, 0]);
       p.style.left = (b[0] / L.w * 100).toFixed(3) + '%';
@@ -2199,6 +2200,20 @@
     state.playing = false;
     cancelAnimationFrame(state.raf);
     if (state.stage) state.stage.classList.add('is-paused');
+  };
+
+  // Screen rectangles of a product's parts, so a preview can be kept off the one being highlighted.
+  api.rects = function (id) {
+    var out = [];
+    if (!state.stage) return out;
+    var items = state.stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
+    for (var i = 0; i < items.length; i++) {
+      for (var c = items[i].firstElementChild; c; c = c.nextElementSibling) {
+        var r = c.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) out.push(r);
+      }
+    }
+    return out;
   };
 
   api.relayout = function () {
