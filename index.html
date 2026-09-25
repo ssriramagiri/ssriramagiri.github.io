@@ -433,6 +433,10 @@
     body.portfolio-open { background: #000; }
     .flipdot-container { transition: opacity 0.6s ease; }
     body.portfolio-open .flipdot-container { opacity: 0.1; }
+    /* At a tenth of its brightness the matrix's fades and glow can't be seen, and each update would
+       repaint the whole screen for several frames under the scene. */
+    body.portfolio-open .dot { transition: none; }
+    body.portfolio-open .dot.on { box-shadow: none; }
 
     .portfolio-overlay {
       position: fixed;
