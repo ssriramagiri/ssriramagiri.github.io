@@ -16,6 +16,9 @@
   <link rel="icon" type="image/gif" href="/assets/sai-favicon.gif">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <script>
+    if (location.hash === '#portfolio') document.documentElement.classList.add('pf-start');
+  </script>
+  <script>
     (function() {
       var canvas = document.createElement('canvas');
       var size = 64;
@@ -431,6 +434,9 @@
 
     body { transition: background-color 0.6s ease; }
     body.portfolio-open { background: #000; }
+    /* A link straight to the Portfolio is black from the first paint, with no dot matrix. */
+    .pf-start body { background: #000; }
+    .pf-start .flipdot-container { visibility: hidden; }
     .flipdot-container { transition: opacity 0.6s ease, visibility 0s linear 0s; }
     /* The dot matrix is off on the Portfolio page: it fades out and its loop stops. */
     body.portfolio-open .flipdot-container {
@@ -1687,8 +1693,11 @@
     portfolioResizeId = setTimeout(function() { window.PortfolioScene.relayout(); }, 150);
   });
 
+  // A link straight to the Portfolio opens it before the first paint, so the home page's dot matrix
+  // never shows while the scene's script loads. The scene mounts itself once that script runs.
   if (location.hash === '#portfolio') {
-    document.addEventListener('DOMContentLoaded', openPortfolio);
+    openPortfolio();
+    document.documentElement.classList.remove('pf-start');
   }
 
   // --- Site preview on hover (lazy cached) ---
