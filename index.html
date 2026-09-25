@@ -416,7 +416,7 @@
       pointer-events: none;
       opacity: 0;
       transform: translateY(4px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transition: opacity 0.09s ease-out, transform 0.09s ease-out;
       overflow: hidden;
     }
     .site-preview.visible {
@@ -1679,7 +1679,6 @@
   // that refuses to be framed, and leaves nothing running in the background. Other links frame the
   // live page.
   var preview = document.getElementById('site-preview');
-  var previewTimeout = null;
   var previewEls = {};
 
   function getPreviewEl(link) {
@@ -1710,9 +1709,13 @@
     for (var key in previewEls) previewEls[key].style.display = 'none';
   }
 
+  // Decoded ahead of time, so a still is ready the moment its label is hovered.
   function preloadPortfolioPreviews() {
     var links = document.querySelectorAll('.portfolio-pill[data-preview-img]');
-    for (var j = 0; j < links.length; j++) getPreviewEl(links[j]);
+    for (var j = 0; j < links.length; j++) {
+      var img = getPreviewEl(links[j]);
+      if (img.decode) img.decode().catch(function() {});
+    }
   }
 
   // Try spots around the label and around the product it highlights, and take the one that covers
@@ -1757,16 +1760,13 @@
   for (var i = 0; i < previewLinks.length; i++) {
     (function(link) {
       link.addEventListener('mouseenter', function() {
-        clearTimeout(previewTimeout);
         hidePreviewEls();
         getPreviewEl(link).style.display = '';
         placePreview(link);
         preview.classList.add('visible');
       });
       link.addEventListener('mouseleave', function() {
-        previewTimeout = setTimeout(function() {
-          preview.classList.remove('visible');
-        }, 150);
+        preview.classList.remove('visible');
       });
     })(previewLinks[i]);
   }
