@@ -433,6 +433,10 @@
     body.portfolio-open { background: #000; }
     .flipdot-container { transition: opacity 0.6s ease; }
     body.portfolio-open .flipdot-container { opacity: 0.1; }
+    /* At a tenth of its brightness the matrix's fades and glow can't be seen, and each update would
+       repaint the whole screen for several frames under the scene. */
+    body.portfolio-open .dot { transition: none; }
+    body.portfolio-open .dot.on { box-shadow: none; }
 
     .portfolio-overlay {
       position: fixed;
@@ -491,7 +495,7 @@
       background: rgba(0,0,0,0.86);
       color: #e8e8e8;
       font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', monospace;
-      font-size: clamp(7px, 0.66cqw, 10.5px);
+      font-size: clamp(7px, var(--pf-fs, 0.66cqw), 10.5px);
       line-height: 1.35;
       text-align: center;
       text-decoration: none;
@@ -499,6 +503,8 @@
       pointer-events: auto;
       opacity: 0;
       transition: opacity 0.5s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      /* Its own layer, so moving parts of the scene underneath never make the browser repaint it. */
+      will-change: transform;
     }
     .portfolio-pill b {
       display: block;
@@ -509,6 +515,25 @@
       font-style: normal;
       font-size: 0.8em;
       opacity: 0.6;
+    }
+    .portfolio-pill em {
+      display: inline-block;
+      margin-left: 0.6em;
+      padding: 0 0.42em;
+      border: 1px solid currentColor;
+      border-radius: 0.6em;
+      font-style: normal;
+      font-size: 0.74em;
+      line-height: 1.4;
+      letter-spacing: 0.05em;
+      vertical-align: 0.08em;
+      opacity: 0.7;
+    }
+    .portfolio-pill em + em {
+      margin-left: 0.35em;
+    }
+    span.portfolio-pill {
+      cursor: default;
     }
     .portfolio-pill span {
       display: block;
@@ -670,16 +695,18 @@
 <div class="portfolio-overlay" id="portfolio-overlay" aria-hidden="true">
   <div class="portfolio-stage" id="portfolio-stage">
     <div class="portfolio-pills">
-      <a class="portfolio-pill" data-id="1x" href="https://1x.tech" target="_blank" rel="noopener"><b>1X TECHNOLOGIES</b><span>A humanoid robot for the home</span></a>
-      <a class="portfolio-pill" data-id="nothing" href="https://nothing.tech" target="_blank" rel="noopener" data-preview="https://www.youtube.com/embed/MMVuPuFKM3U?autoplay=1&mute=1"><b>NOTHING</b><span>Transparent phones and audio</span></a>
-      <a class="portfolio-pill" data-id="odyssey" href="https://odyssey.systems" target="_blank" rel="noopener"><b>ODYSSEY</b><span>AI that learns to simulate the world</span></a>
-      <a class="portfolio-pill" data-id="exploration" href="https://exploration.space" target="_blank" rel="noopener"><b>THE EXPLORATION COMPANY</b><span>Reusable capsules to orbit and back</span></a>
-      <a class="portfolio-pill" data-id="hume" href="https://hume.ai" target="_blank" rel="noopener"><b>HUME <i>(ACQ. GOOGLE)</i></b><span>Voice AI that reads tone, not just words</span></a>
-      <a class="portfolio-pill" data-id="geneng" href="https://generative.vision" target="_blank" rel="noopener"><b>GENERATIVE ENGINEERING</b><span>AI that generates and tests designs</span></a>
-      <a class="portfolio-pill" data-id="camion" href="https://camion.energy" target="_blank" rel="noopener"><b>CAMION <i>(ACQ. DEEPKI)</i></b><span>Finds where solar and storage pay off</span></a>
-      <a class="portfolio-pill" data-id="cemvision" href="https://www.cemvision.tech/" target="_blank" rel="noopener"><b>CEMVISION</b><span>Low-carbon cement from industrial waste</span></a>
-      <a class="portfolio-pill" data-id="ineffable" href="https://www.ineffable.ai" target="_blank" rel="noopener"><b>INEFFABLE INTELLIGENCE</b><span>AI that learns from its own experience</span></a>
-      <a class="portfolio-pill" data-id="starcloud" href="https://www.starcloud.com/starcloud-4" target="_blank" rel="noopener"><b>STARCLOUD</b><span>Data centers in orbit, run on sunlight</span></a>
+      <a class="portfolio-pill" data-id="1x" href="https://1x.tech" target="_blank" rel="noopener" data-preview-img="/assets/previews/1x.jpg"><b>1X TECHNOLOGIES<em>SERIES B</em></b><span>A humanoid robot for the home</span></a>
+      <a class="portfolio-pill" data-id="nothing" href="https://nothing.tech" target="_blank" rel="noopener" data-preview-img="/assets/previews/nothing.jpg"><b>NOTHING<em>SERIES B</em></b><span>A next-gen consumer tech ecosystem</span></a>
+      <a class="portfolio-pill" data-id="odyssey" href="https://odyssey.systems" target="_blank" rel="noopener" data-preview-img="/assets/previews/odyssey.jpg"><b>ODYSSEY<em>SERIES A</em></b><span>AI that learns to simulate the world</span></a>
+      <a class="portfolio-pill" data-id="exploration" href="https://exploration.space" target="_blank" rel="noopener" data-preview-img="/assets/previews/exploration.jpg"><b>THE EXPLORATION COMPANY<em>SERIES A</em><em>SERIES C</em></b><span>Reusable capsules to orbit and back</span></a>
+      <a class="portfolio-pill" data-id="hume" href="https://hume.ai" target="_blank" rel="noopener" data-preview-img="/assets/previews/hume.jpg"><b>HUME <i>(ACQ. GOOGLE)</i><em>SERIES B</em></b><span>Voice AI that reads tone, not just words</span></a>
+      <a class="portfolio-pill" data-id="geneng" href="https://generative.vision" target="_blank" rel="noopener" data-preview-img="/assets/previews/geneng.jpg"><b>GENERATIVE ENGINEERING<em>PRE-SEED</em></b><span>AI that generates and tests designs</span></a>
+      <a class="portfolio-pill" data-id="camion" href="https://camion.energy" target="_blank" rel="noopener" data-preview-img="/assets/previews/camion.jpg"><b>CAMION <i>(ACQ. DEEPKI)</i><em>PRE-SEED</em></b><span>Finds where solar and storage pay off</span></a>
+      <a class="portfolio-pill" data-id="cemvision" href="https://www.cemvision.tech/" target="_blank" rel="noopener" data-preview-img="/assets/previews/cemvision.jpg"><b>CEMVISION<em>PRE-SEED</em></b><span>Low-carbon cement from industrial waste</span></a>
+      <a class="portfolio-pill" data-id="ineffable" href="https://www.ineffable.ai" target="_blank" rel="noopener" data-preview-img="/assets/previews/ineffable.jpg"><b>INEFFABLE INTELLIGENCE<em>SEED</em></b><span>AI that learns from its own experience</span></a>
+      <a class="portfolio-pill" data-id="starcloud" href="https://www.starcloud.com/starcloud-4" target="_blank" rel="noopener" data-preview-img="/assets/previews/starcloud.jpg"><b>STARCLOUD<em>SERIES A</em></b><span>Data centers in orbit, run on sunlight</span></a>
+      <a class="portfolio-pill" data-id="euclyd" href="https://www.euclyd.ai/" target="_blank" rel="noopener" data-preview-img="/assets/previews/euclyd.jpg"><b>EUCLYD<em>SERIES A</em></b><span>Chips built to run AI, not train it</span></a>
+      <span class="portfolio-pill" data-id="unannounced"><b>UNANNOUNCED<em>SERIES B</em></b><span>Generative AI for new materials</span></span>
     </div>
   </div>
 </div>
@@ -1597,6 +1624,7 @@
       window.PortfolioScene.mount(portfolioStage);
       window.PortfolioScene.play();
     }
+    setTimeout(preloadPortfolioPreviews, 1500);
     if (location.hash !== '#portfolio') history.replaceState(null, '', '#portfolio');
   }
 
@@ -1647,44 +1675,92 @@
   }
 
   // --- Site preview on hover (lazy cached) ---
+  // Portfolio labels show a still of the company's site, so it appears at once, never hits a site
+  // that refuses to be framed, and leaves nothing running in the background. Other links frame the
+  // live page.
   var preview = document.getElementById('site-preview');
   var previewTimeout = null;
-  var previewFrames = {};
+  var previewEls = {};
 
-  function getPreviewFrame(href) {
-    if (!previewFrames[href]) {
-      var iframe = document.createElement('iframe');
-      iframe.src = href;
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      iframe.setAttribute('loading', 'lazy');
-      iframe.style.cssText = 'width:1360px;height:850px;transform:scale(0.25);transform-origin:top left;border:none;pointer-events:none;position:absolute;top:0;left:0;display:none;';
-      preview.appendChild(iframe);
-      previewFrames[href] = iframe;
+  function getPreviewEl(link) {
+    var img = link.getAttribute('data-preview-img');
+    var key = img || link.getAttribute('data-preview') || link.getAttribute('href');
+    if (!previewEls[key]) {
+      var e;
+      if (img) {
+        e = document.createElement('img');
+        e.src = img;
+        e.alt = '';
+        e.decoding = 'async';
+        e.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:none;';
+      } else {
+        e = document.createElement('iframe');
+        e.src = key;
+        e.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+        e.setAttribute('loading', 'lazy');
+        e.style.cssText = 'width:1360px;height:850px;transform:scale(0.25);transform-origin:top left;border:none;pointer-events:none;position:absolute;top:0;left:0;display:none;';
+      }
+      preview.appendChild(e);
+      previewEls[key] = e;
     }
-    return previewFrames[href];
+    return previewEls[key];
   }
 
-  function hidePreviewFrames() {
-    for (var key in previewFrames) previewFrames[key].style.display = 'none';
+  function hidePreviewEls() {
+    for (var key in previewEls) previewEls[key].style.display = 'none';
+  }
+
+  function preloadPortfolioPreviews() {
+    var links = document.querySelectorAll('.portfolio-pill[data-preview-img]');
+    for (var j = 0; j < links.length; j++) getPreviewEl(links[j]);
+  }
+
+  // Try spots around the label and around the product it highlights, and take the one that covers
+  // the least of either, then the nearest.
+  function placePreview(link) {
+    var pw = preview.offsetWidth || 340, ph = preview.offsetHeight || 213, m = 10;
+    var vw = window.innerWidth, vh = window.innerHeight, r = link.getBoundingClientRect();
+    var avoid = [{ l: r.left - 6, t: r.top - 6, r: r.right + 6, b: r.bottom + 6, w: 4 }];
+    var id = link.getAttribute('data-id'), u = null;
+    if (id && window.PortfolioScene && window.PortfolioScene.rects) {
+      window.PortfolioScene.rects(id).forEach(function(q) {
+        avoid.push({ l: q.left, t: q.top, r: q.right, b: q.bottom, w: 1 });
+        u = u ? { l: Math.min(u.l, q.left), t: Math.min(u.t, q.top), r: Math.max(u.r, q.right), b: Math.max(u.b, q.bottom) } : { l: q.left, t: q.top, r: q.right, b: q.bottom };
+      });
+    }
+    ['nav', '.site-id'].forEach(function(sel) {
+      var n = document.querySelector(sel), q = n && n.getBoundingClientRect();
+      if (q && q.width) avoid.push({ l: q.left, t: q.top, r: q.right, b: q.bottom, w: 0.5 });
+    });
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var xs = [r.left, r.right - pw, cx - pw / 2], ys = [r.top, r.bottom - ph, cy - ph / 2], cands = [];
+    xs.forEach(function(x) { cands.push([x, r.top - ph - m], [x, r.bottom + m]); });
+    ys.forEach(function(y) { cands.push([r.left - pw - m, y], [r.right + m, y]); });
+    if (u) {
+      cands.push([cx - pw / 2, u.t - ph - m], [cx - pw / 2, u.b + m], [u.l - pw - m, cy - ph / 2], [u.r + m, cy - ph / 2]);
+      cands.push([u.l - pw - m, u.t], [u.r + m, u.t], [u.l - pw - m, u.b - ph], [u.r + m, u.b - ph]);
+    }
+    var best = null;
+    cands.forEach(function(c) {
+      var x = Math.max(m, Math.min(vw - pw - m, c[0])), y = Math.max(m, Math.min(vh - ph - m, c[1])), s = 0;
+      avoid.forEach(function(a) {
+        s += a.w * Math.max(0, Math.min(x + pw, a.r) - Math.max(x, a.l)) * Math.max(0, Math.min(y + ph, a.b) - Math.max(y, a.t));
+      });
+      s += 0.5 * Math.hypot(x + pw / 2 - cx, y + ph / 2 - cy);
+      if (!best || s < best.s) best = { s: s, x: x, y: y };
+    });
+    preview.style.left = Math.round(best.x) + 'px';
+    preview.style.top = Math.round(best.y) + 'px';
   }
 
   var previewLinks = document.querySelectorAll('#about-overlay a.about-word[href], .portfolio-pill[href]');
   for (var i = 0; i < previewLinks.length; i++) {
     (function(link) {
       link.addEventListener('mouseenter', function() {
-        var href = link.getAttribute('data-preview') || link.getAttribute('href');
         clearTimeout(previewTimeout);
-        hidePreviewFrames();
-        getPreviewFrame(href).style.display = '';
-        var rect = link.getBoundingClientRect();
-        var pw = 340, ph = 213;
-        var x = rect.left;
-        var y = rect.top - ph - 8;
-        if (y < 8) y = rect.bottom + 8;
-        if (x + pw > window.innerWidth - 8) x = window.innerWidth - pw - 8;
-        if (x < 8) x = 8;
-        preview.style.left = x + 'px';
-        preview.style.top = y + 'px';
+        hidePreviewEls();
+        getPreviewEl(link).style.display = '';
+        placePreview(link);
         preview.classList.add('visible');
       });
       link.addEventListener('mouseleave', function() {

@@ -185,15 +185,13 @@
     for (var i = 0; i < lists.length; i++) d += dPoly(lists[i], closed);
     return this.path(d, cls || 'l2', attrs);
   };
-  PP.box = function (x, y, z, w, d, h, cls) {
+  PP.boxD = function (x, y, z, w, d, h) {
     var x1 = x + w, y1 = y + d, z1 = z + h;
-    return this.path(
-      dPoly(this.pts([[x, y, z1], [x1, y, z1], [x1, y1, z1], [x, y1, z1]]), true) +
+    return dPoly(this.pts([[x, y, z1], [x1, y, z1], [x1, y1, z1], [x, y1, z1]]), true) +
       dPoly(this.pts([[x1, y, z], [x1, y1, z], [x1, y1, z1], [x1, y, z1]]), true) +
-      dPoly(this.pts([[x, y1, z], [x1, y1, z], [x1, y1, z1], [x, y1, z1]]), true),
-      cls || 'k'
-    );
+      dPoly(this.pts([[x, y1, z], [x1, y1, z], [x1, y1, z1], [x, y1, z1]]), true);
   };
+  PP.box = function (x, y, z, w, d, h, cls) { return this.path(this.boxD(x, y, z, w, d, h), cls || 'k'); };
   // Parallelogram o, o+u, o+u+v, o+v
   PP.quad = function (o, u, v, cls) { return this.poly([o, add(o, u), add(add(o, u), v), add(o, v)], cls); };
   PP.circle = function (c, a, b, r, cls, n) { return this.path(dPoly(this.pts(circle3(c, a, b, r, n || 32)), true), cls || 'k'); };
@@ -384,41 +382,51 @@
 
   var FIG = {};
 
-  // 1X NEO in three-quarter view facing left, handing over a mug. Units: height 100.
+  // 1X NEO in three-quarter view facing left, handing over a mug. Units: height 100, feet at 0.
+  // Proportions follow the real robot: an egg-shaped head a little under an eighth of its height,
+  // carried forward on a tall ribbed turtleneck; a straight knit column of a torso; legs just over
+  // half its height, with loose hems breaking over soft, thick-soled clogs; no visible joints.
   FIG.neo = (function () {
     var ribs = [], k;
     for (k = 0; k < 8; k++) {
-      var y0 = -73.2 + k * 1.7, y1 = -76 + k * 1.72;
-      ribs.push('M' + (-9.5 + k * 0.1) + ' ' + y0 + ' C-4 ' + (y0 - 1.6) + ' 3 ' + (y1 - 0.6) + ' 8.4 ' + y1);
+      var y = -74.2 + k * 1.65, w = k === 0 ? 0.55 : 1;
+      ribs.push('M' + (-8.2 * w) + ' ' + (y + 0.4) + ' C-3 ' + (y - 0.5) + ' 4 ' + (y - 0.7) + ' ' + (9.2 * w) + ' ' + (y - 0.2));
     }
     return {
-      farLeg: 'M-8.6 -54.6 C-8.9 -47 -8.9 -38 -8.4 -30 C-8 -24 -8.4 -16 -9 -9 C-9.2 -7.4 -9.4 -5.8 -9.6 -4.6 L-1.6 -4.4 C-1.4 -10 -1.3 -18 -1.2 -24 C-1 -32 -0.6 -42 -0.2 -52.6 Z',
-      farShoe: 'M-11 -4.9 C-14.4 -4.7 -16.2 -2.6 -16 -1 C-15.9 0 -14.6 0.3 -12.4 0.3 L-2 0.3 C-0.8 0.3 -0.3 -1 -0.5 -2.4 C-0.7 -4 -1.7 -5 -3.1 -5 Z',
-      nearLeg: 'M-1.6 -53.4 C-1.2 -46 -0.9 -38 -0.6 -30 C-0.3 -23 -0.4 -14 -0.8 -8 L-1 -4.2 L8.6 -4.2 C8.4 -9 8 -16 7.7 -23 C7.5 -30 7.9 -40 8.6 -48 C8.9 -51 9.4 -53.4 9.8 -54.8 Z',
-      nearShoe: 'M-2.8 -4.7 C-6.4 -4.5 -8.4 -2.4 -8.2 -0.7 C-8.1 0.3 -6.7 0.6 -4.5 0.6 L7.6 0.6 C9 0.6 9.6 -0.6 9.4 -2.1 C9.2 -3.8 8.2 -4.8 6.6 -4.8 Z',
-      soles: 'M-15.7 -1.9 C-11 -1.6 -5 -1.6 -0.4 -1.9 M-8 -1.7 C-2 -1.4 4 -1.4 9.4 -1.7',
-      farUpper: 'M-7.2 -82.4 C-10.2 -82.2 -12 -80.2 -12.4 -77 C-12.8 -73.6 -12.8 -70 -12.6 -66.6 C-12.4 -64.4 -11.2 -62.8 -9.4 -63 C-8 -63.2 -7.6 -64.6 -7.8 -66.6 C-8 -70 -7.8 -73.6 -7.6 -76.6 Z',
-      farForearm: 'M-12.6 -66.9 C-14.8 -67.7 -17 -68.7 -19.2 -69.5 L-20.4 -65.6 C-18.2 -64.8 -15.8 -63.6 -13.4 -62.6 C-11.2 -61.9 -10.4 -65.9 -12.6 -66.9 Z',
-      farCuff: 'M-19.2 -69.6 L-22.4 -70.8 L-23.6 -66.8 L-20.4 -65.6 Z',
-      farHand: 'M-22.3 -70.9 C-23.8 -71.8 -25.6 -71.6 -26.6 -70.4 C-27.1 -69.6 -27.2 -67.8 -26.6 -66.9 C-25.8 -66 -24.5 -65.9 -23.6 -66.8 Z',
-      mug: 'M-32.2 -72.6 L-31.8 -65.9 C-31.6 -64.8 -27.8 -64.8 -27.6 -65.9 L-27.2 -72.6 C-28.6 -73.4 -30.8 -73.4 -32.2 -72.6 Z',
-      mugHandle: 'M-32 -71.2 C-34.2 -71.2 -34.2 -67.4 -31.8 -67.4',
-      mugRim: ellipse2(-29.7, -72.6, 2.5, 0.7, 0, 16),
-      steam: 'M-30.4 -74.4 C-31.2 -75.6 -29.6 -76.6 -30.4 -77.8 M-28.8 -74.6 C-29.6 -75.8 -28 -76.6 -28.8 -77.6',
-      torso: 'M-9.1 -54.4 C-9.2 -56.6 -8.6 -58.8 -8.5 -61.6 C-8.4 -64.6 -8.8 -67.6 -9.4 -70.6 C-10.1 -73.6 -10.4 -76.6 -9.8 -79.2 C-9.2 -81.6 -7.4 -83 -4.6 -83.4 L3.2 -83.6 C6.4 -83.6 9.8 -82.2 10.4 -80 C11 -77.4 10.2 -73.4 9.9 -68.6 C9.6 -64 9.8 -59.6 9.8 -54.8',
-      torsoClose: ' C7.4 -53.4 4.2 -52.6 0.8 -52.2 C-2.6 -51.8 -6.4 -52.4 -9.1 -54.4 Z',
+      farLeg: 'M-8.4 -54.4 C-8.8 -46 -8.4 -36 -7.8 -29.5 C-7.4 -25.5 -8.2 -20 -8.6 -14 C-8.9 -9.6 -9.3 -6.4 -9.7 -4.2 L-1.2 -4 C-1.3 -9 -1.1 -15 -1 -21 C-0.9 -25.5 -1.2 -28 -0.9 -32 C-0.6 -39 -0.4 -46 -0.2 -52.8 Z',
+      farShoe: 'M-10.4 -4.8 C-13.8 -4.8 -15.8 -3.2 -15.9 -1.5 C-16 -0.2 -15 0.4 -13.2 0.4 L-1.8 0.4 C-0.6 0.4 -0.2 -0.8 -0.4 -2.2 C-0.6 -3.9 -1.6 -4.9 -3.2 -4.9 Z',
+      nearLeg: 'M-0.6 -52.8 C-0.4 -45 -0.3 -38 0 -31.8 C0.3 -27.6 -0.1 -24.5 0 -20.5 C0.1 -14.5 0 -9 -0.2 -3.8 L9 -3.8 C8.8 -7 8.4 -11.5 8.2 -16 C8 -20.5 8.6 -25.5 8.3 -29.8 C8 -35 8.6 -42.5 9 -48.5 C9.2 -51 9.3 -53.2 9.4 -54.6 Z',
+      nearShoe: 'M-2.4 -4.6 C-6 -4.6 -8.2 -3 -8.2 -1.2 C-8.2 0.2 -7 0.7 -5 0.7 L8.6 0.7 C10 0.7 10.6 -0.6 10.4 -2.1 C10.1 -3.9 9 -4.8 7.2 -4.8 Z',
+      soles: 'M-15.8 -1.9 C-11 -1.5 -5 -1.5 -0.4 -1.9 M-8.1 -1.6 C-2 -1.2 4 -1.2 10.4 -1.6',
+      hems: 'M-9.6 -5.8 C-6.8 -4.9 -3.8 -5.1 -1.2 -5.6 M-0.2 -5.3 C3 -4.5 6.2 -4.6 9 -5.3',
+      knees: 'M-7.9 -30.6 C-6 -31.7 -3.3 -31.7 -1 -30.8 M-7.8 -28.3 C-5.9 -27.3 -3.3 -27.3 -1 -28.3 M-7.8 -29.4 L-1 -29.5 M0.1 -30.8 C2.6 -31.9 5.8 -31.9 8.3 -30.8 M0.1 -28.3 C2.6 -27.2 5.8 -27.2 8.3 -28.3 M0.1 -29.5 L8.3 -29.5',
+      farUpper: 'M-7 -81.6 C-10 -81.4 -11.9 -79.4 -12.3 -76.4 C-12.7 -73.2 -12.7 -69.6 -12.5 -66.4 C-12.3 -64.2 -11.1 -62.8 -9.4 -63 C-8 -63.2 -7.6 -64.6 -7.8 -66.6 C-8 -70 -7.8 -73.6 -7.6 -76.6 Z',
+      farForearm: 'M-12.6 -66.9 C-15 -67.9 -17.4 -68.9 -19.8 -69.7 L-21 -65.8 C-18.6 -65 -16 -63.8 -13.4 -62.7 C-11.2 -62 -10.4 -66 -12.6 -66.9 Z',
+      farCuff: 'M-19.8 -69.8 L-23.2 -71 L-24.4 -67 L-21 -65.8 Z',
+      farHand: 'M-23 -71.1 C-24.6 -72 -26.4 -71.8 -27.4 -70.6 C-27.9 -69.8 -28 -68 -27.4 -67.1 C-26.6 -66.2 -25.3 -66.1 -24.4 -67 Z',
+      mug: 'M-33 -72.8 L-32.6 -66.1 C-32.4 -65 -28.6 -65 -28.4 -66.1 L-28 -72.8 C-29.4 -73.6 -31.6 -73.6 -33 -72.8 Z',
+      mugHandle: 'M-32.8 -71.4 C-35 -71.4 -35 -67.6 -32.6 -67.6',
+      mugRim: ellipse2(-30.5, -72.8, 2.5, 0.7, 0, 16),
+      steam: 'M-31.2 -74.6 C-32 -75.8 -30.4 -76.8 -31.2 -78 M-29.6 -74.8 C-30.4 -76 -28.8 -76.8 -29.6 -77.8',
+      torso: 'M-8.6 -54.2 C-8.4 -58.5 -8 -62.5 -8.1 -66.5 C-8.2 -70.2 -8.6 -73.2 -8.9 -76.2 C-9.2 -78.6 -8.1 -80.4 -5.8 -81.3 C-3.2 -82.3 0.8 -82.7 3.8 -82.2 C7.2 -81.7 9.7 -80.3 10.2 -77.7 C10.6 -74.9 9.8 -71.6 9.6 -67.2 C9.4 -62.6 9.6 -58.6 9.6 -54.6',
+      torsoClose: ' C7.2 -53.2 4 -52.4 0.6 -52.1 C-2.8 -51.8 -6.2 -52.4 -8.6 -54.2 Z',
       ribs: ribs.join(' '),
-      zones: 'M-9.7 -74.8 C-4.6 -77.8 2.6 -78.8 8.4 -77.9 M-8.6 -61.8 C-6 -58.6 3 -58 8.8 -61.4 M-9 -56 C-6.2 -55.2 -3.8 -54 -2.8 -52.2 M9.6 -57 C6.8 -56 4.4 -54.6 3.4 -52.6',
-      nearArm: 'M7.6 -83 C10.8 -83.3 12.8 -81.2 13 -77.6 C13.2 -73.8 13 -69.6 12.8 -65.4 C12.7 -61.4 12.9 -57.4 13 -52.3 L9 -52.1 C8.9 -56.6 8.8 -60.6 8.8 -64.6 C8.8 -69 8.6 -73.2 8.5 -76.6 C8.4 -79.2 7.5 -81.2 7.6 -83 Z',
-      shoulderRings: [ellipse2(10.8, -78.8, 2.6, 2.9, 0, 18, -2.3, 1.3), ellipse2(10.8, -78.8, 1.6, 1.8, 0, 14, -2.3, 1.3), ellipse2(10.9, -64.4, 1.5, 1.8, 0, 14)],
-      nearCuff: 'M8.8 -52.4 C10.4 -52.8 12 -52.8 13.6 -52.6 L13.8 -48.6 C12 -48.3 10.4 -48.3 8.8 -48.5 Z',
-      nearHand: 'M9.2 -48.6 C8.6 -46.4 8.5 -43.8 8.9 -41.4 C9.2 -39.8 10 -38.8 10.8 -39.1 C11.3 -39.4 11.2 -40.4 11.1 -41.2 C11.7 -40 12.6 -39.4 13.1 -39.9 C13.5 -40.4 13.3 -41.5 13 -42.4 C13.7 -42.1 14.3 -42.5 14.2 -43.3 C14.1 -45 13.7 -46.8 13.6 -48.6 Z',
-      details: 'M-0.4 -31.4 L7.6 -31.4 M-0.3 -29.8 L7.6 -29.8 M-0.3 -28.2 L7.6 -28.2 M-8.2 -31.4 L-1 -31.4 M-8.2 -29.8 L-1 -29.8 M-0.9 -6.6 C2.4 -6 5.6 -6 8.5 -6.6 M-9.4 -6.8 C-6.6 -6.3 -4 -6.3 -1.5 -6.7 M10 -52.6 L10 -48.4 M11.2 -52.7 L11.2 -48.3 M12.4 -52.7 L12.4 -48.4 M-20.4 -69.9 L-21.6 -66 M-21.4 -70.3 L-22.6 -66.4 M-3.6 -88.4 L-3.2 -83 M-2 -88.5 L-1.4 -82.6 M-0.4 -88.9 L0.2 -82.5',
-      neck: 'M-5 -89.2 C-5.2 -87 -5 -85 -4.6 -83 C-1.8 -81.8 1.6 -82 3.2 -83.4 C2.5 -85.4 1.8 -87.4 1.4 -89.6 C-0.7 -88.6 -3 -88.6 -5 -89.2 Z',
-      head: 'M-2.4 -100 C1 -100 2.9 -97.5 2.8 -94.4 C2.7 -91.6 2 -90.2 1.2 -89.5 C-0.5 -88.9 -2.3 -88.3 -4 -88.1 C-5.8 -88 -6.9 -89.7 -7.2 -92.3 C-7.4 -95.8 -5.9 -100 -2.4 -100 Z',
-      seam: 'M-1.1 -99.9 C-0.3 -97.2 -0.9 -93.6 -1.5 -91.4 C-1.9 -89.9 -2.2 -89 -2.3 -88.4',
-      ring: ellipse2(0.6, -94.3, 1.7, 3.3, -0.14, 30),
-      eyes: [ellipse2(-3.9, -95, 0.58, 0.62, 0, 10), ellipse2(-6.4, -95.1, 0.36, 0.56, 0, 10)]
+      zones: 'M-8.9 -73.4 C-4.8 -76.9 3 -78.1 9.9 -76.5 M-8.3 -59.6 C-5.4 -62.6 5.2 -62.8 9.5 -59.8 M-8.5 -56.2 C-5.4 -55.2 -2.6 -53.8 -0.4 -52.3 M9.5 -56.6 C6.6 -55.4 3.4 -53.8 1 -52.2',
+      nearArm: 'M7.4 -81.5 C10.6 -81.6 12.8 -79.8 13.1 -76.6 C13.4 -72.6 13.1 -68 12.9 -63.8 C12.8 -59.6 13.1 -55 13.2 -50.8 L9.2 -50.6 C9.1 -55 8.9 -59.2 9 -63.4 C9.1 -67.6 8.8 -72 8.6 -75.6 C8.4 -78.2 7.6 -80.2 7.2 -81.8 Z',
+      shoulder: [ellipse2(10.2, -77.6, 2.5, 3.1, -0.1, 20)],
+      shoulderRibs: 'M8.3 -79.2 L12.2 -79.2 M7.9 -77.6 L12.6 -77.6 M8.3 -76 L12.2 -76',
+      nearCuff: 'M9.1 -50.8 C10.6 -51.2 12 -51.2 13.3 -51 L13.5 -47.4 C12 -47.1 10.5 -47.1 9 -47.3 Z',
+      cuffRibs: 'M10.1 -51.1 L10.1 -47.2 M11.1 -51.2 L11.1 -47.1 M12.2 -51.1 L12.2 -47.1 M-20.9 -70.1 L-22.1 -66.2 M-22 -70.5 L-23.2 -66.6',
+      nearHand: 'M9.4 -47.4 C8.8 -45 8.7 -42.6 9.1 -40.2 C9.4 -38.8 10.2 -38 11 -38.3 C11.5 -38.6 11.4 -39.5 11.3 -40.3 C11.9 -39.3 12.8 -38.8 13.3 -39.3 C13.7 -39.8 13.5 -40.9 13.2 -41.8 C13.9 -41.6 14.5 -42 14.4 -42.8 C14.3 -44.4 13.9 -46 13.7 -47.4 Z',
+      fingers: 'M11.3 -40.3 C11.2 -41.6 11.3 -42.8 11.6 -43.8 M13.2 -41.8 C12.9 -42.9 12.9 -43.9 13.1 -44.8',
+      neck: 'M-2.4 -88.4 C-2.5 -86.6 -2.3 -84.8 -2 -83.2 C0.4 -82.2 2.6 -82.4 3.4 -83.4 C3 -85.2 2.8 -87.2 2.6 -89.2 C0.8 -88.6 -0.8 -88.4 -2.4 -88.4 Z',
+      neckRibs: 'M-1.3 -88.3 L-1.1 -83 M0 -88.4 L0.2 -82.6 M1.3 -88.6 L1.5 -82.6 M2.2 -88.9 L2.5 -82.9 M-2 -83.4 L0.6 -82.2 L3.3 -83.6',
+      head: 'M-0.6 -100 C2.3 -100 4.3 -97.9 4.3 -95.1 C4.3 -92.7 3.7 -90.9 3 -89.9 C1.1 -89.1 -1.3 -88.4 -3.3 -88.1 C-4.6 -88 -5.4 -89.6 -5.5 -91.8 C-5.6 -95.2 -4.3 -100 -0.6 -100 Z',
+      seam: 'M0.6 -99.9 C-0.5 -97.6 -1.4 -95 -1.3 -92.4 C-1.25 -90.6 -1.5 -89.3 -1.8 -88.5',
+      ring: ellipse2(1.4, -94.2, 2.1, 3.4, -0.12, 32),
+      disc: [ellipse2(1.4, -94.2, 1.5, 2.7, -0.12, 26)],
+      bezels: [ellipse2(-2.6, -94.7, 0.75, 0.8, 0, 12), ellipse2(-4.8, -94.8, 0.45, 0.72, 0, 12)],
+      eyes: [ellipse2(-2.6, -94.7, 0.42, 0.44, 0, 10), ellipse2(-4.8, -94.8, 0.24, 0.4, 0, 10)]
     };
   })();
 
@@ -435,27 +443,33 @@
     pen.fig(F.farShoe, m, 'k');
     pen.fig(F.nearLeg, m, 'k');
     pen.fig(F.nearShoe, m, 'k');
-    pen.fig(F.soles, m, 'l3');
+    pen.fig(F.soles + ' ' + F.hems, m, 'l3');
+    pen.fig(F.knees, m, 'l4');
     pen.fig(F.farUpper, m, 'k');
     pen.fig(F.farForearm, m, 'k');
     pen.fig(F.farCuff, m, 'k');
     pen.fig(F.mug, m, 'k');
     pen.fig(F.mugHandle, m, 'l2');
     pen.fig2([F.mugRim], m, 'l2', true);
-    pen.fig(F.steam, m, 'l3 steam');
+    live(pen.fig(F.steam, m, 'l3'), { css: 'pf-steam', pad: 1 });
     pen.fig(F.farHand, m, 'k');
     pen.fig(F.torso + F.torsoClose, m, 'f');
     pen.fig(F.torso, m, 'l1');
-    pen.fig(F.ribs + ' ' + F.zones, m, 'l3');
+    pen.fig(F.ribs, m, 'l4');
+    pen.fig(F.zones, m, 'l3');
     pen.fig(F.nearArm, m, 'k');
-    pen.fig2(F.shoulderRings, m, 'l3');
+    pen.fig2(F.shoulder, m, 'l3', true);
+    pen.fig(F.shoulderRibs, m, 'l4');
     pen.fig(F.nearCuff, m, 'k');
     pen.fig(F.nearHand, m, 'k');
-    pen.fig(F.details, m, 'l3');
+    pen.fig(F.cuffRibs + ' ' + F.fingers, m, 'l3');
     pen.fig(F.neck, m, 'k');
+    pen.fig(F.neckRibs, m, 'l3');
     pen.fig(F.head, m, 'k');
     pen.fig(F.seam, m, 'l3');
-    pen.fig2([F.ring], m, 'l1 glow', true);
+    pen.fig2(F.disc, m, 'l3', true);
+    live(pen.fig2([F.ring], m, 'l1 glow', true), { css: 'pf-pulse', pad: 4 });
+    pen.fig2(F.bezels, m, 'l3', true);
     pen.fig2(F.eyes, m, 'wf', true);
     pen.close();
   }
@@ -533,9 +547,7 @@
       var a = i / 48 * TAU, r0 = r * 1.55, r1 = r * (i % 4 === 0 ? 1.85 : 1.7);
       ticks.push([[cx + Math.cos(a) * r0, cy + Math.sin(a) * r0], [cx + Math.cos(a) * r1, cy + Math.sin(a) * r1]]);
     }
-    var tk = pen.lines2(ticks, 'l3');
-    tk.setAttribute('class', 'l3 spin-slow');
-    tk.style.transformOrigin = cx + 'px ' + cy + 'px';
+    live(pen.lines2(ticks, 'l3'), { css: 'pf-spin', pad: 1 });
     pen.lines2([[[cx - r * 2.3, cy], [cx - r * 1.95, cy]], [[cx + r * 1.95, cy], [cx + r * 2.3, cy]], [[cx, cy - r * 2.3], [cx, cy - r * 1.95]], [[cx, cy + r * 1.95], [cx, cy + r * 2.3]]], 'l2');
     pen.close();
   }
@@ -672,18 +684,20 @@
     pen.circle([sx + 3.5, sy, 236], X, Z, 3, 'l3', 16);
     pen.close();
     // the next container arriving to dock
-    var ar = pen.open({ 'class': 'arrive' });
+    var arW = pen.open(), ar = pen.open({ 'class': 'arrive' });
     drawContainer(pen, 1, -W / 2, 8 + 5 * (W + 8), L, W, true);
+    pen.close();
     pen.close();
     var p0 = pen.P([150, 0, 8 + 5 * (W + 8)]), p1 = pen.P([1, 0, 8 + 5 * (W + 8)]);
     pen.path(dPoly([pen.P([L + 150, 0, 8 + 5 * (W + 8) + W / 2]), pen.P([L + 4, 0, 8 + 5 * (W + 8) + W / 2])], false), 'l3 dsh');
     function slide(t) {
-      var u = (t * 0.07) % 1, e = u < 0.7 ? 1 - Math.pow(1 - u / 0.7, 3) : 1;
-      var k = 1 - e;
-      ar.setAttribute('transform', 'translate(' + f1((p0[0] - p1[0]) * k) + ' ' + f1((p0[1] - p1[1]) * k) + ')');
-      ar.style.opacity = u > 0.94 ? (1 - (u - 0.94) / 0.06).toFixed(2) : (u < 0.08 ? (u / 0.08).toFixed(2) : 1);
+      var u = (t * 0.07) % 1, k = u < 0.7 ? Math.pow(1 - u / 0.7, 3) : 0;
+      var o = String(Math.round((u > 0.94 ? 1 - (u - 0.94) / 0.06 : (u < 0.08 ? u / 0.08 : 1)) * 50) / 50);
+      nudge(ar, (p0[0] - p1[0]) * k, (p0[1] - p1[1]) * k);
+      if (ar._pfO !== o) { ar._pfO = o; ar.style.opacity = o; }
     }
     slide(0.62 / 0.07);
+    live(arW, { draw: slide, pad: 3 });
     anims.push(slide);
   }
 
@@ -702,6 +716,7 @@
     pen.lines([[[-24, 6, H + 5], [2, 6, H + 5]], [[8, -4, H + 1], [8, 4, H + 1]]], 'l3');
     pen.revolve([8, 0, H + 3], X, [[0, 5.4], [2, 5.4], [6, 4], [10, 0]]);
     var hub = pen.P([13, 0, H + 3]);
+    var rg = pen.open({ 'class': 'rotor' });
     var rotor = pen.path('', 'k');
     var M = [C30 * pen.s, -0.5 * pen.s, 0, pen.s, hub[0], hub[1]];
     function blade(a) {
@@ -717,6 +732,8 @@
     draw(0.4);
     anims.push(draw);
     pen.path(dPoly(ellipse2(hub[0], hub[1], 2.2, 2.2, 0, 12), true), 'k');
+    pen.close();
+    live(rg, { draw: draw, pad: 2 });
     pen.close();
   }
 
@@ -761,14 +778,16 @@
     pen.poly([add(c0, [0, -3, 0]), add(c1, [0, -3, 0]), add(c1, [0, 3, 0]), add(c0, [0, 3, 0])], 'k2');
     pen.line([c1, add(c1, [0, 0, -28])], 'l2');
     var belt = pen.path('', 'l1 belt'), PB = pen.snap();
-    anims.push(function (t) {
+    function beltAt(t) {
       var d = '';
       for (var j = 0; j < 9; j++) {
         var u = ((t * 0.08 + j / 9) % 1), q = PB(mix(add(c0, [0, 0, 0.8]), add(c1, [0, 0, 0.8]), u));
         d += 'M' + f1(q[0] - 1.2) + ' ' + f1(q[1]) + 'L' + f1(q[0] + 1.2) + ' ' + f1(q[1] - 0.4);
       }
       belt.setAttribute('d', d);
-    });
+    }
+    live(belt, { draw: beltAt, pad: 2 });
+    anims.push(beltAt);
     // hall: back wall and floor seen through the section cut
     var XC = 62, RZ = 49;
     function sideTop(y) { return topAt(LX) + 4 * Math.sin(y * 0.06); }
@@ -1176,6 +1195,7 @@
       lit.setAttribute('d', d);
     }
     glyph(0.6);
+    live(lit, { draw: glyph, pad: 2 });
     anims.push(function (t) { if (Math.floor(t * 8) !== glyph.f) { glyph.f = Math.floor(t * 8); glyph(glyph.f / 8); } });
     // cameras
     [[15, 38.5], [37.8, 38.5]].forEach(function (p) {
@@ -1236,6 +1256,7 @@
       bars.setAttribute('d', d);
     }
     wave(0.3);
+    live(bars, { draw: wave, pad: 2 });
     anims.push(function (t) { if (Math.floor(t * 14) !== wave.f) { wave.f = Math.floor(t * 14); wave(wave.f / 14); } });
     var rows = [['Calmness', 0.27], ['Interest', 0.19], ['Amusement', 0.13]];
     rows.forEach(function (r, i) {
@@ -1370,12 +1391,12 @@
     var fg = toV(84, 54, 0.46);
     pen.fig2([ellipse2(fg[0], fg[1] - 9.4, 1.4, 1.6, 0, 10)], m, 'l2', true);
     pen.fig2([[[fg[0], fg[1] - 7.8], [fg[0], fg[1] - 3.4], [fg[0] - 1.4, fg[1]]], [[fg[0], fg[1] - 3.4], [fg[0] + 1.4, fg[1]]]], m, 'l2');
-    pen.fig2([ellipse2(10, 9, 1.2, 1.2, 0, 8)], m, 'wf blink', true);
+    live(pen.fig2([ellipse2(10, 9, 1.2, 1.2, 0, 8)], m, 'wf', true), { css: 'pf-blink', pad: 1 });
     pen.fig2([[[13.4, 9], [22, 9]]], m, 'l3');
     // prompt bar and the frame strip, newest frame still generating
     pen.fig2([rrect2(4, 57, W - 8, 11, 5, 3)], m, 'l3', true);
     pen.fig2([[[10, 62.5], [40, 62.5]], [[43, 62.5], [60, 62.5]]], m, 'l3 dsh');
-    pen.fig2([[[63, 59.6], [63, 65.4]]], m, 'l1 blink');
+    live(pen.fig2([[[63, 59.6], [63, 65.4]]], m, 'l1'), { css: 'pf-blink', pad: 1 });
     var strip = [];
     for (i = 0; i < 5; i++) strip.push(rrect2(4 + i * 24, H + 4, 20, 12, 1.2, 2));
     pen.fig2(strip, m, 'l3', true);
@@ -1384,7 +1405,7 @@
     pen.fig2(fr, m, 'l4');
     var gen = pen.path('', 'l2');
     var mm = [m[0] * pen.s, m[1] * pen.s, m[2] * pen.s, m[3] * pen.s, pen.ox + m[4] * pen.s, pen.oy + m[5] * pen.s];
-    anims.push(function (t) {
+    function genAt(t) {
       var u = (t * 0.4) % 1, bx = 100, d = '';
       var segs = [[[bx + 2, H + 14], [bx + 10, H + 7.6]], [[bx + 10, H + 7.6], [bx + 18, H + 14]], [[bx + 3, H + 7.6], [bx + 17, H + 7.6]]];
       segs.forEach(function (sg, j) {
@@ -1394,7 +1415,9 @@
         d += dPoly(p, false);
       });
       gen.setAttribute('d', d);
-    });
+    }
+    live(gen, { draw: genAt, pad: 2 });
+    anims.push(genAt);
     pen.close();
   }
 
@@ -1458,14 +1481,13 @@
     var tB = pen.P(circle3(c, X, Y, R + 12, 1, Math.PI * 0.5, Math.PI * 0.5)[0]);
     pen.text('action', [1, 0, 0, 1, (tA[0] - pen.ox) / pen.s, (tA[1] - 3 - pen.oy) / pen.s], 'tx', 6, 'middle');
     pen.text('observation, reward', [1, 0, 0, 1, (tB[0] - pen.ox) / pen.s, (tB[1] + 9 - pen.oy) / pen.s], 'tx', 6, 'middle');
-    var dots = pen.path('', 'wf'), PL = pen.snap();
+    var PL = pen.snap(), host = dotHost(pen), dots = [];
+    for (var i = 0; i < 6; i++) dots.push(new Dot(host, 1.3, false));
     anims.push(function (t) {
-      var d = '';
       for (var i = 0; i < 6; i++) {
         var a = Math.PI + ((t * 0.18 + i / 6) % 1) * TAU, p = PL(add(c, [Math.cos(a) * R, Math.sin(a) * R, 0]));
-        d += dPoly(ellipse2(p[0], p[1], 1.3, 1.3, 0, 8), true);
+        dots[i].at(p[0], p[1], 1);
       }
-      dots.setAttribute('d', d);
     });
     pen.close();
   }
@@ -1490,6 +1512,184 @@
     return { focus: pen.P(focus) };
   }
 
+  // Euclyd's craftwerk: one square package of 64 tiles, each a small processor beside its own memory,
+  // on a plinth carrying the Euclyd mark. A wave of compute sweeps the tiles corner to corner.
+  function drawEuclyd(pen, anims) {
+    pen.open({ 'class': 'euclyd' });
+    var L = 60, B = 8, o = 1.8, T = L - 2 * o, z = 11.2, b = 0.9, i, j;
+    pen.box(-B, -B, 0, L + 2 * B, L + 2 * B, 7, 'k2');
+    pen.box(0, 0, 7, L, L, 2.6, 'k2');
+    pen.lines([[[L, 2.5, 8.3], [L, L - 2.5, 8.3]], [[2.5, L, 8.3], [L - 2.5, L, 8.3]]], 'l3 perf');
+    pen.box(o, o, 9.6, T, T, z - 9.6, 'k');
+    pen.lines([[[o + b, o + b, z], [o + T - b, o + b, z], [o + T - b, o + T - b, z], [o + b, o + T - b, z]]], 'l3', true);
+    var p = (T - 2 * b) / 8, g = 0.9, tiles = [];
+    function tile(ii, jj) {
+      var x = o + b + ii * p + g / 2, y = o + b + jj * p + g / 2, s = p - g;
+      return [[x, y, z], [x + s, y, z], [x + s, y + s, z], [x, y + s, z]];
+    }
+    for (i = 0; i < 8; i++) for (j = 0; j < 8; j++) tiles.push(tile(i, j));
+    pen.lines(tiles, 'l3', true);
+    // the mark on the plinth: a square, its inscribed circle, a cross and a V from the top corners
+    var m = pen.planeM([L + B, L * 0.66, 5.9], [0, -1, 0], [0, 0, -1]), q = 4.8;
+    pen.fig2([[[0, 0], [q, 0], [q, q], [0, q]], ellipse2(q / 2, q / 2, q / 2, q / 2, 0, 24)], m, 'l2', true);
+    pen.fig2([[[q / 2, 0], [q / 2, q]], [[0, q / 2], [q, q / 2]], [[0, 0], [q / 2, q / 2], [q, 0]]], m, 'l2');
+    var hot = pen.path('', 'l1'), PH = pen.snap();
+    function wave(t) {
+      var u = (t % 4.6) / 2.4, k = u < 1 ? Math.floor(u * 15) : -1, d = '';
+      if (k === wave.k) return;
+      wave.k = k;
+      for (i = 0; i < 8; i++) { j = k - i; if (j >= 0 && j < 8) d += dPoly(tile(i, j).map(function (v) { return PH(v); }), true); }
+      hot.setAttribute('d', d);
+    }
+    wave(1.2);
+    live(hot, { draw: function (t) { wave.k = null; wave(t); }, pad: 2 });
+    anims.push(wave);
+    pen.close();
+    return { top: pen.P([L / 2, L / 2, z]), back: pen.P([o + T * 0.25, o + 2, z]), front: pen.P([o + 2, o + T * 0.7, z]) };
+  }
+
+  // An AI materials-design station: a porous framework whose front cells assemble one by one, a CO2
+  // molecule drifting into one of its pores, and a panel ranking candidate structures on a target.
+  function drawMaterials(pen, anims) {
+    pen.open({ 'class': 'materials' });
+    var u = 14, X0 = 2.6 * u, Y0 = 0.4 * u, Z0 = u, i, j, k;
+    pen.box(0, 0, 0, 6 * u, 4.6 * u, 2.2, 'k2');
+    pen.revolve([X0 + 1.5 * u, Y0 + 1.5 * u, 2.2], Z, [[0, 0.95 * u], [1.6, 0.95 * u]]);
+    pen.line([[X0 + 1.5 * u, Y0 + 1.5 * u, 3.8], [X0 + 1.5 * u, Y0 + 1.5 * u, Z0 - 1.4]], 'l3');
+    function N(a) { return [X0 + a[0] * u, Y0 + a[1] * u, Z0 + a[2] * u]; }
+    function edges(ci, cj, ck) {
+      var e = [];
+      for (var a = 0; a < 2; a++) for (var c = 0; c < 2; c++) {
+        e.push([[ci, cj + a, ck + c], [ci + 1, cj + a, ck + c]], [[ci + a, cj, ck + c], [ci + a, cj + 1, ck + c]], [[ci + a, cj + c, ck], [ci + a, cj + c, ck + 1]]);
+      }
+      return e;
+    }
+    function key(p) { return p.join(','); }
+    function ekey(e) { var a = key(e[0]), c = key(e[1]); return a < c ? a + '|' + c : c + '|' + a; }
+    // the five front cells of the top layer are still being generated
+    var ghost = [[2, 2, 2], [2, 1, 2], [1, 2, 2], [2, 0, 2], [0, 2, 2]];
+    var isGhost = {}, solid = {}, nodes = {};
+    ghost.forEach(function (g) { isGhost[key(g)] = true; });
+    for (i = 0; i < 3; i++) for (j = 0; j < 3; j++) for (k = 0; k < 3; k++) {
+      if (isGhost[key([i, j, k])]) continue;
+      edges(i, j, k).forEach(function (e) { solid[ekey(e)] = e; nodes[key(e[0])] = e[0]; nodes[key(e[1])] = e[1]; });
+    }
+    var cells = ghost.map(function (g) {
+      var own = edges(g[0], g[1], g[2]).filter(function (e) { return !solid[ekey(e)]; }), pts = {};
+      own.forEach(function (e) { e.forEach(function (q) { if (!nodes[key(q)]) pts[key(q)] = q; }); });
+      return { edges: own, nodes: Object.keys(pts).map(function (kk) { return pts[kk]; }) };
+    });
+    function depth(a, c) { return (a[0] + a[1] + a[2]) - (c[0] + c[1] + c[2]); }
+    var PS = pen.snap();
+    function proj(list) { return list.map(function (q) { return PS(q); }); }
+    function nodeD(list) {
+      return list.slice().sort(depth).map(function (q) {
+        var c = N(q), h = 1.3, x = c[0] - h, y = c[1] - h, z = c[2] - h, x1 = x + 2 * h, y1 = y + 2 * h, z1 = z + 2 * h;
+        return dPoly(proj([[x, y, z1], [x1, y, z1], [x1, y1, z1], [x, y1, z1]]), true) +
+          dPoly(proj([[x1, y, z], [x1, y1, z], [x1, y1, z1], [x1, y, z1]]), true) +
+          dPoly(proj([[x, y1, z], [x1, y1, z], [x1, y1, z1], [x, y1, z1]]), true);
+      }).join('');
+    }
+    pen.lines(Object.keys(solid).map(function (kk) { return solid[kk].map(N); }), 'l2');
+    var ge = [];
+    cells.forEach(function (c) { c.edges.forEach(function (e) { ge.push(e.map(N)); }); });
+    pen.lines(ge, 'l3 dsh');
+    pen.path(nodeD(Object.keys(nodes).map(function (kk) { return nodes[kk]; })), 'k');
+    // a pore on the front face, where the molecule docks
+    var pc = [X0 + 3 * u, Y0 + 1.5 * u, Z0 + 1.5 * u];
+    pen.circle(pc, Y, Z, 0.36 * u, 'l3 dsh', 28);
+    // assembly of the front cells, and the molecule's approach, on layers of their own
+    var ag = pen.open(), ae = pen.path('', 'l2'), an = pen.path('', 'k');
+    pen.close();
+    var built = -1;
+    function assemble(t) {
+      var tt = t % 10, n = tt < 8.6 ? Math.max(0, Math.min(5, Math.floor((tt - 0.4) / 0.8) + 1)) : 5;
+      var o = tt < 8.6 ? 1 : Math.max(0, 1 - (tt - 8.6) / 1.4);
+      if (n !== built) {
+        built = n;
+        var es = [], ns = [];
+        for (var c = 0; c < n; c++) { es = es.concat(cells[c].edges); ns = ns.concat(cells[c].nodes); }
+        ae.setAttribute('d', es.map(function (e) { return dPoly(proj(e.map(N)), false); }).join(''));
+        an.setAttribute('d', nodeD(ns));
+      }
+      var ov = String(Math.round(o * 20) / 20);
+      if (ag._pfO !== ov) { ag._pfO = ov; (agL.sprite || ag).style.opacity = ov; }
+    }
+    var agL = live(ag, { draw: function (t) { built = -1; assemble(t); }, pad: 3 });
+    anims.push(assemble);
+    var P0 = pen.P(pc), co2 = pen.open(), rings = pen.path('', 'l1'), core = pen.path('', 'wf');
+    pen.close();
+    function molecule(t) {
+      var tt = t % 12, e = Math.min(1, tt / 4), f = 1 - Math.pow(1 - e, 3);
+      var x = P0[0] + (1 - f) * 44, y = P0[1] - (1 - f) * 20 + Math.sin(f * Math.PI) * 6, a = -0.35 * (1 - f);
+      var q = String(Math.round(x * 10) + ',' + Math.round(y * 10) + ',' + Math.round(a * 50));
+      if (co2._pfK !== q) {
+        co2._pfK = q;
+        var dx = Math.cos(a) * 2.9, dy = Math.sin(a) * 2.9;
+        rings.setAttribute('d', dPoly(ellipse2(x - dx, y - dy, 1.55, 1.55, 0, 12), true) + dPoly(ellipse2(x + dx, y + dy, 1.55, 1.55, 0, 12), true));
+        core.setAttribute('d', dPoly(ellipse2(x, y, 1.05, 1.05, 0, 10), true));
+      }
+      var ov = String(tt > 11 ? Math.round((12 - tt) * 20) / 20 : (tt < 0.4 ? Math.round(tt / 0.4 * 20) / 20 : 1));
+      if (co2._pfO !== ov) { co2._pfO = ov; (coL.sprite || co2).style.opacity = ov; }
+    }
+    var coL = live(co2, { draw: function (t) { co2._pfK = null; molecule(t); }, pad: 3 });
+    anims.push(molecule);
+    // the ranking panel: five candidates, each with its net, scored against a dashed target
+    var px = 0.3 * u, py = 4.3 * u, pz = 0.9 * u, pw = 2.5 * u, ph = 1.7 * u;
+    [0.25, 0.8].forEach(function (f) { pen.line([[px + pw * f, py - 0.5, 0], [px + pw * f, py - 0.5, pz]], 'l3'); });
+    pen.box(px, py - 1, pz, pw, 1, ph, 'k');
+    var m = pen.planeM([px, py, pz + ph], [1, 0, 0], [0, 0, -1]), lens = [22, 18.5, 15, 11, 7], nets = [], bars = [];
+    for (i = 0; i < 5; i++) {
+      var ry = 3.4 + i * 4.4;
+      nets.push([[2.4, ry - 1.5], [5.4, ry - 1.5], [5.4, ry + 1.5], [2.4, ry + 1.5]]);
+      bars.push([[7.6, ry], [7.6 + lens[i], ry]]);
+    }
+    pen.fig2(nets, m, 'l3', true);
+    pen.fig2([[[3.9, 1.9], [3.9, 4.9]], [[2.4, 3.4], [5.4, 3.4]]], m, 'l3');
+    pen.fig2([ellipse2(3.9, 7.8, 1.3, 1.3, Math.PI / 6, 6)], m, 'l3', true);
+    pen.fig2([[[2.9, 13.4], [3.9, 11.2], [4.9, 13.4], [2.9, 13.4]], [[2.6, 17.4], [3.3, 15.8], [4.1, 17.4], [4.8, 15.8]], [[2.7, 20.8], [5.1, 20.8]], [[2.7, 22.2], [5.1, 22.2]]], m, 'l3');
+    pen.fig2(bars, m, 'l1');
+    pen.fig2([[[21.6, 1.2], [21.6, 22.6]]], m, 'l3 dsh');
+    pen.fig2([[[30.8, 1.6], [31.8, 1.6], [31.8, 5.2], [30.8, 5.2]]], m, 'l2');
+    pen.close();
+    return { top: pen.P(N([1.5, 1.5, 3])), right: pen.P([6 * u, 0.9 * u, 2.2]), front: pen.P([2.2 * u, 4.6 * u, 2.2]), left: pen.P([0.2 * u, 4.6 * u, 2.2]), base: pen.P([6 * u, 4.6 * u, 0]) };
+  }
+
+  // Detail view of Nothing's audio, linked to the phone: a Headphone (1) cup face on, and an Ear (3a) case.
+  function drawAudioCallout(pen, cc, cr, target, other) {
+    pen.at(0, 0, 1);
+    var id = 'pf-clip-audio-' + Math.round(cc[0]) + '-' + Math.round(cc[1]);
+    var clip = el('clipPath', { id: id });
+    clip.appendChild(el('circle', { cx: cc[0], cy: cc[1], r: cr - 1.2 }));
+    pen.g.appendChild(clip);
+    pen.path(dPoly(ellipse2(cc[0], cc[1], cr, cr, 0, 64), true), 'k');
+    pen.open({ 'clip-path': 'url(#' + id + ')' });
+    var s = cr / 38, m = [s, 0, 0, s, cc[0] - 9 * s, cc[1] + 3 * s], e = [s, 0, 0, s, cc[0] + 20 * s, cc[1] + 12 * s];
+    pen.fig2([rrect2(-4.5, -33, 9, 15, 2, 3)], m, 'k2', true);
+    pen.fig2([[[-0.7, -18.2], [-0.7, -16.6]], [[0.7, -18.2], [0.7, -16.6]]], m, 'l2');
+    pen.fig2([rrect2(-15, -17, 30, 36, 7.5, 5)], m, 'k', true);
+    pen.fig2([ellipse2(0, 2, 11, 15.2, 0, 40)], m, 'l2', true);
+    pen.fig2([rrect2(-7, -9, 14, 22.5, 3, 3)], m, 'l3', true);
+    pen.fig2([ellipse2(0, -2.2, 3.4, 3.4, 0, 20), ellipse2(0, 6.4, 3.4, 3.4, 0, 20)], m, 'l2', true);
+    pen.fig2([ellipse2(0, -2.2, 1.8, 1.8, 0, 14), ellipse2(0, 6.4, 1.8, 1.8, 0, 14)], m, 'l3', true);
+    pen.fig2([[[-10.4, 1.2], [-8.4, 1.2], [-8.4, 3.2], [-10.4, 3.2]]], m, 'wf', true);
+    pen.fig2([ellipse2(11.2, -13.2, 1.6, 1.6, 0, 12)], m, 'l3', true);
+    pen.fig2([rrect2(-9, -6.5, 18, 13, 4.5, 4)], e, 'k', true);
+    pen.fig2([[[-8.6, -1.4], [8.6, -1.4]]], e, 'l3');
+    pen.fig2([ellipse2(-3.8, 1.8, 2.2, 2.2, 0, 14), ellipse2(3.8, 1.8, 2.2, 2.2, 0, 14)], e, 'l2', true);
+    pen.fig2([[[-3.8, 1.8], [-1.3, 4.6]], [[3.8, 1.8], [1.3, 4.6]]], e, 'l3');
+    pen.fig2([ellipse2(-1.4, -3.8, 0.45, 0.45, 0, 8), ellipse2(0, -3.8, 0.45, 0.45, 0, 8), ellipse2(1.4, -3.8, 0.45, 0.45, 0, 8)], e, 'wf', true);
+    pen.close();
+    pen.path(dPoly(ellipse2(cc[0], cc[1], cr + 4, cr + 4, 0, 64), true), 'l3 dsh');
+    var ang = Math.atan2(target[1] - cc[1], target[0] - cc[0]);
+    pen.path(dPoly([[cc[0] + Math.cos(ang) * (cr + 4), cc[1] + Math.sin(ang) * (cr + 4)], [target[0] - Math.cos(ang) * 5, target[1] - Math.sin(ang) * 5]], false), 'callout');
+    pen.path(dPoly(ellipse2(target[0], target[1], 5, 5, 0, 16), true), 'callout');
+    if (other) {
+      var a2 = Math.atan2(other[1] - cc[1], other[0] - cc[0]);
+      pen.path(dPoly([[cc[0] + Math.cos(a2) * (cr + 4), cc[1] + Math.sin(a2) * (cr + 4)], [other[0] - Math.cos(a2) * (other[2] + 4), other[1] - Math.sin(a2) * (other[2] + 4)]], false), 'callout');
+    }
+  }
+
   /* ---------- scene ---------- */
 
   var CSS = [
@@ -1511,7 +1711,6 @@
     '.tx{fill:rgba(232,232,232,.62);font-family:"Berkeley Mono","SF Mono","Fira Code",monospace;letter-spacing:.02em}',
     '.tx-hi{fill:rgba(232,232,232,.9)}',
     '.flow{fill:none;stroke:rgba(232,232,232,.4);stroke-width:.75;stroke-dasharray:1.4 3.2;stroke-linecap:round}',
-    '.flow-dot{fill:#fff;filter:drop-shadow(0 0 1.4px rgba(255,255,255,.9))}',
     '.leader{fill:none;stroke:rgba(232,232,232,.45);stroke-width:.7}',
     '.anchor{fill:#e8e8e8}',
     '.tube-o{fill:none;stroke:#e8e8e8;stroke-width:2.6;stroke-linecap:round}',
@@ -1520,18 +1719,23 @@
     '.pf-item{opacity:0;transform:translateY(5px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.16,1,.3,1)}',
     '.is-built .pf-item{opacity:1;transform:none;transition-delay:var(--d,0s)}',
     '.pf-dim .pf-item:not(.is-on){opacity:.28;transition-delay:0s}',
-    '.pf-dim .pf-flows{opacity:.3}',
-    '.pf-flows{transition:opacity .4s ease}',
-    '.spin-slow{animation:pf-spin 80s linear infinite}',
-    '.blink{animation:pf-blink 1.1s steps(1) infinite}',
-    '.steam{animation:pf-steam 3s ease-in-out infinite}',
-    '.neo .glow{animation:pf-pulse 3.2s ease-in-out infinite}',
+    '.pf-dim .pf-flows,.pf-dim .pf-flowdots{opacity:.3}',
+    '.pf-flows,.pf-flowdots{transition:opacity .4s ease}',
+    '.pf-scene{will-change:transform}',
+    '.pf-live,.pf-flowdots,.pf-dotbox{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}',
+    '.pf-sprite{position:absolute;overflow:visible;will-change:transform}',
+    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform}',
+    '.flow-dot{fill:#fff;filter:drop-shadow(0 0 1.4px rgba(255,255,255,.9))}',
+    '.pf-spin{animation:pf-spin 80s linear infinite}',
+    '.pf-blink{animation:pf-blink 1.1s steps(1) infinite}',
+    '.pf-steam{animation:pf-steam 3s ease-in-out infinite}',
+    '.pf-pulse{animation:pf-pulse 3.2s ease-in-out infinite}',
     '.is-paused *{animation-play-state:paused!important}',
     '@keyframes pf-spin{to{transform:rotate(360deg)}}',
     '@keyframes pf-blink{0%,55%{opacity:1}56%,100%{opacity:0}}',
     '@keyframes pf-steam{0%,100%{opacity:.15}50%{opacity:.8}}',
     '@keyframes pf-pulse{0%,100%{opacity:1}50%{opacity:.55}}',
-    '@media (prefers-reduced-motion:reduce){.pf-item{transition:none}.spin-slow,.blink,.steam,.neo .glow{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.pf-item{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
   ].join('');
 
   function curve(pts, n) {
@@ -1554,6 +1758,130 @@
     return out;
   }
 
+  /* ---------- live layers ---------- */
+
+  // Parts that change after the scene is built are lifted out of the main drawing into small layers
+  // of their own, so an animation frame never repaints the static line work underneath.
+  var LIVE = { list: [], dots: null, L: null, k: 1 };
+
+  // opt.draw(t) redraws the part for time t, and is sampled to find how far the part reaches.
+  // opt.css names a compositor animation for the lifted layer. opt.pad grows it for strokes and glows.
+  function live(node, opt) {
+    var h = { node: node, opt: opt || {}, sprite: null, box: null };
+    LIVE.list.push(h);
+    return h;
+  }
+
+  // Moves a group, in steps of 0.05 units so a slow drift repaints only when it visibly could.
+  function nudge(g, dx, dy) {
+    var v = 'translate(' + (Math.round(dx * 20) / 20) + ' ' + (Math.round(dy * 20) / 20) + ')';
+    if (g._pfT !== v) { g._pfT = v; g.setAttribute('transform', v); }
+  }
+
+  // Dots placed in scene units and moved by the compositor. Dots that belong to a product share its
+  // fade-in and hover highlight; flow dots share the flows' dimming.
+  function dotHost(pen) {
+    for (var g = pen && pen.g; g && g.getAttribute; g = g.parentNode) {
+      if (/\bpf-item\b/.test(g.getAttribute('class') || '')) {
+        if (!g._pfDots) {
+          var d = document.createElement('div');
+          d.className = 'pf-dotbox ' + g.getAttribute('class');
+          if (g.getAttribute('data-id')) d.setAttribute('data-id', g.getAttribute('data-id'));
+          d.style.cssText = g.style.cssText;
+          LIVE.dots.parentNode.insertBefore(d, LIVE.dots);
+          g._pfDots = d;
+        }
+        return g._pfDots;
+      }
+    }
+    return LIVE.dots;
+  }
+  // Each dot is its own tiny SVG in scene units, drawn exactly as before, so only its own few pixels
+  // repaint when it changes size. Offsets are in pixels from the stage's measured scale: a percentage
+  // of the dot's own width would multiply the browser's rounding of that width into visible drift.
+  function Dot(host, r, glow) {
+    var L = LIVE.L, S = glow ? 7 : r + 1;
+    var s = el('svg', { viewBox: [-S, -S, 2 * S, 2 * S].join(' '), 'class': 'pf-dot', 'aria-hidden': 'true', focusable: 'false' });
+    s.style.width = (2 * S / L.w * 100).toFixed(4) + '%';
+    s.style.height = (2 * S / L.h * 100).toFixed(4) + '%';
+    this.p = el('path', { 'class': glow ? 'flow-dot' : 'wf' });
+    s.appendChild(this.p);
+    host.appendChild(s);
+    this.e = s;
+    this.S = S;
+    this.r = r;
+    this.q = -1;
+  }
+  // Size moves in steps of 0.05 units, far below what shows, so a dot repaints a few times a second.
+  Dot.prototype.at = function (x, y, s) {
+    var k = LIVE.k, S = this.S, q = Math.round(this.r * s * 20);
+    this.e.style.transform = 'translate(' + ((x - S - (LIVE.L.x0 || 0)) * k).toFixed(2) + 'px,' + ((y - S) * k).toFixed(2) + 'px)';
+    if (q !== this.q) { this.q = q; this.p.setAttribute('d', dPoly(ellipse2(0, 0, q / 20, q / 20, 0, 8), true)); }
+  };
+
+  // Everything drawn after a lifted part was painted over it. Those shapes, drawn in black with the
+  // same strokes, become a mask on the part's layer, so it never paints over them.
+  function occluders(h, svg, box) {
+    var out = [], all = svg.querySelectorAll('path');
+    for (var i = 0; i < all.length; i++) {
+      var c = all[i];
+      if (!(h.node.compareDocumentPosition(c) & 4)) continue;
+      if (LIVE.list.some(function (o) { return o.node.contains(c); })) continue;
+      var r = c.getBBox();
+      if (r.x > box[0] + box[2] || r.y > box[1] + box[3] || r.x + r.width < box[0] || r.y + r.height < box[1]) continue;
+      var cs = getComputedStyle(c), fill = cs.fill !== 'none', stroke = cs.stroke !== 'none' && parseFloat(cs.strokeWidth) > 0;
+      if (!fill && !stroke) continue;
+      var st = 'fill:' + (fill ? '#000' : 'none') + ';stroke:' + (stroke ? '#000' : 'none');
+      if (stroke) {
+        st += ';stroke-width:' + cs.strokeWidth + ';stroke-linecap:' + cs.strokeLinecap + ';stroke-linejoin:' + cs.strokeLinejoin;
+        if (cs.strokeDasharray && cs.strokeDasharray !== 'none') st += ';stroke-dasharray:' + cs.strokeDasharray;
+      }
+      out.push(el('path', { d: c.getAttribute('d'), 'fill-rule': c.getAttribute('fill-rule'), style: st }));
+    }
+    return out;
+  }
+
+  function liftLive(layer, svg, L) {
+    var mid = 0;
+    LIVE.list.forEach(function (h) {
+      var n = h.node, o = h.opt, b = null, i;
+      function grow() {
+        var r = n.getBBox();
+        if (r.width <= 0 && r.height <= 0) return;
+        b = b ? [Math.min(b[0], r.x), Math.min(b[1], r.y), Math.max(b[2], r.x + r.width), Math.max(b[3], r.y + r.height)] : [r.x, r.y, r.x + r.width, r.y + r.height];
+      }
+      n.removeAttribute('transform');
+      if (o.draw) for (i = 0; i <= 40; i++) { o.draw(i * 0.37); grow(); }
+      else grow();
+      if (!b) return;
+      var p = o.pad || 3;
+      var box = h.box = [f1(b[0] - p), f1(b[1] - p), f1(b[2] - b[0] + 2 * p), f1(b[3] - b[1] + 2 * p)];
+      var s = el('svg', { viewBox: box.join(' '), 'class': 'pf-sprite' + (o.css ? ' ' + o.css : ''), 'aria-hidden': 'true', focusable: 'false' });
+      s.style.left = ((box[0] - (L.x0 || 0)) / L.w * 100).toFixed(4) + '%';
+      s.style.top = (box[1] / L.h * 100).toFixed(4) + '%';
+      s.style.width = (box[2] / L.w * 100).toFixed(4) + '%';
+      s.style.height = (box[3] / L.h * 100).toFixed(4) + '%';
+      var host = s, chain = [];
+      for (var g = n.parentNode; g && g !== svg; g = g.parentNode) chain.unshift(g);
+      chain.forEach(function (a) { var c = a.cloneNode(false); c.removeAttribute('id'); host.appendChild(c); host = c; });
+      var occ = o.css === 'pf-spin' ? [] : occluders(h, svg, box);
+      if (occ.length) {
+        var id = 'pf-occ-' + (++mid), mk = el('mask', { id: id, maskUnits: 'userSpaceOnUse', x: box[0], y: box[1], width: box[2], height: box[3] });
+        mk.appendChild(el('rect', { x: box[0], y: box[1], width: box[2], height: box[3], fill: '#fff' }));
+        occ.forEach(function (m) { mk.appendChild(m); });
+        s.insertBefore(mk, s.firstChild);
+        host = host.appendChild(el('g', { mask: 'url(#' + id + ')' }));
+      }
+      host.appendChild(n);
+      layer.insertBefore(s, firstDotBox(layer));
+      h.sprite = s;
+    });
+  }
+  function firstDotBox(layer) {
+    for (var c = layer.firstChild; c; c = c.nextSibling) if (c.nodeName === 'DIV') return c;
+    return null;
+  }
+
   function Flow(pen, pts, opt) {
     opt = opt || {};
     var path = opt.smooth === false ? pts : curve(pts, 14);
@@ -1563,10 +1891,10 @@
     this.len = len;
     this.total = len[len.length - 1];
     pen.path(dPoly(path, false), 'flow');
-    this.dots = pen.path('', 'flow-dot');
     this.n = opt.n || Math.max(2, Math.round(this.total / 90));
     this.speed = opt.speed || 38;
-    this.r = opt.r || 1.6;
+    this.dots = [];
+    for (i = 0; i < this.n; i++) this.dots.push(new Dot(LIVE.dots, opt.r || 1.6, true));
   }
   Flow.prototype.at = function (d) {
     var len = this.len, i = 1;
@@ -1575,14 +1903,11 @@
     return [lerp(a[0], b[0], t), lerp(a[1], b[1], t)];
   };
   Flow.prototype.tick = function (t) {
-    var d = '';
     for (var i = 0; i < this.n; i++) {
       var u = ((t * this.speed / this.total) + i / this.n) % 1;
-      var p = this.at(u * this.total), fade = Math.sin(u * Math.PI);
-      var r = this.r * (0.55 + 0.45 * fade);
-      d += dPoly(ellipse2(p[0], p[1], r, r, 0, 8), true);
+      var p = this.at(u * this.total);
+      this.dots[i].at(p[0], p[1], 0.55 + 0.45 * Math.sin(u * Math.PI));
     }
-    this.dots.setAttribute('d', d);
   };
 
   function groundGrid(pen, ox, oy, size, step, cls) {
@@ -1603,8 +1928,10 @@
   var LAYOUTS = {};
 
   LAYOUTS.wide = {
-    w: 1600,
+    x0: -200,
+    w: 1840,
     h: 1000,
+    fade: [800, 740, 896, 0.6],
     build: function (pen, anims, flows) {
       var A = {};
       // ground
@@ -1616,6 +1943,7 @@
       // sky
       item(pen, null, 0.1);
       drawStars(pen, [20, 10, 1600, 330], 46, 3);
+      drawStars(pen, [-190, 10, 20, 330], 7, 23);
       drawSun(pen, 112, 104, 22, anims);
       A.sun = [112, 104];
       pen.close();
@@ -1630,14 +1958,17 @@
       pen.close();
 
       item(pen, 'exploration', 0.3);
-      var nyxG = pen.open({ 'class': 'nyx-drift' });
+      var nyxW = pen.open(), nyxG = pen.open({ 'class': 'nyx-drift' });
       pen.at(600, 150, 1);
       drawNyx(pen, [0, 0, 0], unit([1, -0.28, 0.1]), 0.86);
       A.nyx = pen.P([46, -13, 34]);
       A.nyxNose = pen.P([98, -28, 10]);
       A.nyxTail = pen.P([0, 0, 0]);
       pen.close();
-      anims.push(function (t) { var u = Math.sin(t * 0.6) * 2.2; nyxG.setAttribute('transform', 'translate(' + f1(u * 0.97) + ' ' + f1(u * 0.23) + ')'); });
+      pen.close();
+      var nyxAt = function (t) { var u = Math.sin(t * 0.6) * 2.2; nudge(nyxG, u * 0.97, u * 0.23); };
+      live(nyxW, { draw: nyxAt, pad: 3 });
+      anims.push(nyxAt);
       drawParachutes(pen, 1512, 452, 1.05);
       A.chutes = [1512, 452];
       pen.close();
@@ -1649,6 +1980,15 @@
       A.cemvision = pen.P([70, 38, 70]);
       A.bags = pen.P([170, 60, 12]);
       A.kiln = pen.P([150, 40, 0]);
+      A.cemIn = pen.P([10, 60, 40]);
+      pen.close();
+
+      item(pen, 'unannounced', 0.42);
+      pen.at(-104, 470, 1.12);
+      var mt = drawMaterials(pen, anims);
+      A.materials = mt.top;
+      A.matRight = mt.right;
+      A.matFront = mt.front;
       pen.close();
 
       item(pen, null, 0.45);
@@ -1661,6 +2001,14 @@
       pen.at(1290, 520, 1.05);
       var gs = drawGroundStation(pen);
       A.dish = gs.focus;
+      pen.close();
+
+      item(pen, 'euclyd', 0.62);
+      pen.at(1494, 604, 0.94);
+      var eu = drawEuclyd(pen, anims);
+      A.euclyd = pen.P([68, 68, 0]);
+      A.euIn = eu.back;
+      A.euOut = eu.front;
       pen.close();
 
       // middle row
@@ -1691,6 +2039,7 @@
       pen.at(96, 690, 1.12);
       drawGenEng(pen);
       A.geneng = pen.P([153, 77, 0]);
+      A.geCard = pen.P([60, -18, 96]);
       pen.close();
 
       var hx = 800, hy = 735, hs = 1.2;
@@ -1703,6 +2052,7 @@
       drawNeo(pen, neoAt[0], neoAt[1], 1.1, false);
       A.neo = [neoAt[0] - 2, neoAt[1] - 110];
       A.phone = [A.person[0] + 15, A.person[1] - 22];
+      A.head = [A.person[0] + 3, A.person[1] - 38];
       A.homeSlab = pen.P([0, 150, -4]);
       pen.close();
 
@@ -1714,6 +2064,7 @@
 
       item(pen, 'nothing', 0.9);
       A.nothing = drawPhoneCallout(pen, [600, 570], 62, 1.4, A.phone, anims);
+      drawAudioCallout(pen, [480, 584], 33, A.head, [600, 570, 62]);
       pen.close();
 
       item(pen, 'odyssey', 0.95);
@@ -1740,18 +2091,23 @@
       // flows: sunlight into orbit, compute down to Earth, capture into models, cement into foundations
       pen.open({ 'class': 'pf-flows' });
       flows.push(new Flow(pen, [[A.sun[0] + 28, A.sun[1] - 6], [560, 24], A.plane], { n: 5, speed: 44 }));
-      flows.push(new Flow(pen, [[-20, 250], [280, 180], [A.nyxTail[0] - 6, A.nyxTail[1] + 4]], { n: 2, speed: 40 }));
+      flows.push(new Flow(pen, [[-220, 262], [280, 180], [A.nyxTail[0] - 6, A.nyxTail[1] + 4]], { n: 3, speed: 40 }));
       flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
       flows.push(new Flow(pen, [A.dock, [1300, 230], [1470, 330], [A.chutes[0], A.chutes[1] - 12]], { n: 2, speed: 34 }));
-      flows.push(new Flow(pen, [[A.chutes[0], A.chutes[1] + 50], [1530, 560], [1560, 660]], { n: 1, speed: 24 }));
+      flows.push(new Flow(pen, [[A.chutes[0], A.chutes[1] + 50], [1548, 540], [1590, 600]], { n: 1, speed: 24 }));
       flows.push(new Flow(pen, [A.spine, [1220, 410], A.dish], { n: 3, speed: 46 }));
       flows.push(new Flow(pen, [A.dish, [1190, 470], A.terminal], { n: 2, speed: 36 }));
-      flows.push(new Flow(pen, [A.dish, [1320, 600], A.screen], { n: 2, speed: 36 }));
+      // a few requests into Euclyd's inference chip, a stream of tokens out to the world model
+      flows.push(new Flow(pen, [A.dish, [1360, 560], A.euIn], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.euOut, [1330, 650], A.screen], { n: 5, speed: 44 }));
       flows.push(new Flow(pen, [A.rig, [1330, 740], A.screen], { n: 2, speed: 30 }));
       flows.push(new Flow(pen, [A.labCorner, [1150, 650], [1060, 705], A.neo], { n: 3, speed: 32 }));
       flows.push(new Flow(pen, [A.turbine, [380, 500], A.kiln], { n: 2, speed: 30 }));
       flows.push(new Flow(pen, [A.bags, [410, 620], A.slab], { n: 2, speed: 26 }));
       flows.push(new Flow(pen, [A.slabFront, [580, 850], A.homeSlab], { n: 2, speed: 26 }));
+      // new materials into the cement plant, and into the next machine's design
+      flows.push(new Flow(pen, [A.matRight, [30, 470], A.cemIn], { n: 2, speed: 24 }));
+      flows.push(new Flow(pen, [A.matFront, [-20, 612], A.geCard], { n: 2, speed: 24 }));
       pen.close();
       return A;
     },
@@ -1763,17 +2119,19 @@
       camion: { at: 'camion', to: [520, 878], pos: 'below' },
       ineffable: { at: 'ineffable', to: [948, 372], pos: 'left' },
       geneng: { at: 'geneng', to: [200, 846], pos: 'below' },
-      '1x': { at: 'neo', to: [902, 624], pos: 'right' },
+      '1x': { at: 'neo', to: [902, 624], pos: 'right', wrap: true },
       hume: { at: 'hume', to: [806, 584], wrap: true },
-      nothing: { at: 'nothing', to: [625, 494] },
-      odyssey: { at: 'odyssey', to: [1450, 800], pos: 'below' }
+      nothing: { at: 'nothing', to: [642, 494] },
+      odyssey: { at: 'odyssey', to: [1450, 800], pos: 'below' },
+      euclyd: { at: 'euclyd', to: [1494, 682], pos: 'below' },
+      unannounced: { at: 'materials', to: [-84, 424], wrap: true }
     }
   };
 
   // Portrait composition for phones: orbit at the top, then the labs, the home, and the industrial base.
   LAYOUTS.tall = {
     w: 720,
-    h: 2860,
+    h: 3120,
     fade: [360, 1480, 820, 2.3],
     build: function (pen, anims, flows) {
       var A = {};
@@ -1798,14 +2156,17 @@
       pen.close();
 
       item(pen, 'exploration', 0.3);
-      var nyxG = pen.open({ 'class': 'nyx-drift' });
+      var nyxW = pen.open(), nyxG = pen.open({ 'class': 'nyx-drift' });
       pen.at(80, 420, 0.9);
       drawNyx(pen, [0, 0, 0], unit([1, -0.28, 0.1]), 0.8);
       A.nyx = pen.P([42, -12, 32]);
       A.nyxNose = pen.P([92, -26, 10]);
       A.nyxTail = pen.P([0, 0, 0]);
       pen.close();
-      anims.push(function (t) { var u = Math.sin(t * 0.6) * 2; nyxG.setAttribute('transform', 'translate(' + f1(u * 0.97) + ' ' + f1(u * 0.23) + ')'); });
+      pen.close();
+      var nyxAt = function (t) { var u = Math.sin(t * 0.6) * 2; nudge(nyxG, u * 0.97, u * 0.23); };
+      live(nyxW, { draw: nyxAt, pad: 3 });
+      anims.push(nyxAt);
       pen.close();
 
       // the labs
@@ -1813,6 +2174,14 @@
       pen.at(640, 900, 1.05);
       var gs = drawGroundStation(pen);
       A.dish = gs.focus;
+      pen.close();
+
+      item(pen, 'euclyd', 0.62);
+      pen.at(522, 1124, 0.8);
+      var eu = drawEuclyd(pen, anims);
+      A.euclyd = pen.P([68, 68, 0]);
+      A.euIn = eu.back;
+      A.euOut = eu.front;
       pen.close();
 
       item(pen, 'ineffable', 0.6);
@@ -1838,7 +2207,7 @@
       item(pen, null, 0.8);
       pen.at(672, 1900, 1.1);
       drawTree(pen, [0, 0, 0], 44, 14, 2);
-      pen.at(620, 1080, 0.9);
+      pen.at(676, 1346, 0.9);
       drawTree(pen, [0, 0, 0], 40, 13, 6);
       pen.at(84, 1950, 1.0);
       drawTree(pen, [0, 0, 0], 40, 13, 9);
@@ -1854,6 +2223,7 @@
       drawNeo(pen, neoAt[0], neoAt[1], 1.24, false);
       A.neo = [neoAt[0] + 6, neoAt[1] - 118];
       A.phone = [A.person[0] + 17, A.person[1] - 25];
+      A.head = [A.person[0] + 3, A.person[1] - 43];
       A.homeSlab = pen.P([0, 150, -4]);
       pen.close();
 
@@ -1865,6 +2235,7 @@
 
       item(pen, 'nothing', 0.9);
       A.nothing = drawPhoneCallout(pen, [98, 1522], 60, 1.36, A.phone, anims);
+      drawAudioCallout(pen, [92, 1654], 32, A.head, [98, 1522, 60]);
       pen.close();
 
       // the base: materials, energy, engineering
@@ -1880,10 +2251,19 @@
       A.cemvision = pen.P([30, 38, 60]);
       A.bags = pen.P([170, 60, 12]);
       A.kiln = pen.P([150, 40, 0]);
+      A.cemIn = pen.P([10, 60, 40]);
+      pen.close();
+
+      item(pen, 'unannounced', 0.42);
+      pen.at(318, 2436, 1.15);
+      var mt = drawMaterials(pen, anims);
+      A.matBase = mt.base;
+      A.matRight = mt.right;
+      A.matLeft = mt.left;
       pen.close();
 
       item(pen, 'camion', 0.55);
-      pen.at(430, 2630, 0.8);
+      pen.at(430, 2890, 0.8);
       var cm = drawCamion(pen, anims);
       A.camion = pen.P([120, 96, 0]);
       A.slab = pen.P([0, 96, 0]);
@@ -1895,9 +2275,10 @@
       pen.close();
 
       item(pen, 'geneng', 0.7);
-      pen.at(22, 2610, 0.96);
+      pen.at(22, 2870, 0.96);
       drawGenEng(pen);
       A.geneng = pen.P([100, -20, 164]);
+      A.geCard = pen.P([60, -18, 96]);
       pen.close();
 
       pen.open({ 'class': 'pf-flows' });
@@ -1906,12 +2287,15 @@
       flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
       flows.push(new Flow(pen, [A.spine, [580, 700], A.dish], { n: 3, speed: 44 }));
       flows.push(new Flow(pen, [A.dish, [560, 850], A.terminal], { n: 2, speed: 34 }));
-      flows.push(new Flow(pen, [A.dish, [520, 1140], A.screen], { n: 2, speed: 34 }));
+      flows.push(new Flow(pen, [A.dish, [606, 1030], A.euIn], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.euOut, [300, 1118], A.screen], { n: 5, speed: 44 }));
       flows.push(new Flow(pen, [A.rig, [260, 1150], A.screen], { n: 2, speed: 30 }));
-      flows.push(new Flow(pen, [A.terminal, [704, 1290], [700, 1480], A.neo], { n: 3, speed: 34 }));
+      flows.push(new Flow(pen, [A.terminal, [640, 1010], [704, 1180], [704, 1330], [698, 1490], A.neo], { n: 3, speed: 34 }));
       flows.push(new Flow(pen, [A.turbine, [430, 2230], A.kiln], { n: 2, speed: 30 }));
-      flows.push(new Flow(pen, [A.bags, [404, 2460], A.slab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.bags, [600, 2480], [560, 2780], A.slab], { n: 2, speed: 26 }));
       flows.push(new Flow(pen, [A.bags, [360, 2050], A.homeSlab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.matRight, [420, 2380], A.cemIn], { n: 2, speed: 24 }));
+      flows.push(new Flow(pen, [A.matLeft, [120, 2530], [12, 2650], [14, 2760], A.geCard], { n: 2, speed: 24 }));
       pen.close();
       return A;
     },
@@ -1920,12 +2304,14 @@
       starcloud: { at: 'starcloud', to: [440, 520], pos: 'left' },
       ineffable: { at: 'ineffable', dx: -144, dy: -78 },
       odyssey: { at: 'odyssey', dx: 101, dy: -44 },
-      nothing: { at: 'nothing', to: [160, 1428] },
+      nothing: { at: 'nothing', to: [184, 1428] },
       '1x': { at: 'neo', to: [530, 1428] },
       hume: { at: 'hume', to: [330, 1524], wrap: true },
       cemvision: { at: 'cemvision', dx: -14, dy: -80 },
-      camion: { at: 'camion', to: [470, 2778], pos: 'below' },
-      geneng: { at: 'geneng', dx: 60, dy: -36 }
+      camion: { at: 'camion', to: [470, 3038], pos: 'below' },
+      geneng: { at: 'geneng', dx: 84, dy: -36 },
+      euclyd: { at: 'euclyd', to: [498, 1204], pos: 'below' },
+      unannounced: { at: 'matBase', to: [372, 2552], pos: 'below' }
     }
   };
 
@@ -1939,14 +2325,16 @@
   function build(stage, name) {
     var L = LAYOUTS[name];
     if (state.svg) state.svg.remove();
+    if (state.layer) state.layer.remove();
     state.anims = [];
     state.flows = [];
-    var svg = el('svg', { viewBox: '0 0 ' + L.w + ' ' + L.h, 'class': 'pf-scene', 'aria-hidden': 'true', focusable: 'false' });
+    var x0 = L.x0 || 0;
+    var svg = el('svg', { viewBox: x0 + ' 0 ' + L.w + ' ' + L.h, 'class': 'pf-scene', 'aria-hidden': 'true', focusable: 'false' });
     var style = el('style');
     style.textContent = CSS;
     svg.appendChild(style);
     var defs = el('defs');
-    var fc = L.fade || [L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
+    var fc = L.fade || [x0 + L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
     var grad = el('radialGradient', {
       id: 'pf-grad', gradientUnits: 'userSpaceOnUse', cx: fc[0], cy: fc[1], r: fc[2],
       gradientTransform: 'translate(' + fc[0] + ' ' + fc[1] + ') scale(1 ' + fc[3] + ') translate(' + (-fc[0]) + ' ' + (-fc[1]) + ')'
@@ -1954,11 +2342,19 @@
     grad.appendChild(el('stop', { offset: 0.3, 'stop-color': '#fff' }));
     grad.appendChild(el('stop', { offset: 1, 'stop-color': '#000' }));
     defs.appendChild(grad);
-    var mask = el('mask', { id: 'pf-fade', maskUnits: 'userSpaceOnUse', x: -L.w, y: -L.h, width: L.w * 3, height: L.h * 3 });
-    mask.appendChild(el('rect', { x: -L.w, y: -L.h, width: L.w * 3, height: L.h * 3, fill: 'url(#pf-grad)' }));
+    var mask = el('mask', { id: 'pf-fade', maskUnits: 'userSpaceOnUse', x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3 });
+    mask.appendChild(el('rect', { x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3, fill: 'url(#pf-grad)' }));
     defs.appendChild(mask);
     svg.appendChild(defs);
     stage.insertBefore(svg, stage.firstChild);
+    var layer = document.createElement('div');
+    layer.className = 'pf-live';
+    LIVE.list = [];
+    LIVE.L = L;
+    LIVE.dots = document.createElement('div');
+    LIVE.dots.className = 'pf-flowdots';
+    layer.appendChild(LIVE.dots);
+    stage.insertBefore(layer, svg.nextSibling);
     var pen = new Pen(svg);
     state.anchors = L.build(pen, state.anims, state.flows);
     pen.at(0, 0, 1);
@@ -1972,12 +2368,23 @@
       pen.path(dPoly(ellipse2(a[0], a[1], 1.8, 1.8, 0, 10), true), 'anchor');
     });
     pen.close();
+    liftLive(layer, svg, L);
     state.svg = svg;
+    state.layer = layer;
     state.layout = name;
     stage.style.setProperty('--ar', (L.w / L.h).toFixed(4));
+    // labels keep the same size against the drawing however wide the scene is
+    stage.style.setProperty('--pf-fs', (0.66 * 1600 / L.w).toFixed(4) + 'cqw');
     stage.classList.toggle('is-tall', name === 'tall');
     if (stage.parentNode) stage.parentNode.classList.toggle('is-tall', name === 'tall');
     placePills(stage, L);
+    measure();
+  }
+
+  function measure() {
+    if (!state.stage || !LIVE.L) return;
+    var w = state.stage.getBoundingClientRect().width;
+    if (w > 0) LIVE.k = w / LIVE.L.w;
     tick(performance.now(), true);
   }
 
@@ -1989,9 +2396,10 @@
     var pills = stage.querySelectorAll('.portfolio-pill');
     for (var i = 0; i < pills.length; i++) {
       var p = pills[i], cfg = L.pills[p.getAttribute('data-id')];
+      p.style.display = cfg ? '' : 'none';
       if (!cfg) continue;
       var b = pillPoint(cfg, state.anchors[cfg.at] || [0, 0]);
-      p.style.left = (b[0] / L.w * 100).toFixed(3) + '%';
+      p.style.left = ((b[0] - (L.x0 || 0)) / L.w * 100).toFixed(3) + '%';
       p.style.top = (b[1] / L.h * 100).toFixed(3) + '%';
       p.classList.remove('below', 'left', 'right', 'wrap');
       if (cfg.pos) p.classList.add(cfg.pos);
@@ -2018,18 +2426,21 @@
       if (!state.t0) state.t0 = performance.now();
       build(stage, name);
       bindHover(stage);
-    }
+      if (window.ResizeObserver && !stage._pfSized) {
+        stage._pfSized = true;
+        new ResizeObserver(measure).observe(stage);
+      }
+    } else measure();
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        state.svg.classList.add('is-built');
-        stage.classList.add('is-ready');
+        stage.classList.add('is-built', 'is-ready');
       });
     });
   };
 
   api.play = function () {
     if (!state.svg) return;
-    state.svg.classList.remove('is-paused');
+    state.stage.classList.remove('is-paused');
     if (reduceMotion || state.playing) return;
     state.playing = true;
     state.raf = requestAnimationFrame(tick);
@@ -2038,16 +2449,27 @@
   api.pause = function () {
     state.playing = false;
     cancelAnimationFrame(state.raf);
-    if (state.svg) state.svg.classList.add('is-paused');
+    if (state.stage) state.stage.classList.add('is-paused');
+  };
+
+  // Screen rectangles of a product's parts, so a preview can be kept off the one being highlighted.
+  api.rects = function (id) {
+    var out = [];
+    if (!state.stage) return out;
+    var items = state.stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
+    for (var i = 0; i < items.length; i++) {
+      for (var c = items[i].firstElementChild; c; c = c.nextElementSibling) {
+        var r = c.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) out.push(r);
+      }
+    }
+    return out;
   };
 
   api.relayout = function () {
     if (!state.stage || !state.svg) return;
     var name = pickLayout();
-    if (name !== state.layout) {
-      build(state.stage, name);
-      state.svg.classList.add('is-built');
-    }
+    if (name !== state.layout) build(state.stage, name);
   };
 
   function bindHover(stage) {
@@ -2059,14 +2481,14 @@
         var id = p.getAttribute('data-id');
         function on() {
           if (!state.svg) return;
-          state.svg.classList.add('pf-dim');
-          var items = state.svg.querySelectorAll('.pf-item[data-id="' + id + '"]');
+          stage.classList.add('pf-dim');
+          var items = stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
           for (var j = 0; j < items.length; j++) items[j].classList.add('is-on');
         }
         function off() {
           if (!state.svg) return;
-          state.svg.classList.remove('pf-dim');
-          var items = state.svg.querySelectorAll('.pf-item.is-on');
+          stage.classList.remove('pf-dim');
+          var items = stage.querySelectorAll('.pf-item.is-on');
           for (var j = 0; j < items.length; j++) items[j].classList.remove('is-on');
         }
         p.addEventListener('mouseenter', on);
