@@ -1735,8 +1735,14 @@
     for (var key in previewEls) previewEls[key].style.display = 'none';
   }
 
-  // Decoded ahead of time, so a still is ready the moment its label is hovered.
+  // Decoded ahead of time, so a still is ready the moment its label is hovered. Phones never show the
+  // preview, so they skip the download, and elsewhere it waits for the page to finish loading.
   function preloadPortfolioPreviews() {
+    if (getComputedStyle(preview).display === 'none') return;
+    if (document.readyState !== 'complete') {
+      window.addEventListener('load', preloadPortfolioPreviews, { once: true });
+      return;
+    }
     var links = document.querySelectorAll('.portfolio-pill[data-preview-img]');
     for (var j = 0; j < links.length; j++) {
       var img = getPreviewEl(links[j]);
