@@ -1723,16 +1723,24 @@
     '.is-built .pf-pane.pf-item{opacity:.999}',
     '.is-settled .pf-item{transition:opacity .09s ease-out}',
     '.pf-dim .pf-pane:not(.is-on),.pf-dim .pf-sprite .pf-item[data-id]:not(.is-on){opacity:.28;transition-delay:0s}',
-    // dots dim one by one: dimming their container makes WebKit redraw them all offscreen on every frame
+    // dots fade and dim one by one: changing their container's opacity makes WebKit redraw them all
+    // offscreen on every frame
+    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform;opacity:0;transition:opacity 1s ease var(--d,0s)}',
+    '.is-built .pf-dot{opacity:.999}',
+    '.is-settled .pf-dot{transition:opacity .09s ease-out}',
     '.pf-dim .pf-dotbox:not(.is-on) .pf-dot{opacity:.28}',
     '.pf-dim .pf-flowdots .pf-dot{opacity:.3}',
-    '.pf-shade{position:absolute;left:-50%;top:-50%;width:200%;height:200%;background:#000;opacity:0;visibility:hidden;will-change:opacity;transition:opacity .09s ease-out,visibility 0s linear .09s}',
-    '.is-tall .pf-shade{left:0;top:0;width:100%;height:100%}',
+    // The scenery fades in as a veil over it fades out, and the veil goes once the scene has settled.
+    // A shade that is never shown before a highlight then dims the scenery behind the product.
+    '.pf-veil,.pf-shade{position:absolute;left:-50%;top:-50%;width:200%;height:200%;background:#000;will-change:opacity}',
+    '.is-tall .pf-veil,.is-tall .pf-shade{left:0;top:0;width:100%;height:100%}',
+    '.pf-veil{opacity:.999;transition:opacity 1s ease}',
+    '.is-built .pf-veil{opacity:0}',
+    '.pf-shade{opacity:0;visibility:hidden;transition:opacity .09s ease-out,visibility 0s linear .09s}',
     '.pf-dim .pf-shade{opacity:.72;visibility:visible;transition:opacity .09s ease-out}',
     '.pf-pane{position:absolute;overflow:visible;will-change:transform}',
     '.pf-live,.pf-flowdots,.pf-dotbox{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}',
     '.pf-sprite{position:absolute;overflow:visible;will-change:transform}',
-    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform;opacity:.999;transition:opacity .09s ease-out}',
     '.flow-dot{fill:#fff;filter:drop-shadow(0 0 1.4px rgba(255,255,255,.9))}',
     '.pf-spin{animation:pf-spin 80s linear infinite}',
     '.pf-blink{animation:pf-blink 1.1s steps(1) infinite}',
@@ -1743,7 +1751,7 @@
     '@keyframes pf-blink{0%,55%{opacity:1}56%,100%{opacity:0}}',
     '@keyframes pf-steam{0%,100%{opacity:.15}50%{opacity:.8}}',
     '@keyframes pf-pulse{0%,100%{opacity:1}50%{opacity:.55}}',
-    '@media (prefers-reduced-motion:reduce){.pf-item,.is-settled .pf-item,.pf-shade,.pf-dim .pf-shade,.pf-dot{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.pf-item,.is-settled .pf-item,.pf-veil,.pf-shade,.pf-dim .pf-shade,.pf-dot,.is-settled .pf-dot{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
   ].join('');
 
   function curve(pts, n) {
@@ -1793,7 +1801,7 @@
       if (/\bpf-item\b/.test(g.getAttribute('class') || '')) {
         if (!g._pfDots) {
           var d = document.createElement('div');
-          d.className = 'pf-dotbox ' + g.getAttribute('class');
+          d.className = 'pf-dotbox';
           if (g.getAttribute('data-id')) d.setAttribute('data-id', g.getAttribute('data-id'));
           d.style.cssText = g.style.cssText;
           LIVE.dots.parentNode.insertBefore(d, LIVE.dots);
@@ -1909,14 +1917,18 @@
   // in and highlighting then only change the opacity of layers, which the compositor does without
   // repainting any line work, while the scenery adds no layer to composite on every frame.
   function splitPanes(svg, layer, L) {
-    var first = firstDotBox(layer), shade = document.createElement('div');
+    var first = firstDotBox(layer), veil = document.createElement('div'), shade = document.createElement('div');
+    veil.className = 'pf-veil';
     shade.className = 'pf-shade';
+    layer.insertBefore(veil, first);
     layer.insertBefore(shade, first);
     [].slice.call(svg.children).forEach(function (c) {
       if (c.nodeName !== 'g') return;
       var own = LIVE.list.filter(function (h) { return h.top === c && h.sprite; });
       if (isBackdrop(c)) {
-        own.forEach(function (h) { layer.insertBefore(h.sprite, shade); });
+        // fading in under the veil, so the backdrop is never repainted frame by frame
+        unfade(c);
+        own.forEach(function (h) { unfade(h.sprite.querySelector('.pf-item')); layer.insertBefore(h.sprite, veil); });
         return;
       }
       var parts = [c];
@@ -1935,6 +1947,12 @@
       parts.forEach(function (g) { var s = pane(g, L); if (s) layer.insertBefore(s, first); });
       own.forEach(function (h) { layer.insertBefore(h.sprite, first); });
     });
+  }
+
+  function unfade(g) {
+    if (!g) return;
+    g.setAttribute('class', (g.getAttribute('class') || '').replace(/\bpf-item\b/, '').trim());
+    g.style.removeProperty('--d');
   }
 
   function pane(c, L) {
@@ -2461,6 +2479,7 @@
     pen.close();
     liftLive(layer, svg, L);
     splitPanes(svg, layer, L);
+    if (stage.classList.contains('is-settled')) settle(stage);
     state.svg = svg;
     state.layer = layer;
     state.layout = name;
@@ -2471,6 +2490,14 @@
     if (stage.parentNode) stage.parentNode.classList.toggle('is-tall', name === 'tall');
     placePills(stage, L);
     measure();
+  }
+
+  // Once everything has faded in, highlighting dims and clears at once, and the veil the scenery
+  // faded in from is taken out.
+  function settle(stage) {
+    stage.classList.add('is-settled');
+    var v = stage.querySelector('.pf-veil');
+    if (v) v.parentNode.removeChild(v);
   }
 
   function measure() {
@@ -2526,8 +2553,7 @@
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         stage.classList.add('is-built', 'is-ready');
-        // once everything has faded in, highlighting dims and clears at once
-        setTimeout(function () { stage.classList.add('is-settled'); }, 2900);
+        setTimeout(function () { settle(stage); }, 2900);
       });
     });
   };
@@ -2546,11 +2572,16 @@
     if (state.stage) state.stage.classList.add('is-paused');
   };
 
+  // A product's layer, its lifted parts and its dots.
+  function partsOf(stage, id) {
+    return stage.querySelectorAll('.pf-item[data-id="' + id + '"], .pf-dotbox[data-id="' + id + '"]');
+  }
+
   // Screen rectangles of a product's parts, so a preview can be kept off the one being highlighted.
   api.rects = function (id) {
     var out = [];
     if (!state.stage) return out;
-    var items = state.stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
+    var items = partsOf(state.stage, id);
     for (var i = 0; i < items.length; i++) {
       var root = items[i].classList.contains('pf-pane') ? items[i].firstElementChild : items[i];
       for (var c = root && root.firstElementChild; c; c = c.nextElementSibling) {
@@ -2576,14 +2607,15 @@
         var id = p.getAttribute('data-id');
         function on() {
           if (!state.svg) return;
-          stage.classList.add('is-settled', 'pf-dim');
-          var items = stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
+          settle(stage);
+          stage.classList.add('pf-dim');
+          var items = partsOf(stage, id);
           for (var j = 0; j < items.length; j++) items[j].classList.add('is-on');
         }
         function off() {
           if (!state.svg) return;
           stage.classList.remove('pf-dim');
-          var items = stage.querySelectorAll('.pf-item.is-on');
+          var items = stage.querySelectorAll('.is-on');
           for (var j = 0; j < items.length; j++) items[j].classList.remove('is-on');
         }
         p.addEventListener('mouseenter', on);
