@@ -1922,8 +1922,21 @@
     shade.className = 'pf-shade';
     layer.insertBefore(veil, first);
     layer.insertBefore(shade, first);
+    // leader lines: a line and its anchor dot for each label, in a group of their own
     [].slice.call(svg.children).forEach(function (c) {
-      if (c.nodeName !== 'g') return;
+      if (!/\bpf-leaders\b/.test(c.getAttribute('class') || '')) return;
+      var k = c.children;
+      while (k.length) {
+        var g = svg.insertBefore(c.cloneNode(false), c);
+        g.appendChild(k[0]);
+        if (k.length && !/\bleader\b/.test(k[0].getAttribute('class') || '')) g.appendChild(k[0]);
+      }
+      c.remove();
+    });
+    // every size is read before anything moves, so the drawing is laid out once rather than per layer
+    var groups = [].slice.call(svg.children).filter(function (c) { return c.nodeName === 'g'; });
+    var boxes = groups.map(function (c) { return isBackdrop(c) ? null : c.getBBox(); });
+    groups.forEach(function (c, i) {
       var own = LIVE.list.filter(function (h) { return h.top === c && h.sprite; });
       if (isBackdrop(c)) {
         // fading in under the veil, so the backdrop is never repainted frame by frame
@@ -1931,20 +1944,8 @@
         own.forEach(function (h) { unfade(h.sprite.querySelector('.pf-item')); layer.insertBefore(h.sprite, veil); });
         return;
       }
-      var parts = [c];
-      if (!c.hasAttribute('data-id')) {
-        // leader lines: a line and its anchor dot for each label
-        parts = [];
-        var k = c.children;
-        while (k.length) {
-          var g = svg.insertBefore(c.cloneNode(false), c);
-          g.appendChild(k[0]);
-          if (k.length && !/\bleader\b/.test(k[0].getAttribute('class') || '')) g.appendChild(k[0]);
-          parts.push(g);
-        }
-        c.remove();
-      }
-      parts.forEach(function (g) { var s = pane(g, L); if (s) layer.insertBefore(s, first); });
+      var s = pane(c, boxes[i], L);
+      if (s) layer.insertBefore(s, first);
       own.forEach(function (h) { layer.insertBefore(h.sprite, first); });
     });
   }
@@ -1955,8 +1956,8 @@
     g.style.removeProperty('--d');
   }
 
-  function pane(c, L) {
-    var x0 = L.x0 || 0, r = c.getBBox(), p = 4;
+  function pane(c, r, L) {
+    var x0 = L.x0 || 0, p = 4;
     if (r.width <= 0 && r.height <= 0) return null;
     var a0 = Math.max(x0, r.x - p), b0 = Math.max(0, r.y - p), a1 = Math.min(x0 + L.w, r.x + r.width + p), b1 = Math.min(L.h, r.y + r.height + p);
     var box = [f1(a0), f1(b0), f1(a1 - a0), f1(b1 - b0)];
