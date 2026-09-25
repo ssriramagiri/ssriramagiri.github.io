@@ -431,12 +431,13 @@
 
     body { transition: background-color 0.6s ease; }
     body.portfolio-open { background: #000; }
-    .flipdot-container { transition: opacity 0.6s ease; }
-    body.portfolio-open .flipdot-container { opacity: 0.1; }
-    /* At a tenth of its brightness the matrix's fades and glow can't be seen, and each update would
-       repaint the whole screen for several frames under the scene. */
-    body.portfolio-open .dot { transition: none; }
-    body.portfolio-open .dot.on { box-shadow: none; }
+    .flipdot-container { transition: opacity 0.6s ease, visibility 0s linear 0s; }
+    /* The dot matrix is off on the Portfolio page: it fades out and its loop stops. */
+    body.portfolio-open .flipdot-container {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+    }
 
     .portfolio-overlay {
       position: fixed;
@@ -1557,6 +1558,13 @@
       aboutOverlay.classList.remove('visible', 'closing');
       aboutOpen = false;
       aboutClosing = false;
+      // Portfolio opened meanwhile: the matrix stays off, so skip the dissolve and leave it paused
+      if (portfolioOpen) {
+        clear();
+        render();
+        animations[currentAnim].reset();
+        return;
+      }
       // Noise dissolve transition before resuming
       var noiseT = 0;
       var noiseLast = 0;
@@ -1616,6 +1624,7 @@
     if (portfolioOpen || activeGame) return;
     if (aboutOpen) closeAbout();
     portfolioOpen = true;
+    pauseMainLoop();
     document.body.classList.add('portfolio-open');
     portfolioOverlay.classList.add('visible');
     portfolioOverlay.setAttribute('aria-hidden', 'false');
@@ -1637,6 +1646,7 @@
     portfolioToggle.classList.remove('active');
     preview.classList.remove('visible');
     if (window.PortfolioScene) window.PortfolioScene.pause();
+    if (!activeGame && !aboutOpen) resumeMainLoop();
     if (location.hash === '#portfolio') history.replaceState(null, '', location.pathname + location.search);
   }
 
