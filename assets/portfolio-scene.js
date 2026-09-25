@@ -1716,22 +1716,31 @@
     '.tube-o{fill:none;stroke:#e8e8e8;stroke-width:2.6;stroke-linecap:round}',
     '.tube-i{fill:none;stroke:#000;stroke-width:1.1;stroke-linecap:round}',
     '.callout{fill:none;stroke:rgba(232,232,232,.5);stroke-width:.75;stroke-dasharray:3 2.4}',
+    '.ground{fill:none;stroke:url(#pf-ground);stroke-width:.55}',
     '.pf-item{opacity:0;transform:translateY(5px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.16,1,.3,1)}',
     '.is-built .pf-item{opacity:1;transform:none;transition-delay:var(--d,0s)}',
     // WebKit stalls for about a third of a second when a layer's opacity crosses 1, so layers rest just below it
     '.is-built .pf-pane.pf-item{opacity:.999}',
     '.is-settled .pf-item{transition:opacity .09s ease-out}',
     '.pf-dim .pf-pane:not(.is-on),.pf-dim .pf-sprite .pf-item[data-id]:not(.is-on){opacity:.28;transition-delay:0s}',
-    // dots dim one by one: dimming their container makes WebKit redraw them all offscreen on every frame
+    // dots fade and dim one by one: changing their container's opacity makes WebKit redraw them all
+    // offscreen on every frame
+    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform;opacity:0;transition:opacity 1s ease var(--d,0s)}',
+    '.is-built .pf-dot{opacity:.999}',
+    '.is-settled .pf-dot{transition:opacity .09s ease-out}',
     '.pf-dim .pf-dotbox:not(.is-on) .pf-dot{opacity:.28}',
     '.pf-dim .pf-flowdots .pf-dot{opacity:.3}',
-    '.pf-shade{position:absolute;left:-50%;top:-50%;width:200%;height:200%;background:#000;opacity:0;visibility:hidden;will-change:opacity;transition:opacity .09s ease-out,visibility 0s linear .09s}',
-    '.is-tall .pf-shade{left:0;top:0;width:100%;height:100%}',
+    // The scenery fades in as a veil over it fades out, and the veil goes once the scene has settled.
+    // A shade that is never shown before a highlight then dims the scenery behind the product.
+    '.pf-veil,.pf-shade{position:absolute;left:-50%;top:-50%;width:200%;height:200%;background:#000;will-change:opacity}',
+    '.is-tall .pf-veil,.is-tall .pf-shade{left:0;top:0;width:100%;height:100%}',
+    '.pf-veil{opacity:.999;transition:opacity 1s ease}',
+    '.is-built .pf-veil{opacity:0}',
+    '.pf-shade{opacity:0;visibility:hidden;transition:opacity .09s ease-out,visibility 0s linear .09s}',
     '.pf-dim .pf-shade{opacity:.72;visibility:visible;transition:opacity .09s ease-out}',
     '.pf-pane{position:absolute;overflow:visible;will-change:transform}',
     '.pf-live,.pf-flowdots,.pf-dotbox{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}',
     '.pf-sprite{position:absolute;overflow:visible;will-change:transform}',
-    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform;opacity:.999;transition:opacity .09s ease-out}',
     '.flow-dot{fill:#fff;filter:drop-shadow(0 0 1.4px rgba(255,255,255,.9))}',
     '.pf-spin{animation:pf-spin 80s linear infinite}',
     '.pf-blink{animation:pf-blink 1.1s steps(1) infinite}',
@@ -1742,7 +1751,7 @@
     '@keyframes pf-blink{0%,55%{opacity:1}56%,100%{opacity:0}}',
     '@keyframes pf-steam{0%,100%{opacity:.15}50%{opacity:.8}}',
     '@keyframes pf-pulse{0%,100%{opacity:1}50%{opacity:.55}}',
-    '@media (prefers-reduced-motion:reduce){.pf-item,.is-settled .pf-item,.pf-shade,.pf-dim .pf-shade,.pf-dot{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.pf-item,.is-settled .pf-item,.pf-veil,.pf-shade,.pf-dim .pf-shade,.pf-dot,.is-settled .pf-dot{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
   ].join('');
 
   function curve(pts, n) {
@@ -1792,7 +1801,7 @@
       if (/\bpf-item\b/.test(g.getAttribute('class') || '')) {
         if (!g._pfDots) {
           var d = document.createElement('div');
-          d.className = 'pf-dotbox ' + g.getAttribute('class');
+          d.className = 'pf-dotbox';
           if (g.getAttribute('data-id')) d.setAttribute('data-id', g.getAttribute('data-id'));
           d.style.cssText = g.style.cssText;
           LIVE.dots.parentNode.insertBefore(d, LIVE.dots);
@@ -1908,36 +1917,47 @@
   // in and highlighting then only change the opacity of layers, which the compositor does without
   // repainting any line work, while the scenery adds no layer to composite on every frame.
   function splitPanes(svg, layer, L) {
-    var first = firstDotBox(layer), shade = document.createElement('div');
+    var first = firstDotBox(layer), veil = document.createElement('div'), shade = document.createElement('div');
+    veil.className = 'pf-veil';
     shade.className = 'pf-shade';
+    layer.insertBefore(veil, first);
     layer.insertBefore(shade, first);
+    // leader lines: a line and its anchor dot for each label, in a group of their own
     [].slice.call(svg.children).forEach(function (c) {
-      if (c.nodeName !== 'g') return;
+      if (!/\bpf-leaders\b/.test(c.getAttribute('class') || '')) return;
+      var k = c.children;
+      while (k.length) {
+        var g = svg.insertBefore(c.cloneNode(false), c);
+        g.appendChild(k[0]);
+        if (k.length && !/\bleader\b/.test(k[0].getAttribute('class') || '')) g.appendChild(k[0]);
+      }
+      c.remove();
+    });
+    // every size is read before anything moves, so the drawing is laid out once rather than per layer
+    var groups = [].slice.call(svg.children).filter(function (c) { return c.nodeName === 'g'; });
+    var boxes = groups.map(function (c) { return isBackdrop(c) ? null : c.getBBox(); });
+    groups.forEach(function (c, i) {
       var own = LIVE.list.filter(function (h) { return h.top === c && h.sprite; });
       if (isBackdrop(c)) {
-        own.forEach(function (h) { layer.insertBefore(h.sprite, shade); });
+        // fading in under the veil, so the backdrop is never repainted frame by frame
+        unfade(c);
+        own.forEach(function (h) { unfade(h.sprite.querySelector('.pf-item')); layer.insertBefore(h.sprite, veil); });
         return;
       }
-      var parts = [c];
-      if (!c.hasAttribute('data-id')) {
-        // leader lines: a line and its anchor dot for each label
-        parts = [];
-        var k = c.children;
-        while (k.length) {
-          var g = svg.insertBefore(c.cloneNode(false), c);
-          g.appendChild(k[0]);
-          if (k.length && !/\bleader\b/.test(k[0].getAttribute('class') || '')) g.appendChild(k[0]);
-          parts.push(g);
-        }
-        c.remove();
-      }
-      parts.forEach(function (g) { var s = pane(g, L); if (s) layer.insertBefore(s, first); });
+      var s = pane(c, boxes[i], L);
+      if (s) layer.insertBefore(s, first);
       own.forEach(function (h) { layer.insertBefore(h.sprite, first); });
     });
   }
 
-  function pane(c, L) {
-    var x0 = L.x0 || 0, r = c.getBBox(), p = 4;
+  function unfade(g) {
+    if (!g) return;
+    g.setAttribute('class', (g.getAttribute('class') || '').replace(/\bpf-item\b/, '').trim());
+    g.style.removeProperty('--d');
+  }
+
+  function pane(c, r, L) {
+    var x0 = L.x0 || 0, p = 4;
     if (r.width <= 0 && r.height <= 0) return null;
     var a0 = Math.max(x0, r.x - p), b0 = Math.max(0, r.y - p), a1 = Math.min(x0 + L.w, r.x + r.width + p), b1 = Math.min(L.h, r.y + r.height + p);
     var box = [f1(a0), f1(b0), f1(a1 - a0), f1(b1 - b0)];
@@ -1979,13 +1999,36 @@
     }
   };
 
-  function groundGrid(pen, ox, oy, size, step, cls) {
+  // Centre, radius and vertical squash of the ellipse the ground grid fades out towards.
+  function fadeOf(L) {
+    return L.fade || [(L.x0 || 0) + L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
+  }
+
+  // The part of segment a-b inside box [x0, y0, x1, y1], or null.
+  function clipSeg(a, b, box) {
+    var t0 = 0, t1 = 1, dx = b[0] - a[0], dy = b[1] - a[1];
+    var p = [-dx, dx, -dy, dy], q = [a[0] - box[0], box[2] - a[0], a[1] - box[1], box[3] - a[1]];
+    for (var i = 0; i < 4; i++) {
+      if (p[i] === 0) { if (q[i] < 0) return null; continue; }
+      var t = q[i] / p[i];
+      if (p[i] < 0) { if (t > t1) return null; if (t > t0) t0 = t; }
+      else { if (t < t0) return null; if (t < t1) t1 = t; }
+    }
+    return [[a[0] + t0 * dx, a[1] + t0 * dy], [a[0] + t1 * dx, a[1] + t1 * dy]];
+  }
+
+  // Grid lines stop where their fade reaches nothing, at the edge of the fade's ellipse.
+  function groundGrid(pen, ox, oy, size, step) {
     pen.at(ox, oy, 1);
+    var fc = fadeOf(LIVE.L), box = [fc[0] - fc[2], fc[1] - fc[2] * fc[3], fc[0] + fc[2], fc[1] + fc[2] * fc[3]];
     var lines = [];
     for (var i = 0; i <= size; i += step) {
-      lines.push([[i, 0, 0], [i, size, 0]], [[0, i, 0], [size, i, 0]]);
+      [[[i, 0, 0], [i, size, 0]], [[0, i, 0], [size, i, 0]]].forEach(function (l) {
+        var c = clipSeg(pen.P(l[0]), pen.P(l[1]), box);
+        if (c) lines.push(c);
+      });
     }
-    pen.lines(lines, cls || 'l4');
+    pen.lines2(lines, 'ground');
   }
 
   function item(pen, id, delay) {
@@ -2004,9 +2047,8 @@
     build: function (pen, anims, flows) {
       var A = {};
       // ground
-      var gg = item(pen, null, 0);
-      gg.setAttribute('mask', 'url(#pf-fade)');
-      groundGrid(pen, 800, -330, 2400, 40, 'l4');
+      item(pen, null, 0);
+      groundGrid(pen, 800, -330, 2400, 40);
       pen.close();
 
       // sky
@@ -2192,7 +2234,7 @@
       hume: { at: 'hume', to: [806, 584], wrap: true },
       nothing: { at: 'nothing', to: [642, 494] },
       odyssey: { at: 'odyssey', to: [1450, 800], pos: 'below' },
-      euclyd: { at: 'euclyd', to: [1494, 682], pos: 'below' },
+      euclyd: { at: 'euclyd', to: [1506, 682], pos: 'below' },
       unannounced: { at: 'materials', to: [-84, 424], wrap: true }
     }
   };
@@ -2204,9 +2246,8 @@
     fade: [360, 1480, 820, 2.3],
     build: function (pen, anims, flows) {
       var A = {};
-      var gg = item(pen, null, 0);
-      gg.setAttribute('mask', 'url(#pf-fade)');
-      groundGrid(pen, 360, -700, 3800, 40, 'l4');
+      item(pen, null, 0);
+      groundGrid(pen, 360, -700, 3800, 40);
       pen.close();
 
       item(pen, null, 0.1);
@@ -2403,17 +2444,17 @@
     style.textContent = CSS;
     svg.appendChild(style);
     var defs = el('defs');
-    var fc = L.fade || [x0 + L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
+    // The ground's lines fade out through their own stroke. A mask would look the same, but WebKit
+    // renders a mask as an offscreen image of all it covers, which took a phone a third of a second
+    // every time the ground was painted.
+    var fc = fadeOf(L);
     var grad = el('radialGradient', {
-      id: 'pf-grad', gradientUnits: 'userSpaceOnUse', cx: fc[0], cy: fc[1], r: fc[2],
+      id: 'pf-ground', gradientUnits: 'userSpaceOnUse', cx: fc[0], cy: fc[1], r: fc[2],
       gradientTransform: 'translate(' + fc[0] + ' ' + fc[1] + ') scale(1 ' + fc[3] + ') translate(' + (-fc[0]) + ' ' + (-fc[1]) + ')'
     });
-    grad.appendChild(el('stop', { offset: 0.3, 'stop-color': '#fff' }));
-    grad.appendChild(el('stop', { offset: 1, 'stop-color': '#000' }));
+    grad.appendChild(el('stop', { offset: 0.3, 'stop-color': '#e8e8e8', 'stop-opacity': 0.14 }));
+    grad.appendChild(el('stop', { offset: 1, 'stop-color': '#e8e8e8', 'stop-opacity': 0 }));
     defs.appendChild(grad);
-    var mask = el('mask', { id: 'pf-fade', maskUnits: 'userSpaceOnUse', x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3 });
-    mask.appendChild(el('rect', { x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3, fill: 'url(#pf-grad)' }));
-    defs.appendChild(mask);
     svg.appendChild(defs);
     stage.insertBefore(svg, stage.firstChild);
     var layer = document.createElement('div');
@@ -2439,6 +2480,7 @@
     pen.close();
     liftLive(layer, svg, L);
     splitPanes(svg, layer, L);
+    if (stage.classList.contains('is-settled')) settle(stage);
     state.svg = svg;
     state.layer = layer;
     state.layout = name;
@@ -2449,6 +2491,14 @@
     if (stage.parentNode) stage.parentNode.classList.toggle('is-tall', name === 'tall');
     placePills(stage, L);
     measure();
+  }
+
+  // Once everything has faded in, highlighting dims and clears at once, and the veil the scenery
+  // faded in from is taken out.
+  function settle(stage) {
+    stage.classList.add('is-settled');
+    var v = stage.querySelector('.pf-veil');
+    if (v) v.parentNode.removeChild(v);
   }
 
   function measure() {
@@ -2504,8 +2554,7 @@
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         stage.classList.add('is-built', 'is-ready');
-        // once everything has faded in, highlighting dims and clears at once
-        setTimeout(function () { stage.classList.add('is-settled'); }, 2900);
+        setTimeout(function () { settle(stage); }, 2900);
       });
     });
   };
@@ -2524,11 +2573,16 @@
     if (state.stage) state.stage.classList.add('is-paused');
   };
 
+  // A product's layer, its lifted parts and its dots.
+  function partsOf(stage, id) {
+    return stage.querySelectorAll('.pf-item[data-id="' + id + '"], .pf-dotbox[data-id="' + id + '"]');
+  }
+
   // Screen rectangles of a product's parts, so a preview can be kept off the one being highlighted.
   api.rects = function (id) {
     var out = [];
     if (!state.stage) return out;
-    var items = state.stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
+    var items = partsOf(state.stage, id);
     for (var i = 0; i < items.length; i++) {
       var root = items[i].classList.contains('pf-pane') ? items[i].firstElementChild : items[i];
       for (var c = root && root.firstElementChild; c; c = c.nextElementSibling) {
@@ -2554,14 +2608,15 @@
         var id = p.getAttribute('data-id');
         function on() {
           if (!state.svg) return;
-          stage.classList.add('is-settled', 'pf-dim');
-          var items = stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
+          settle(stage);
+          stage.classList.add('pf-dim');
+          var items = partsOf(stage, id);
           for (var j = 0; j < items.length; j++) items[j].classList.add('is-on');
         }
         function off() {
           if (!state.svg) return;
           stage.classList.remove('pf-dim');
-          var items = stage.querySelectorAll('.pf-item.is-on');
+          var items = stage.querySelectorAll('.is-on');
           for (var j = 0; j < items.length; j++) items[j].classList.remove('is-on');
         }
         p.addEventListener('mouseenter', on);

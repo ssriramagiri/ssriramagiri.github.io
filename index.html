@@ -16,6 +16,9 @@
   <link rel="icon" type="image/gif" href="/assets/sai-favicon.gif">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
   <script>
+    if (location.hash === '#portfolio') document.documentElement.classList.add('pf-start');
+  </script>
+  <script>
     (function() {
       var canvas = document.createElement('canvas');
       var size = 64;
@@ -431,6 +434,9 @@
 
     body { transition: background-color 0.6s ease; }
     body.portfolio-open { background: #000; }
+    /* A link straight to the Portfolio is black from the first paint, with no dot matrix. */
+    .pf-start body { background: #000; }
+    .pf-start .flipdot-container { visibility: hidden; }
     .flipdot-container { transition: opacity 0.6s ease, visibility 0s linear 0s; }
     /* The dot matrix is off on the Portfolio page: it fades out and its loop stops. */
     body.portfolio-open .flipdot-container {
@@ -706,7 +712,7 @@
       <a class="portfolio-pill" data-id="cemvision" href="https://www.cemvision.tech/" target="_blank" rel="noopener" data-preview-img="/assets/previews/cemvision.jpg"><b>CEMVISION<em>PRE-SEED</em></b><span>Low-carbon cement from industrial waste</span></a>
       <a class="portfolio-pill" data-id="ineffable" href="https://www.ineffable.ai" target="_blank" rel="noopener" data-preview-img="/assets/previews/ineffable.jpg"><b>INEFFABLE INTELLIGENCE<em>SEED</em></b><span>AI that learns from its own experience</span></a>
       <a class="portfolio-pill" data-id="starcloud" href="https://www.starcloud.com/starcloud-4" target="_blank" rel="noopener" data-preview-img="/assets/previews/starcloud.jpg"><b>STARCLOUD<em>SERIES A</em></b><span>Data centers in orbit, run on sunlight</span></a>
-      <a class="portfolio-pill" data-id="euclyd" href="https://www.euclyd.ai/" target="_blank" rel="noopener" data-preview-img="/assets/previews/euclyd.jpg"><b>EUCLYD<em>SERIES A</em></b><span>Chips built to run AI, not train it</span></a>
+      <a class="portfolio-pill" data-id="euclyd" href="https://www.euclyd.ai/" target="_blank" rel="noopener" data-preview-img="/assets/previews/euclyd.jpg"><b>EUCLYD<em>SERIES A</em></b><span>3D memory on compute for AI inference</span></a>
       <span class="portfolio-pill" data-id="unannounced"><b>UNANNOUNCED<em>SERIES B</em></b><span>Generative AI for new materials</span></span>
     </div>
   </div>
@@ -1630,8 +1636,15 @@
     portfolioOverlay.setAttribute('aria-hidden', 'false');
     portfolioToggle.classList.add('active');
     if (window.PortfolioScene) {
-      window.PortfolioScene.mount(portfolioStage);
-      window.PortfolioScene.play();
+      // The overlay starts fading in on this frame and the scene is built after it, so a tap answers
+      // at once and the build runs while the fades play on their own.
+      requestAnimationFrame(function() {
+        setTimeout(function() {
+          if (!portfolioOpen) return;
+          window.PortfolioScene.mount(portfolioStage);
+          window.PortfolioScene.play();
+        }, 0);
+      });
     }
     setTimeout(preloadPortfolioPreviews, 1500);
     if (location.hash !== '#portfolio') history.replaceState(null, '', '#portfolio');
@@ -1680,8 +1693,11 @@
     portfolioResizeId = setTimeout(function() { window.PortfolioScene.relayout(); }, 150);
   });
 
+  // A link straight to the Portfolio opens it before the first paint, so the home page's dot matrix
+  // never shows while the scene's script loads. The scene mounts itself once that script runs.
   if (location.hash === '#portfolio') {
-    document.addEventListener('DOMContentLoaded', openPortfolio);
+    openPortfolio();
+    document.documentElement.classList.remove('pf-start');
   }
 
   // --- Site preview on hover (lazy cached) ---
@@ -1719,8 +1735,14 @@
     for (var key in previewEls) previewEls[key].style.display = 'none';
   }
 
-  // Decoded ahead of time, so a still is ready the moment its label is hovered.
+  // Decoded ahead of time, so a still is ready the moment its label is hovered. Phones never show the
+  // preview, so they skip the download, and elsewhere it waits for the page to finish loading.
   function preloadPortfolioPreviews() {
+    if (getComputedStyle(preview).display === 'none') return;
+    if (document.readyState !== 'complete') {
+      window.addEventListener('load', preloadPortfolioPreviews, { once: true });
+      return;
+    }
     var links = document.querySelectorAll('.portfolio-pill[data-preview-img]');
     for (var j = 0; j < links.length; j++) {
       var img = getPreviewEl(links[j]);
