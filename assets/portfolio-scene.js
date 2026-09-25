@@ -185,15 +185,13 @@
     for (var i = 0; i < lists.length; i++) d += dPoly(lists[i], closed);
     return this.path(d, cls || 'l2', attrs);
   };
-  PP.box = function (x, y, z, w, d, h, cls) {
+  PP.boxD = function (x, y, z, w, d, h) {
     var x1 = x + w, y1 = y + d, z1 = z + h;
-    return this.path(
-      dPoly(this.pts([[x, y, z1], [x1, y, z1], [x1, y1, z1], [x, y1, z1]]), true) +
+    return dPoly(this.pts([[x, y, z1], [x1, y, z1], [x1, y1, z1], [x, y1, z1]]), true) +
       dPoly(this.pts([[x1, y, z], [x1, y1, z], [x1, y1, z1], [x1, y, z1]]), true) +
-      dPoly(this.pts([[x, y1, z], [x1, y1, z], [x1, y1, z1], [x, y1, z1]]), true),
-      cls || 'k'
-    );
+      dPoly(this.pts([[x, y1, z], [x1, y1, z], [x1, y1, z1], [x, y1, z1]]), true);
   };
+  PP.box = function (x, y, z, w, d, h, cls) { return this.path(this.boxD(x, y, z, w, d, h), cls || 'k'); };
   // Parallelogram o, o+u, o+u+v, o+v
   PP.quad = function (o, u, v, cls) { return this.poly([o, add(o, u), add(add(o, u), v), add(o, v)], cls); };
   PP.circle = function (c, a, b, r, cls, n) { return this.path(dPoly(this.pts(circle3(c, a, b, r, n || 32)), true), cls || 'k'); };
@@ -1514,6 +1512,184 @@
     return { focus: pen.P(focus) };
   }
 
+  // Euclyd's craftwerk: one square package of 64 tiles, each a small processor beside its own memory,
+  // on a plinth carrying the Euclyd mark. A wave of compute sweeps the tiles corner to corner.
+  function drawEuclyd(pen, anims) {
+    pen.open({ 'class': 'euclyd' });
+    var L = 60, B = 8, o = 1.8, T = L - 2 * o, z = 11.2, b = 0.9, i, j;
+    pen.box(-B, -B, 0, L + 2 * B, L + 2 * B, 7, 'k2');
+    pen.box(0, 0, 7, L, L, 2.6, 'k2');
+    pen.lines([[[L, 2.5, 8.3], [L, L - 2.5, 8.3]], [[2.5, L, 8.3], [L - 2.5, L, 8.3]]], 'l3 perf');
+    pen.box(o, o, 9.6, T, T, z - 9.6, 'k');
+    pen.lines([[[o + b, o + b, z], [o + T - b, o + b, z], [o + T - b, o + T - b, z], [o + b, o + T - b, z]]], 'l3', true);
+    var p = (T - 2 * b) / 8, g = 0.9, tiles = [];
+    function tile(ii, jj) {
+      var x = o + b + ii * p + g / 2, y = o + b + jj * p + g / 2, s = p - g;
+      return [[x, y, z], [x + s, y, z], [x + s, y + s, z], [x, y + s, z]];
+    }
+    for (i = 0; i < 8; i++) for (j = 0; j < 8; j++) tiles.push(tile(i, j));
+    pen.lines(tiles, 'l3', true);
+    // the mark on the plinth: a square, its inscribed circle, a cross and a V from the top corners
+    var m = pen.planeM([L + B, L * 0.66, 5.9], [0, -1, 0], [0, 0, -1]), q = 4.8;
+    pen.fig2([[[0, 0], [q, 0], [q, q], [0, q]], ellipse2(q / 2, q / 2, q / 2, q / 2, 0, 24)], m, 'l2', true);
+    pen.fig2([[[q / 2, 0], [q / 2, q]], [[0, q / 2], [q, q / 2]], [[0, 0], [q / 2, q / 2], [q, 0]]], m, 'l2');
+    var hot = pen.path('', 'l1'), PH = pen.snap();
+    function wave(t) {
+      var u = (t % 4.6) / 2.4, k = u < 1 ? Math.floor(u * 15) : -1, d = '';
+      if (k === wave.k) return;
+      wave.k = k;
+      for (i = 0; i < 8; i++) { j = k - i; if (j >= 0 && j < 8) d += dPoly(tile(i, j).map(function (v) { return PH(v); }), true); }
+      hot.setAttribute('d', d);
+    }
+    wave(1.2);
+    live(hot, { draw: function (t) { wave.k = null; wave(t); }, pad: 2 });
+    anims.push(wave);
+    pen.close();
+    return { top: pen.P([L / 2, L / 2, z]), back: pen.P([o + T * 0.25, o + 2, z]), front: pen.P([o + 2, o + T * 0.7, z]) };
+  }
+
+  // An AI materials-design station: a porous framework whose front cells assemble one by one, a CO2
+  // molecule drifting into one of its pores, and a panel ranking candidate structures on a target.
+  function drawMaterials(pen, anims) {
+    pen.open({ 'class': 'materials' });
+    var u = 14, X0 = 2.6 * u, Y0 = 0.4 * u, Z0 = u, i, j, k;
+    pen.box(0, 0, 0, 6 * u, 4.6 * u, 2.2, 'k2');
+    pen.revolve([X0 + 1.5 * u, Y0 + 1.5 * u, 2.2], Z, [[0, 0.95 * u], [1.6, 0.95 * u]]);
+    pen.line([[X0 + 1.5 * u, Y0 + 1.5 * u, 3.8], [X0 + 1.5 * u, Y0 + 1.5 * u, Z0 - 1.4]], 'l3');
+    function N(a) { return [X0 + a[0] * u, Y0 + a[1] * u, Z0 + a[2] * u]; }
+    function edges(ci, cj, ck) {
+      var e = [];
+      for (var a = 0; a < 2; a++) for (var c = 0; c < 2; c++) {
+        e.push([[ci, cj + a, ck + c], [ci + 1, cj + a, ck + c]], [[ci + a, cj, ck + c], [ci + a, cj + 1, ck + c]], [[ci + a, cj + c, ck], [ci + a, cj + c, ck + 1]]);
+      }
+      return e;
+    }
+    function key(p) { return p.join(','); }
+    function ekey(e) { var a = key(e[0]), c = key(e[1]); return a < c ? a + '|' + c : c + '|' + a; }
+    // the five front cells of the top layer are still being generated
+    var ghost = [[2, 2, 2], [2, 1, 2], [1, 2, 2], [2, 0, 2], [0, 2, 2]];
+    var isGhost = {}, solid = {}, nodes = {};
+    ghost.forEach(function (g) { isGhost[key(g)] = true; });
+    for (i = 0; i < 3; i++) for (j = 0; j < 3; j++) for (k = 0; k < 3; k++) {
+      if (isGhost[key([i, j, k])]) continue;
+      edges(i, j, k).forEach(function (e) { solid[ekey(e)] = e; nodes[key(e[0])] = e[0]; nodes[key(e[1])] = e[1]; });
+    }
+    var cells = ghost.map(function (g) {
+      var own = edges(g[0], g[1], g[2]).filter(function (e) { return !solid[ekey(e)]; }), pts = {};
+      own.forEach(function (e) { e.forEach(function (q) { if (!nodes[key(q)]) pts[key(q)] = q; }); });
+      return { edges: own, nodes: Object.keys(pts).map(function (kk) { return pts[kk]; }) };
+    });
+    function depth(a, c) { return (a[0] + a[1] + a[2]) - (c[0] + c[1] + c[2]); }
+    var PS = pen.snap();
+    function proj(list) { return list.map(function (q) { return PS(q); }); }
+    function nodeD(list) {
+      return list.slice().sort(depth).map(function (q) {
+        var c = N(q), h = 1.3, x = c[0] - h, y = c[1] - h, z = c[2] - h, x1 = x + 2 * h, y1 = y + 2 * h, z1 = z + 2 * h;
+        return dPoly(proj([[x, y, z1], [x1, y, z1], [x1, y1, z1], [x, y1, z1]]), true) +
+          dPoly(proj([[x1, y, z], [x1, y1, z], [x1, y1, z1], [x1, y, z1]]), true) +
+          dPoly(proj([[x, y1, z], [x1, y1, z], [x1, y1, z1], [x, y1, z1]]), true);
+      }).join('');
+    }
+    pen.lines(Object.keys(solid).map(function (kk) { return solid[kk].map(N); }), 'l2');
+    var ge = [];
+    cells.forEach(function (c) { c.edges.forEach(function (e) { ge.push(e.map(N)); }); });
+    pen.lines(ge, 'l3 dsh');
+    pen.path(nodeD(Object.keys(nodes).map(function (kk) { return nodes[kk]; })), 'k');
+    // a pore on the front face, where the molecule docks
+    var pc = [X0 + 3 * u, Y0 + 1.5 * u, Z0 + 1.5 * u];
+    pen.circle(pc, Y, Z, 0.36 * u, 'l3 dsh', 28);
+    // assembly of the front cells, and the molecule's approach, on layers of their own
+    var ag = pen.open(), ae = pen.path('', 'l2'), an = pen.path('', 'k');
+    pen.close();
+    var built = -1;
+    function assemble(t) {
+      var tt = t % 10, n = tt < 8.6 ? Math.max(0, Math.min(5, Math.floor((tt - 0.4) / 0.8) + 1)) : 5;
+      var o = tt < 8.6 ? 1 : Math.max(0, 1 - (tt - 8.6) / 1.4);
+      if (n !== built) {
+        built = n;
+        var es = [], ns = [];
+        for (var c = 0; c < n; c++) { es = es.concat(cells[c].edges); ns = ns.concat(cells[c].nodes); }
+        ae.setAttribute('d', es.map(function (e) { return dPoly(proj(e.map(N)), false); }).join(''));
+        an.setAttribute('d', nodeD(ns));
+      }
+      var ov = String(Math.round(o * 20) / 20);
+      if (ag._pfO !== ov) { ag._pfO = ov; (agL.sprite || ag).style.opacity = ov; }
+    }
+    var agL = live(ag, { draw: function (t) { built = -1; assemble(t); }, pad: 3 });
+    anims.push(assemble);
+    var P0 = pen.P(pc), co2 = pen.open(), rings = pen.path('', 'l1'), core = pen.path('', 'wf');
+    pen.close();
+    function molecule(t) {
+      var tt = t % 12, e = Math.min(1, tt / 4), f = 1 - Math.pow(1 - e, 3);
+      var x = P0[0] + (1 - f) * 44, y = P0[1] - (1 - f) * 20 + Math.sin(f * Math.PI) * 6, a = -0.35 * (1 - f);
+      var q = String(Math.round(x * 10) + ',' + Math.round(y * 10) + ',' + Math.round(a * 50));
+      if (co2._pfK !== q) {
+        co2._pfK = q;
+        var dx = Math.cos(a) * 2.9, dy = Math.sin(a) * 2.9;
+        rings.setAttribute('d', dPoly(ellipse2(x - dx, y - dy, 1.55, 1.55, 0, 12), true) + dPoly(ellipse2(x + dx, y + dy, 1.55, 1.55, 0, 12), true));
+        core.setAttribute('d', dPoly(ellipse2(x, y, 1.05, 1.05, 0, 10), true));
+      }
+      var ov = String(tt > 11 ? Math.round((12 - tt) * 20) / 20 : (tt < 0.4 ? Math.round(tt / 0.4 * 20) / 20 : 1));
+      if (co2._pfO !== ov) { co2._pfO = ov; (coL.sprite || co2).style.opacity = ov; }
+    }
+    var coL = live(co2, { draw: function (t) { co2._pfK = null; molecule(t); }, pad: 3 });
+    anims.push(molecule);
+    // the ranking panel: five candidates, each with its net, scored against a dashed target
+    var px = 0.3 * u, py = 4.3 * u, pz = 0.9 * u, pw = 2.5 * u, ph = 1.7 * u;
+    [0.25, 0.8].forEach(function (f) { pen.line([[px + pw * f, py - 0.5, 0], [px + pw * f, py - 0.5, pz]], 'l3'); });
+    pen.box(px, py - 1, pz, pw, 1, ph, 'k');
+    var m = pen.planeM([px, py, pz + ph], [1, 0, 0], [0, 0, -1]), lens = [22, 18.5, 15, 11, 7], nets = [], bars = [];
+    for (i = 0; i < 5; i++) {
+      var ry = 3.4 + i * 4.4;
+      nets.push([[2.4, ry - 1.5], [5.4, ry - 1.5], [5.4, ry + 1.5], [2.4, ry + 1.5]]);
+      bars.push([[7.6, ry], [7.6 + lens[i], ry]]);
+    }
+    pen.fig2(nets, m, 'l3', true);
+    pen.fig2([[[3.9, 1.9], [3.9, 4.9]], [[2.4, 3.4], [5.4, 3.4]]], m, 'l3');
+    pen.fig2([ellipse2(3.9, 7.8, 1.3, 1.3, Math.PI / 6, 6)], m, 'l3', true);
+    pen.fig2([[[2.9, 13.4], [3.9, 11.2], [4.9, 13.4], [2.9, 13.4]], [[2.6, 17.4], [3.3, 15.8], [4.1, 17.4], [4.8, 15.8]], [[2.7, 20.8], [5.1, 20.8]], [[2.7, 22.2], [5.1, 22.2]]], m, 'l3');
+    pen.fig2(bars, m, 'l1');
+    pen.fig2([[[21.6, 1.2], [21.6, 22.6]]], m, 'l3 dsh');
+    pen.fig2([[[30.8, 1.6], [31.8, 1.6], [31.8, 5.2], [30.8, 5.2]]], m, 'l2');
+    pen.close();
+    return { top: pen.P(N([1.5, 1.5, 3])), right: pen.P([6 * u, 0.9 * u, 2.2]), front: pen.P([2.2 * u, 4.6 * u, 2.2]), left: pen.P([0.2 * u, 4.6 * u, 2.2]), base: pen.P([6 * u, 4.6 * u, 0]) };
+  }
+
+  // Detail view of Nothing's audio, linked to the phone: a Headphone (1) cup face on, and an Ear (3a) case.
+  function drawAudioCallout(pen, cc, cr, target, other) {
+    pen.at(0, 0, 1);
+    var id = 'pf-clip-audio-' + Math.round(cc[0]) + '-' + Math.round(cc[1]);
+    var clip = el('clipPath', { id: id });
+    clip.appendChild(el('circle', { cx: cc[0], cy: cc[1], r: cr - 1.2 }));
+    pen.g.appendChild(clip);
+    pen.path(dPoly(ellipse2(cc[0], cc[1], cr, cr, 0, 64), true), 'k');
+    pen.open({ 'clip-path': 'url(#' + id + ')' });
+    var s = cr / 38, m = [s, 0, 0, s, cc[0] - 9 * s, cc[1] + 3 * s], e = [s, 0, 0, s, cc[0] + 20 * s, cc[1] + 12 * s];
+    pen.fig2([rrect2(-4.5, -33, 9, 15, 2, 3)], m, 'k2', true);
+    pen.fig2([[[-0.7, -18.2], [-0.7, -16.6]], [[0.7, -18.2], [0.7, -16.6]]], m, 'l2');
+    pen.fig2([rrect2(-15, -17, 30, 36, 7.5, 5)], m, 'k', true);
+    pen.fig2([ellipse2(0, 2, 11, 15.2, 0, 40)], m, 'l2', true);
+    pen.fig2([rrect2(-7, -9, 14, 22.5, 3, 3)], m, 'l3', true);
+    pen.fig2([ellipse2(0, -2.2, 3.4, 3.4, 0, 20), ellipse2(0, 6.4, 3.4, 3.4, 0, 20)], m, 'l2', true);
+    pen.fig2([ellipse2(0, -2.2, 1.8, 1.8, 0, 14), ellipse2(0, 6.4, 1.8, 1.8, 0, 14)], m, 'l3', true);
+    pen.fig2([[[-10.4, 1.2], [-8.4, 1.2], [-8.4, 3.2], [-10.4, 3.2]]], m, 'wf', true);
+    pen.fig2([ellipse2(11.2, -13.2, 1.6, 1.6, 0, 12)], m, 'l3', true);
+    pen.fig2([rrect2(-9, -6.5, 18, 13, 4.5, 4)], e, 'k', true);
+    pen.fig2([[[-8.6, -1.4], [8.6, -1.4]]], e, 'l3');
+    pen.fig2([ellipse2(-3.8, 1.8, 2.2, 2.2, 0, 14), ellipse2(3.8, 1.8, 2.2, 2.2, 0, 14)], e, 'l2', true);
+    pen.fig2([[[-3.8, 1.8], [-1.3, 4.6]], [[3.8, 1.8], [1.3, 4.6]]], e, 'l3');
+    pen.fig2([ellipse2(-1.4, -3.8, 0.45, 0.45, 0, 8), ellipse2(0, -3.8, 0.45, 0.45, 0, 8), ellipse2(1.4, -3.8, 0.45, 0.45, 0, 8)], e, 'wf', true);
+    pen.close();
+    pen.path(dPoly(ellipse2(cc[0], cc[1], cr + 4, cr + 4, 0, 64), true), 'l3 dsh');
+    var ang = Math.atan2(target[1] - cc[1], target[0] - cc[0]);
+    pen.path(dPoly([[cc[0] + Math.cos(ang) * (cr + 4), cc[1] + Math.sin(ang) * (cr + 4)], [target[0] - Math.cos(ang) * 5, target[1] - Math.sin(ang) * 5]], false), 'callout');
+    pen.path(dPoly(ellipse2(target[0], target[1], 5, 5, 0, 16), true), 'callout');
+    if (other) {
+      var a2 = Math.atan2(other[1] - cc[1], other[0] - cc[0]);
+      pen.path(dPoly([[cc[0] + Math.cos(a2) * (cr + 4), cc[1] + Math.sin(a2) * (cr + 4)], [other[0] - Math.cos(a2) * (other[2] + 4), other[1] - Math.sin(a2) * (other[2] + 4)]], false), 'callout');
+    }
+  }
+
   /* ---------- scene ---------- */
 
   var CSS = [
@@ -1639,7 +1815,7 @@
   // Size moves in steps of 0.05 units, far below what shows, so a dot repaints a few times a second.
   Dot.prototype.at = function (x, y, s) {
     var k = LIVE.k, S = this.S, q = Math.round(this.r * s * 20);
-    this.e.style.transform = 'translate(' + ((x - S) * k).toFixed(2) + 'px,' + ((y - S) * k).toFixed(2) + 'px)';
+    this.e.style.transform = 'translate(' + ((x - S - (LIVE.L.x0 || 0)) * k).toFixed(2) + 'px,' + ((y - S) * k).toFixed(2) + 'px)';
     if (q !== this.q) { this.q = q; this.p.setAttribute('d', dPoly(ellipse2(0, 0, q / 20, q / 20, 0, 8), true)); }
   };
 
@@ -1681,7 +1857,7 @@
       var p = o.pad || 3;
       var box = h.box = [f1(b[0] - p), f1(b[1] - p), f1(b[2] - b[0] + 2 * p), f1(b[3] - b[1] + 2 * p)];
       var s = el('svg', { viewBox: box.join(' '), 'class': 'pf-sprite' + (o.css ? ' ' + o.css : ''), 'aria-hidden': 'true', focusable: 'false' });
-      s.style.left = (box[0] / L.w * 100).toFixed(4) + '%';
+      s.style.left = ((box[0] - (L.x0 || 0)) / L.w * 100).toFixed(4) + '%';
       s.style.top = (box[1] / L.h * 100).toFixed(4) + '%';
       s.style.width = (box[2] / L.w * 100).toFixed(4) + '%';
       s.style.height = (box[3] / L.h * 100).toFixed(4) + '%';
@@ -1752,8 +1928,10 @@
   var LAYOUTS = {};
 
   LAYOUTS.wide = {
-    w: 1600,
+    x0: -200,
+    w: 1840,
     h: 1000,
+    fade: [800, 740, 896, 0.6],
     build: function (pen, anims, flows) {
       var A = {};
       // ground
@@ -1765,6 +1943,7 @@
       // sky
       item(pen, null, 0.1);
       drawStars(pen, [20, 10, 1600, 330], 46, 3);
+      drawStars(pen, [-190, 10, 20, 330], 7, 23);
       drawSun(pen, 112, 104, 22, anims);
       A.sun = [112, 104];
       pen.close();
@@ -1801,6 +1980,15 @@
       A.cemvision = pen.P([70, 38, 70]);
       A.bags = pen.P([170, 60, 12]);
       A.kiln = pen.P([150, 40, 0]);
+      A.cemIn = pen.P([10, 60, 40]);
+      pen.close();
+
+      item(pen, 'unannounced', 0.42);
+      pen.at(-104, 470, 1.12);
+      var mt = drawMaterials(pen, anims);
+      A.materials = mt.top;
+      A.matRight = mt.right;
+      A.matFront = mt.front;
       pen.close();
 
       item(pen, null, 0.45);
@@ -1813,6 +2001,14 @@
       pen.at(1290, 520, 1.05);
       var gs = drawGroundStation(pen);
       A.dish = gs.focus;
+      pen.close();
+
+      item(pen, 'euclyd', 0.62);
+      pen.at(1494, 604, 0.94);
+      var eu = drawEuclyd(pen, anims);
+      A.euclyd = pen.P([68, 68, 0]);
+      A.euIn = eu.back;
+      A.euOut = eu.front;
       pen.close();
 
       // middle row
@@ -1843,6 +2039,7 @@
       pen.at(96, 690, 1.12);
       drawGenEng(pen);
       A.geneng = pen.P([153, 77, 0]);
+      A.geCard = pen.P([60, -18, 96]);
       pen.close();
 
       var hx = 800, hy = 735, hs = 1.2;
@@ -1855,6 +2052,7 @@
       drawNeo(pen, neoAt[0], neoAt[1], 1.1, false);
       A.neo = [neoAt[0] - 2, neoAt[1] - 110];
       A.phone = [A.person[0] + 15, A.person[1] - 22];
+      A.head = [A.person[0] + 3, A.person[1] - 38];
       A.homeSlab = pen.P([0, 150, -4]);
       pen.close();
 
@@ -1866,6 +2064,7 @@
 
       item(pen, 'nothing', 0.9);
       A.nothing = drawPhoneCallout(pen, [600, 570], 62, 1.4, A.phone, anims);
+      drawAudioCallout(pen, [480, 584], 33, A.head, [600, 570, 62]);
       pen.close();
 
       item(pen, 'odyssey', 0.95);
@@ -1892,18 +2091,23 @@
       // flows: sunlight into orbit, compute down to Earth, capture into models, cement into foundations
       pen.open({ 'class': 'pf-flows' });
       flows.push(new Flow(pen, [[A.sun[0] + 28, A.sun[1] - 6], [560, 24], A.plane], { n: 5, speed: 44 }));
-      flows.push(new Flow(pen, [[-20, 250], [280, 180], [A.nyxTail[0] - 6, A.nyxTail[1] + 4]], { n: 2, speed: 40 }));
+      flows.push(new Flow(pen, [[-220, 262], [280, 180], [A.nyxTail[0] - 6, A.nyxTail[1] + 4]], { n: 3, speed: 40 }));
       flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
       flows.push(new Flow(pen, [A.dock, [1300, 230], [1470, 330], [A.chutes[0], A.chutes[1] - 12]], { n: 2, speed: 34 }));
-      flows.push(new Flow(pen, [[A.chutes[0], A.chutes[1] + 50], [1530, 560], [1560, 660]], { n: 1, speed: 24 }));
+      flows.push(new Flow(pen, [[A.chutes[0], A.chutes[1] + 50], [1548, 540], [1590, 600]], { n: 1, speed: 24 }));
       flows.push(new Flow(pen, [A.spine, [1220, 410], A.dish], { n: 3, speed: 46 }));
       flows.push(new Flow(pen, [A.dish, [1190, 470], A.terminal], { n: 2, speed: 36 }));
-      flows.push(new Flow(pen, [A.dish, [1320, 600], A.screen], { n: 2, speed: 36 }));
+      // a few requests into Euclyd's inference chip, a stream of tokens out to the world model
+      flows.push(new Flow(pen, [A.dish, [1360, 560], A.euIn], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.euOut, [1330, 650], A.screen], { n: 5, speed: 44 }));
       flows.push(new Flow(pen, [A.rig, [1330, 740], A.screen], { n: 2, speed: 30 }));
       flows.push(new Flow(pen, [A.labCorner, [1150, 650], [1060, 705], A.neo], { n: 3, speed: 32 }));
       flows.push(new Flow(pen, [A.turbine, [380, 500], A.kiln], { n: 2, speed: 30 }));
       flows.push(new Flow(pen, [A.bags, [410, 620], A.slab], { n: 2, speed: 26 }));
       flows.push(new Flow(pen, [A.slabFront, [580, 850], A.homeSlab], { n: 2, speed: 26 }));
+      // new materials into the cement plant, and into the next machine's design
+      flows.push(new Flow(pen, [A.matRight, [30, 470], A.cemIn], { n: 2, speed: 24 }));
+      flows.push(new Flow(pen, [A.matFront, [-20, 612], A.geCard], { n: 2, speed: 24 }));
       pen.close();
       return A;
     },
@@ -1915,17 +2119,19 @@
       camion: { at: 'camion', to: [520, 878], pos: 'below' },
       ineffable: { at: 'ineffable', to: [948, 372], pos: 'left' },
       geneng: { at: 'geneng', to: [200, 846], pos: 'below' },
-      '1x': { at: 'neo', to: [902, 624], pos: 'right' },
+      '1x': { at: 'neo', to: [902, 624], pos: 'right', wrap: true },
       hume: { at: 'hume', to: [806, 584], wrap: true },
-      nothing: { at: 'nothing', to: [625, 494] },
-      odyssey: { at: 'odyssey', to: [1450, 800], pos: 'below' }
+      nothing: { at: 'nothing', to: [642, 494] },
+      odyssey: { at: 'odyssey', to: [1450, 800], pos: 'below' },
+      euclyd: { at: 'euclyd', to: [1494, 682], pos: 'below' },
+      unannounced: { at: 'materials', to: [-84, 424], wrap: true }
     }
   };
 
   // Portrait composition for phones: orbit at the top, then the labs, the home, and the industrial base.
   LAYOUTS.tall = {
     w: 720,
-    h: 2860,
+    h: 3120,
     fade: [360, 1480, 820, 2.3],
     build: function (pen, anims, flows) {
       var A = {};
@@ -1970,6 +2176,14 @@
       A.dish = gs.focus;
       pen.close();
 
+      item(pen, 'euclyd', 0.62);
+      pen.at(522, 1124, 0.8);
+      var eu = drawEuclyd(pen, anims);
+      A.euclyd = pen.P([68, 68, 0]);
+      A.euIn = eu.back;
+      A.euOut = eu.front;
+      pen.close();
+
       item(pen, 'ineffable', 0.6);
       pen.at(372, 880, 1.06);
       var inf = drawIneffable(pen, anims);
@@ -1993,7 +2207,7 @@
       item(pen, null, 0.8);
       pen.at(672, 1900, 1.1);
       drawTree(pen, [0, 0, 0], 44, 14, 2);
-      pen.at(620, 1080, 0.9);
+      pen.at(676, 1346, 0.9);
       drawTree(pen, [0, 0, 0], 40, 13, 6);
       pen.at(84, 1950, 1.0);
       drawTree(pen, [0, 0, 0], 40, 13, 9);
@@ -2009,6 +2223,7 @@
       drawNeo(pen, neoAt[0], neoAt[1], 1.24, false);
       A.neo = [neoAt[0] + 6, neoAt[1] - 118];
       A.phone = [A.person[0] + 17, A.person[1] - 25];
+      A.head = [A.person[0] + 3, A.person[1] - 43];
       A.homeSlab = pen.P([0, 150, -4]);
       pen.close();
 
@@ -2020,6 +2235,7 @@
 
       item(pen, 'nothing', 0.9);
       A.nothing = drawPhoneCallout(pen, [98, 1522], 60, 1.36, A.phone, anims);
+      drawAudioCallout(pen, [92, 1654], 32, A.head, [98, 1522, 60]);
       pen.close();
 
       // the base: materials, energy, engineering
@@ -2035,10 +2251,19 @@
       A.cemvision = pen.P([30, 38, 60]);
       A.bags = pen.P([170, 60, 12]);
       A.kiln = pen.P([150, 40, 0]);
+      A.cemIn = pen.P([10, 60, 40]);
+      pen.close();
+
+      item(pen, 'unannounced', 0.42);
+      pen.at(318, 2436, 1.15);
+      var mt = drawMaterials(pen, anims);
+      A.matBase = mt.base;
+      A.matRight = mt.right;
+      A.matLeft = mt.left;
       pen.close();
 
       item(pen, 'camion', 0.55);
-      pen.at(430, 2630, 0.8);
+      pen.at(430, 2890, 0.8);
       var cm = drawCamion(pen, anims);
       A.camion = pen.P([120, 96, 0]);
       A.slab = pen.P([0, 96, 0]);
@@ -2050,9 +2275,10 @@
       pen.close();
 
       item(pen, 'geneng', 0.7);
-      pen.at(22, 2610, 0.96);
+      pen.at(22, 2870, 0.96);
       drawGenEng(pen);
       A.geneng = pen.P([100, -20, 164]);
+      A.geCard = pen.P([60, -18, 96]);
       pen.close();
 
       pen.open({ 'class': 'pf-flows' });
@@ -2061,12 +2287,15 @@
       flows.push(new Flow(pen, [A.nyxNose, A.dock], { n: 2, speed: 22, smooth: false }));
       flows.push(new Flow(pen, [A.spine, [580, 700], A.dish], { n: 3, speed: 44 }));
       flows.push(new Flow(pen, [A.dish, [560, 850], A.terminal], { n: 2, speed: 34 }));
-      flows.push(new Flow(pen, [A.dish, [520, 1140], A.screen], { n: 2, speed: 34 }));
+      flows.push(new Flow(pen, [A.dish, [606, 1030], A.euIn], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.euOut, [300, 1118], A.screen], { n: 5, speed: 44 }));
       flows.push(new Flow(pen, [A.rig, [260, 1150], A.screen], { n: 2, speed: 30 }));
-      flows.push(new Flow(pen, [A.terminal, [704, 1290], [700, 1480], A.neo], { n: 3, speed: 34 }));
+      flows.push(new Flow(pen, [A.terminal, [640, 1010], [704, 1180], [704, 1330], [698, 1490], A.neo], { n: 3, speed: 34 }));
       flows.push(new Flow(pen, [A.turbine, [430, 2230], A.kiln], { n: 2, speed: 30 }));
-      flows.push(new Flow(pen, [A.bags, [404, 2460], A.slab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.bags, [600, 2480], [560, 2780], A.slab], { n: 2, speed: 26 }));
       flows.push(new Flow(pen, [A.bags, [360, 2050], A.homeSlab], { n: 2, speed: 26 }));
+      flows.push(new Flow(pen, [A.matRight, [420, 2380], A.cemIn], { n: 2, speed: 24 }));
+      flows.push(new Flow(pen, [A.matLeft, [120, 2530], [12, 2650], [14, 2760], A.geCard], { n: 2, speed: 24 }));
       pen.close();
       return A;
     },
@@ -2075,12 +2304,14 @@
       starcloud: { at: 'starcloud', to: [440, 520], pos: 'left' },
       ineffable: { at: 'ineffable', dx: -144, dy: -78 },
       odyssey: { at: 'odyssey', dx: 101, dy: -44 },
-      nothing: { at: 'nothing', to: [160, 1428] },
+      nothing: { at: 'nothing', to: [184, 1428] },
       '1x': { at: 'neo', to: [530, 1428] },
       hume: { at: 'hume', to: [330, 1524], wrap: true },
       cemvision: { at: 'cemvision', dx: -14, dy: -80 },
-      camion: { at: 'camion', to: [470, 2778], pos: 'below' },
-      geneng: { at: 'geneng', dx: 60, dy: -36 }
+      camion: { at: 'camion', to: [470, 3038], pos: 'below' },
+      geneng: { at: 'geneng', dx: 84, dy: -36 },
+      euclyd: { at: 'euclyd', to: [498, 1204], pos: 'below' },
+      unannounced: { at: 'matBase', to: [372, 2552], pos: 'below' }
     }
   };
 
@@ -2097,12 +2328,13 @@
     if (state.layer) state.layer.remove();
     state.anims = [];
     state.flows = [];
-    var svg = el('svg', { viewBox: '0 0 ' + L.w + ' ' + L.h, 'class': 'pf-scene', 'aria-hidden': 'true', focusable: 'false' });
+    var x0 = L.x0 || 0;
+    var svg = el('svg', { viewBox: x0 + ' 0 ' + L.w + ' ' + L.h, 'class': 'pf-scene', 'aria-hidden': 'true', focusable: 'false' });
     var style = el('style');
     style.textContent = CSS;
     svg.appendChild(style);
     var defs = el('defs');
-    var fc = L.fade || [L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
+    var fc = L.fade || [x0 + L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
     var grad = el('radialGradient', {
       id: 'pf-grad', gradientUnits: 'userSpaceOnUse', cx: fc[0], cy: fc[1], r: fc[2],
       gradientTransform: 'translate(' + fc[0] + ' ' + fc[1] + ') scale(1 ' + fc[3] + ') translate(' + (-fc[0]) + ' ' + (-fc[1]) + ')'
@@ -2110,8 +2342,8 @@
     grad.appendChild(el('stop', { offset: 0.3, 'stop-color': '#fff' }));
     grad.appendChild(el('stop', { offset: 1, 'stop-color': '#000' }));
     defs.appendChild(grad);
-    var mask = el('mask', { id: 'pf-fade', maskUnits: 'userSpaceOnUse', x: -L.w, y: -L.h, width: L.w * 3, height: L.h * 3 });
-    mask.appendChild(el('rect', { x: -L.w, y: -L.h, width: L.w * 3, height: L.h * 3, fill: 'url(#pf-grad)' }));
+    var mask = el('mask', { id: 'pf-fade', maskUnits: 'userSpaceOnUse', x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3 });
+    mask.appendChild(el('rect', { x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3, fill: 'url(#pf-grad)' }));
     defs.appendChild(mask);
     svg.appendChild(defs);
     stage.insertBefore(svg, stage.firstChild);
@@ -2141,6 +2373,8 @@
     state.layer = layer;
     state.layout = name;
     stage.style.setProperty('--ar', (L.w / L.h).toFixed(4));
+    // labels keep the same size against the drawing however wide the scene is
+    stage.style.setProperty('--pf-fs', (0.66 * 1600 / L.w).toFixed(4) + 'cqw');
     stage.classList.toggle('is-tall', name === 'tall');
     if (stage.parentNode) stage.parentNode.classList.toggle('is-tall', name === 'tall');
     placePills(stage, L);
@@ -2165,7 +2399,7 @@
       p.style.display = cfg ? '' : 'none';
       if (!cfg) continue;
       var b = pillPoint(cfg, state.anchors[cfg.at] || [0, 0]);
-      p.style.left = (b[0] / L.w * 100).toFixed(3) + '%';
+      p.style.left = ((b[0] - (L.x0 || 0)) / L.w * 100).toFixed(3) + '%';
       p.style.top = (b[1] / L.h * 100).toFixed(3) + '%';
       p.classList.remove('below', 'left', 'right', 'wrap');
       if (cfg.pos) p.classList.add(cfg.pos);

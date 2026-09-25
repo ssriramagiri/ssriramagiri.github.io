@@ -495,7 +495,7 @@
       background: rgba(0,0,0,0.86);
       color: #e8e8e8;
       font-family: 'Berkeley Mono', 'SF Mono', 'Fira Code', monospace;
-      font-size: clamp(7px, 0.66cqw, 10.5px);
+      font-size: clamp(7px, var(--pf-fs, 0.66cqw), 10.5px);
       line-height: 1.35;
       text-align: center;
       text-decoration: none;
@@ -531,6 +531,9 @@
     }
     .portfolio-pill em + em {
       margin-left: 0.35em;
+    }
+    span.portfolio-pill {
+      cursor: default;
     }
     .portfolio-pill span {
       display: block;
@@ -693,7 +696,7 @@
   <div class="portfolio-stage" id="portfolio-stage">
     <div class="portfolio-pills">
       <a class="portfolio-pill" data-id="1x" href="https://1x.tech" target="_blank" rel="noopener" data-preview-img="/assets/previews/1x.jpg"><b>1X TECHNOLOGIES<em>SERIES B</em></b><span>A humanoid robot for the home</span></a>
-      <a class="portfolio-pill" data-id="nothing" href="https://nothing.tech" target="_blank" rel="noopener" data-preview-img="/assets/previews/nothing.jpg"><b>NOTHING<em>SERIES B</em></b><span>Transparent phones and audio</span></a>
+      <a class="portfolio-pill" data-id="nothing" href="https://nothing.tech" target="_blank" rel="noopener" data-preview-img="/assets/previews/nothing.jpg"><b>NOTHING<em>SERIES B</em></b><span>A next-gen consumer tech ecosystem</span></a>
       <a class="portfolio-pill" data-id="odyssey" href="https://odyssey.systems" target="_blank" rel="noopener" data-preview-img="/assets/previews/odyssey.jpg"><b>ODYSSEY<em>SERIES A</em></b><span>AI that learns to simulate the world</span></a>
       <a class="portfolio-pill" data-id="exploration" href="https://exploration.space" target="_blank" rel="noopener" data-preview-img="/assets/previews/exploration.jpg"><b>THE EXPLORATION COMPANY<em>SERIES A</em><em>SERIES C</em></b><span>Reusable capsules to orbit and back</span></a>
       <a class="portfolio-pill" data-id="hume" href="https://hume.ai" target="_blank" rel="noopener" data-preview-img="/assets/previews/hume.jpg"><b>HUME <i>(ACQ. GOOGLE)</i><em>SERIES B</em></b><span>Voice AI that reads tone, not just words</span></a>
@@ -702,6 +705,8 @@
       <a class="portfolio-pill" data-id="cemvision" href="https://www.cemvision.tech/" target="_blank" rel="noopener" data-preview-img="/assets/previews/cemvision.jpg"><b>CEMVISION<em>PRE-SEED</em></b><span>Low-carbon cement from industrial waste</span></a>
       <a class="portfolio-pill" data-id="ineffable" href="https://www.ineffable.ai" target="_blank" rel="noopener" data-preview-img="/assets/previews/ineffable.jpg"><b>INEFFABLE INTELLIGENCE<em>SEED</em></b><span>AI that learns from its own experience</span></a>
       <a class="portfolio-pill" data-id="starcloud" href="https://www.starcloud.com/starcloud-4" target="_blank" rel="noopener" data-preview-img="/assets/previews/starcloud.jpg"><b>STARCLOUD<em>SERIES A</em></b><span>Data centers in orbit, run on sunlight</span></a>
+      <a class="portfolio-pill" data-id="euclyd" href="https://www.euclyd.ai/" target="_blank" rel="noopener" data-preview-img="/assets/previews/euclyd.jpg"><b>EUCLYD<em>SERIES A</em></b><span>Chips built to run AI, not train it</span></a>
+      <span class="portfolio-pill" data-id="unannounced"><b>UNANNOUNCED<em>SERIES B</em></b><span>Generative AI for new materials</span></span>
     </div>
   </div>
 </div>
