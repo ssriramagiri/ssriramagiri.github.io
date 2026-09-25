@@ -2234,7 +2234,7 @@
       hume: { at: 'hume', to: [806, 584], wrap: true },
       nothing: { at: 'nothing', to: [642, 494] },
       odyssey: { at: 'odyssey', to: [1450, 800], pos: 'below' },
-      euclyd: { at: 'euclyd', to: [1494, 682], pos: 'below' },
+      euclyd: { at: 'euclyd', to: [1506, 682], pos: 'below' },
       unannounced: { at: 'materials', to: [-84, 424], wrap: true }
     }
   };
