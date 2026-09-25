@@ -1630,8 +1630,15 @@
     portfolioOverlay.setAttribute('aria-hidden', 'false');
     portfolioToggle.classList.add('active');
     if (window.PortfolioScene) {
-      window.PortfolioScene.mount(portfolioStage);
-      window.PortfolioScene.play();
+      // The overlay starts fading in on this frame and the scene is built after it, so a tap answers
+      // at once and the build runs while the fades play on their own.
+      requestAnimationFrame(function() {
+        setTimeout(function() {
+          if (!portfolioOpen) return;
+          window.PortfolioScene.mount(portfolioStage);
+          window.PortfolioScene.play();
+        }, 0);
+      });
     }
     setTimeout(preloadPortfolioPreviews, 1500);
     if (location.hash !== '#portfolio') history.replaceState(null, '', '#portfolio');
