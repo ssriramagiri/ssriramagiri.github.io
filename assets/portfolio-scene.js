@@ -1716,6 +1716,7 @@
     '.tube-o{fill:none;stroke:#e8e8e8;stroke-width:2.6;stroke-linecap:round}',
     '.tube-i{fill:none;stroke:#000;stroke-width:1.1;stroke-linecap:round}',
     '.callout{fill:none;stroke:rgba(232,232,232,.5);stroke-width:.75;stroke-dasharray:3 2.4}',
+    '.ground{fill:none;stroke:url(#pf-ground);stroke-width:.55}',
     '.pf-item{opacity:0;transform:translateY(5px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.16,1,.3,1)}',
     '.is-built .pf-item{opacity:1;transform:none;transition-delay:var(--d,0s)}',
     // WebKit stalls for about a third of a second when a layer's opacity crosses 1, so layers rest just below it
@@ -1979,13 +1980,36 @@
     }
   };
 
-  function groundGrid(pen, ox, oy, size, step, cls) {
+  // Centre, radius and vertical squash of the ellipse the ground grid fades out towards.
+  function fadeOf(L) {
+    return L.fade || [(L.x0 || 0) + L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
+  }
+
+  // The part of segment a-b inside box [x0, y0, x1, y1], or null.
+  function clipSeg(a, b, box) {
+    var t0 = 0, t1 = 1, dx = b[0] - a[0], dy = b[1] - a[1];
+    var p = [-dx, dx, -dy, dy], q = [a[0] - box[0], box[2] - a[0], a[1] - box[1], box[3] - a[1]];
+    for (var i = 0; i < 4; i++) {
+      if (p[i] === 0) { if (q[i] < 0) return null; continue; }
+      var t = q[i] / p[i];
+      if (p[i] < 0) { if (t > t1) return null; if (t > t0) t0 = t; }
+      else { if (t < t0) return null; if (t < t1) t1 = t; }
+    }
+    return [[a[0] + t0 * dx, a[1] + t0 * dy], [a[0] + t1 * dx, a[1] + t1 * dy]];
+  }
+
+  // Grid lines stop where their fade reaches nothing, at the edge of the fade's ellipse.
+  function groundGrid(pen, ox, oy, size, step) {
     pen.at(ox, oy, 1);
+    var fc = fadeOf(LIVE.L), box = [fc[0] - fc[2], fc[1] - fc[2] * fc[3], fc[0] + fc[2], fc[1] + fc[2] * fc[3]];
     var lines = [];
     for (var i = 0; i <= size; i += step) {
-      lines.push([[i, 0, 0], [i, size, 0]], [[0, i, 0], [size, i, 0]]);
+      [[[i, 0, 0], [i, size, 0]], [[0, i, 0], [size, i, 0]]].forEach(function (l) {
+        var c = clipSeg(pen.P(l[0]), pen.P(l[1]), box);
+        if (c) lines.push(c);
+      });
     }
-    pen.lines(lines, cls || 'l4');
+    pen.lines2(lines, 'ground');
   }
 
   function item(pen, id, delay) {
@@ -2004,9 +2028,8 @@
     build: function (pen, anims, flows) {
       var A = {};
       // ground
-      var gg = item(pen, null, 0);
-      gg.setAttribute('mask', 'url(#pf-fade)');
-      groundGrid(pen, 800, -330, 2400, 40, 'l4');
+      item(pen, null, 0);
+      groundGrid(pen, 800, -330, 2400, 40);
       pen.close();
 
       // sky
@@ -2204,9 +2227,8 @@
     fade: [360, 1480, 820, 2.3],
     build: function (pen, anims, flows) {
       var A = {};
-      var gg = item(pen, null, 0);
-      gg.setAttribute('mask', 'url(#pf-fade)');
-      groundGrid(pen, 360, -700, 3800, 40, 'l4');
+      item(pen, null, 0);
+      groundGrid(pen, 360, -700, 3800, 40);
       pen.close();
 
       item(pen, null, 0.1);
@@ -2403,17 +2425,17 @@
     style.textContent = CSS;
     svg.appendChild(style);
     var defs = el('defs');
-    var fc = L.fade || [x0 + L.w / 2, L.h * 0.74, L.w * 0.56, 0.6];
+    // The ground's lines fade out through their own stroke. A mask would look the same, but WebKit
+    // renders a mask as an offscreen image of all it covers, which took a phone a third of a second
+    // every time the ground was painted.
+    var fc = fadeOf(L);
     var grad = el('radialGradient', {
-      id: 'pf-grad', gradientUnits: 'userSpaceOnUse', cx: fc[0], cy: fc[1], r: fc[2],
+      id: 'pf-ground', gradientUnits: 'userSpaceOnUse', cx: fc[0], cy: fc[1], r: fc[2],
       gradientTransform: 'translate(' + fc[0] + ' ' + fc[1] + ') scale(1 ' + fc[3] + ') translate(' + (-fc[0]) + ' ' + (-fc[1]) + ')'
     });
-    grad.appendChild(el('stop', { offset: 0.3, 'stop-color': '#fff' }));
-    grad.appendChild(el('stop', { offset: 1, 'stop-color': '#000' }));
+    grad.appendChild(el('stop', { offset: 0.3, 'stop-color': '#e8e8e8', 'stop-opacity': 0.14 }));
+    grad.appendChild(el('stop', { offset: 1, 'stop-color': '#e8e8e8', 'stop-opacity': 0 }));
     defs.appendChild(grad);
-    var mask = el('mask', { id: 'pf-fade', maskUnits: 'userSpaceOnUse', x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3 });
-    mask.appendChild(el('rect', { x: x0 - L.w, y: -L.h, width: L.w * 3, height: L.h * 3, fill: 'url(#pf-grad)' }));
-    defs.appendChild(mask);
     svg.appendChild(defs);
     stage.insertBefore(svg, stage.firstChild);
     var layer = document.createElement('div');
