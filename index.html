@@ -416,7 +416,7 @@
       pointer-events: none;
       opacity: 0;
       transform: translateY(4px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transition: opacity 0.09s ease-out, transform 0.09s ease-out;
       overflow: hidden;
     }
     .site-preview.visible {
@@ -431,12 +431,13 @@
 
     body { transition: background-color 0.6s ease; }
     body.portfolio-open { background: #000; }
-    .flipdot-container { transition: opacity 0.6s ease; }
-    body.portfolio-open .flipdot-container { opacity: 0.1; }
-    /* At a tenth of its brightness the matrix's fades and glow can't be seen, and each update would
-       repaint the whole screen for several frames under the scene. */
-    body.portfolio-open .dot { transition: none; }
-    body.portfolio-open .dot.on { box-shadow: none; }
+    .flipdot-container { transition: opacity 0.6s ease, visibility 0s linear 0s; }
+    /* The dot matrix is off on the Portfolio page: it fades out and its loop stops. */
+    body.portfolio-open .flipdot-container {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+    }
 
     .portfolio-overlay {
       position: fixed;
@@ -502,7 +503,7 @@
       white-space: nowrap;
       pointer-events: auto;
       opacity: 0;
-      transition: opacity 0.5s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      transition: opacity 0.5s ease, background-color 0.08s ease-out, color 0.08s ease-out, border-color 0.08s ease-out;
       /* Its own layer, so moving parts of the scene underneath never make the browser repaint it. */
       will-change: transform;
     }
@@ -1557,6 +1558,13 @@
       aboutOverlay.classList.remove('visible', 'closing');
       aboutOpen = false;
       aboutClosing = false;
+      // Portfolio opened meanwhile: the matrix stays off, so skip the dissolve and leave it paused
+      if (portfolioOpen) {
+        clear();
+        render();
+        animations[currentAnim].reset();
+        return;
+      }
       // Noise dissolve transition before resuming
       var noiseT = 0;
       var noiseLast = 0;
@@ -1616,6 +1624,7 @@
     if (portfolioOpen || activeGame) return;
     if (aboutOpen) closeAbout();
     portfolioOpen = true;
+    pauseMainLoop();
     document.body.classList.add('portfolio-open');
     portfolioOverlay.classList.add('visible');
     portfolioOverlay.setAttribute('aria-hidden', 'false');
@@ -1637,6 +1646,7 @@
     portfolioToggle.classList.remove('active');
     preview.classList.remove('visible');
     if (window.PortfolioScene) window.PortfolioScene.pause();
+    if (!activeGame && !aboutOpen) resumeMainLoop();
     if (location.hash === '#portfolio') history.replaceState(null, '', location.pathname + location.search);
   }
 
@@ -1679,7 +1689,6 @@
   // that refuses to be framed, and leaves nothing running in the background. Other links frame the
   // live page.
   var preview = document.getElementById('site-preview');
-  var previewTimeout = null;
   var previewEls = {};
 
   function getPreviewEl(link) {
@@ -1710,9 +1719,13 @@
     for (var key in previewEls) previewEls[key].style.display = 'none';
   }
 
+  // Decoded ahead of time, so a still is ready the moment its label is hovered.
   function preloadPortfolioPreviews() {
     var links = document.querySelectorAll('.portfolio-pill[data-preview-img]');
-    for (var j = 0; j < links.length; j++) getPreviewEl(links[j]);
+    for (var j = 0; j < links.length; j++) {
+      var img = getPreviewEl(links[j]);
+      if (img.decode) img.decode().catch(function() {});
+    }
   }
 
   // Try spots around the label and around the product it highlights, and take the one that covers
@@ -1757,16 +1770,13 @@
   for (var i = 0; i < previewLinks.length; i++) {
     (function(link) {
       link.addEventListener('mouseenter', function() {
-        clearTimeout(previewTimeout);
         hidePreviewEls();
         getPreviewEl(link).style.display = '';
         placePreview(link);
         preview.classList.add('visible');
       });
       link.addEventListener('mouseleave', function() {
-        previewTimeout = setTimeout(function() {
-          preview.classList.remove('visible');
-        }, 150);
+        preview.classList.remove('visible');
       });
     })(previewLinks[i]);
   }

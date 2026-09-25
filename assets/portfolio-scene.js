@@ -1718,13 +1718,20 @@
     '.callout{fill:none;stroke:rgba(232,232,232,.5);stroke-width:.75;stroke-dasharray:3 2.4}',
     '.pf-item{opacity:0;transform:translateY(5px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.16,1,.3,1)}',
     '.is-built .pf-item{opacity:1;transform:none;transition-delay:var(--d,0s)}',
-    '.pf-dim .pf-item:not(.is-on){opacity:.28;transition-delay:0s}',
-    '.pf-dim .pf-flows,.pf-dim .pf-flowdots{opacity:.3}',
-    '.pf-flows,.pf-flowdots{transition:opacity .4s ease}',
-    '.pf-scene{will-change:transform}',
+    // WebKit stalls for about a third of a second when a layer's opacity crosses 1, so layers rest just below it
+    '.is-built .pf-pane.pf-item{opacity:.999}',
+    '.is-settled .pf-item{transition:opacity .09s ease-out}',
+    '.pf-dim .pf-pane:not(.is-on),.pf-dim .pf-sprite .pf-item[data-id]:not(.is-on){opacity:.28;transition-delay:0s}',
+    // dots dim one by one: dimming their container makes WebKit redraw them all offscreen on every frame
+    '.pf-dim .pf-dotbox:not(.is-on) .pf-dot{opacity:.28}',
+    '.pf-dim .pf-flowdots .pf-dot{opacity:.3}',
+    '.pf-shade{position:absolute;left:-50%;top:-50%;width:200%;height:200%;background:#000;opacity:0;visibility:hidden;will-change:opacity;transition:opacity .09s ease-out,visibility 0s linear .09s}',
+    '.is-tall .pf-shade{left:0;top:0;width:100%;height:100%}',
+    '.pf-dim .pf-shade{opacity:.72;visibility:visible;transition:opacity .09s ease-out}',
+    '.pf-pane{position:absolute;overflow:visible;will-change:transform}',
     '.pf-live,.pf-flowdots,.pf-dotbox{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}',
     '.pf-sprite{position:absolute;overflow:visible;will-change:transform}',
-    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform}',
+    '.pf-dot{position:absolute;left:0;top:0;overflow:visible;will-change:transform;opacity:.999;transition:opacity .09s ease-out}',
     '.flow-dot{fill:#fff;filter:drop-shadow(0 0 1.4px rgba(255,255,255,.9))}',
     '.pf-spin{animation:pf-spin 80s linear infinite}',
     '.pf-blink{animation:pf-blink 1.1s steps(1) infinite}',
@@ -1735,7 +1742,7 @@
     '@keyframes pf-blink{0%,55%{opacity:1}56%,100%{opacity:0}}',
     '@keyframes pf-steam{0%,100%{opacity:.15}50%{opacity:.8}}',
     '@keyframes pf-pulse{0%,100%{opacity:1}50%{opacity:.55}}',
-    '@media (prefers-reduced-motion:reduce){.pf-item{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
+    '@media (prefers-reduced-motion:reduce){.pf-item,.is-settled .pf-item,.pf-shade,.pf-dim .pf-shade,.pf-dot{transition:none}.pf-spin,.pf-blink,.pf-steam,.pf-pulse{animation:none}}'
   ].join('');
 
   function curve(pts, n) {
@@ -1820,9 +1827,13 @@
   };
 
   // Everything drawn after a lifted part was painted over it. Those shapes, drawn in black with the
-  // same strokes, become a mask on the part's layer, so it never paints over them.
+  // same strokes, become a mask on the part's layer, so it never paints over them. Products and
+  // leader lines are layers above the backdrop and cover what they need to themselves.
   function occluders(h, svg, box) {
-    var out = [], all = svg.querySelectorAll('path');
+    var out = [], all = [];
+    (isBackdrop(h.top) ? [].slice.call(svg.children).filter(isBackdrop) : [h.top || svg]).forEach(function (g) {
+      all.push.apply(all, g.querySelectorAll('path'));
+    });
     for (var i = 0; i < all.length; i++) {
       var c = all[i];
       if (!(h.node.compareDocumentPosition(c) & 4)) continue;
@@ -1857,12 +1868,10 @@
       var p = o.pad || 3;
       var box = h.box = [f1(b[0] - p), f1(b[1] - p), f1(b[2] - b[0] + 2 * p), f1(b[3] - b[1] + 2 * p)];
       var s = el('svg', { viewBox: box.join(' '), 'class': 'pf-sprite' + (o.css ? ' ' + o.css : ''), 'aria-hidden': 'true', focusable: 'false' });
-      s.style.left = ((box[0] - (L.x0 || 0)) / L.w * 100).toFixed(4) + '%';
-      s.style.top = (box[1] / L.h * 100).toFixed(4) + '%';
-      s.style.width = (box[2] / L.w * 100).toFixed(4) + '%';
-      s.style.height = (box[3] / L.h * 100).toFixed(4) + '%';
+      placeBox(s, box, L);
       var host = s, chain = [];
       for (var g = n.parentNode; g && g !== svg; g = g.parentNode) chain.unshift(g);
+      h.top = chain[0];
       chain.forEach(function (a) { var c = a.cloneNode(false); c.removeAttribute('id'); host.appendChild(c); host = c; });
       var occ = o.css === 'pf-spin' ? [] : occluders(h, svg, box);
       if (occ.length) {
@@ -1880,6 +1889,66 @@
   function firstDotBox(layer) {
     for (var c = layer.firstChild; c; c = c.nextSibling) if (c.nodeName === 'DIV') return c;
     return null;
+  }
+  function placeBox(s, box, L) {
+    s.style.left = ((box[0] - (L.x0 || 0)) / L.w * 100).toFixed(4) + '%';
+    s.style.top = (box[1] / L.h * 100).toFixed(4) + '%';
+    s.style.width = (box[2] / L.w * 100).toFixed(4) + '%';
+    s.style.height = (box[3] / L.h * 100).toFixed(4) + '%';
+  }
+
+  // The ground, the sky, the flows and the other scenery that isn't a product.
+  function isBackdrop(g) {
+    return !!g && g.nodeName === 'g' && !g.hasAttribute('data-id') && !/\bpf-leaders\b/.test(g.getAttribute('class') || '');
+  }
+
+  // The backdrop stays in the main drawing, which the browser paints once into the page itself. Each
+  // product, and each label's leader line, becomes a small layer of its own, stacked in drawing order
+  // with its lifted parts right above it, and a black shade between the two dims the backdrop. Fading
+  // in and highlighting then only change the opacity of layers, which the compositor does without
+  // repainting any line work, while the scenery adds no layer to composite on every frame.
+  function splitPanes(svg, layer, L) {
+    var first = firstDotBox(layer), shade = document.createElement('div');
+    shade.className = 'pf-shade';
+    layer.insertBefore(shade, first);
+    [].slice.call(svg.children).forEach(function (c) {
+      if (c.nodeName !== 'g') return;
+      var own = LIVE.list.filter(function (h) { return h.top === c && h.sprite; });
+      if (isBackdrop(c)) {
+        own.forEach(function (h) { layer.insertBefore(h.sprite, shade); });
+        return;
+      }
+      var parts = [c];
+      if (!c.hasAttribute('data-id')) {
+        // leader lines: a line and its anchor dot for each label
+        parts = [];
+        var k = c.children;
+        while (k.length) {
+          var g = svg.insertBefore(c.cloneNode(false), c);
+          g.appendChild(k[0]);
+          if (k.length && !/\bleader\b/.test(k[0].getAttribute('class') || '')) g.appendChild(k[0]);
+          parts.push(g);
+        }
+        c.remove();
+      }
+      parts.forEach(function (g) { var s = pane(g, L); if (s) layer.insertBefore(s, first); });
+      own.forEach(function (h) { layer.insertBefore(h.sprite, first); });
+    });
+  }
+
+  function pane(c, L) {
+    var x0 = L.x0 || 0, r = c.getBBox(), p = 4;
+    if (r.width <= 0 && r.height <= 0) return null;
+    var a0 = Math.max(x0, r.x - p), b0 = Math.max(0, r.y - p), a1 = Math.min(x0 + L.w, r.x + r.width + p), b1 = Math.min(L.h, r.y + r.height + p);
+    var box = [f1(a0), f1(b0), f1(a1 - a0), f1(b1 - b0)];
+    var s = el('svg', { viewBox: box.join(' '), 'class': 'pf-pane pf-item', 'aria-hidden': 'true', focusable: 'false' });
+    placeBox(s, box, L);
+    var id = c.getAttribute('data-id'), d = c.style.getPropertyValue('--d');
+    c.setAttribute('class', (c.getAttribute('class') || '').replace(/\bpf-item\b/, '').trim());
+    if (id) { s.setAttribute('data-id', id); c.removeAttribute('data-id'); }
+    if (d) { s.style.setProperty('--d', d); c.style.removeProperty('--d'); }
+    s.appendChild(c);
+    return s;
   }
 
   function Flow(pen, pts, opt) {
@@ -2369,6 +2438,7 @@
     });
     pen.close();
     liftLive(layer, svg, L);
+    splitPanes(svg, layer, L);
     state.svg = svg;
     state.layer = layer;
     state.layout = name;
@@ -2434,6 +2504,8 @@
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         stage.classList.add('is-built', 'is-ready');
+        // once everything has faded in, highlighting dims and clears at once
+        setTimeout(function () { stage.classList.add('is-settled'); }, 2900);
       });
     });
   };
@@ -2458,7 +2530,8 @@
     if (!state.stage) return out;
     var items = state.stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
     for (var i = 0; i < items.length; i++) {
-      for (var c = items[i].firstElementChild; c; c = c.nextElementSibling) {
+      var root = items[i].classList.contains('pf-pane') ? items[i].firstElementChild : items[i];
+      for (var c = root && root.firstElementChild; c; c = c.nextElementSibling) {
         var r = c.getBoundingClientRect();
         if (r.width > 0 && r.height > 0) out.push(r);
       }
@@ -2481,7 +2554,7 @@
         var id = p.getAttribute('data-id');
         function on() {
           if (!state.svg) return;
-          stage.classList.add('pf-dim');
+          stage.classList.add('is-settled', 'pf-dim');
           var items = stage.querySelectorAll('.pf-item[data-id="' + id + '"]');
           for (var j = 0; j < items.length; j++) items[j].classList.add('is-on');
         }
