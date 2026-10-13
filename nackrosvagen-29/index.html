@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Näckrosvägen 29 — 3D model, sun study and furnishing planner</title>
+  <meta name="description" content="A 3D model of a 1946 flat in Råsunda, Solna, with its neighbourhood, an hour-by-hour sunlight simulation and a drag-and-drop furnishing planner.">
+  <meta name="author" content="Sai Sriramagiri">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/gif" href="/assets/sai-favicon.gif">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <script>
+    (function() {
+      var canvas = document.createElement('canvas');
+      var size = 64;
+      canvas.width = size;
+      canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      var reduceMotion = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      document.head.appendChild(link);
+
+      var glyphs = [
+        ['111', '100', '111', '001', '111'],
+        ['010', '101', '111', '101', '101'],
+        ['111', '010', '010', '010', '111']
+      ];
+      var dots = [];
+      var cell = 5;
+      var gap = 5;
+      var glyphWidth = 3 * cell;
+      var totalWidth = glyphWidth * 3 + gap * 2;
+      var startX = (size - totalWidth) / 2 + cell / 2;
+      var startY = 18;
+
+      function hash(n) {
+        var x = Math.sin(n * 127.1) * 43758.5453;
+        return x - Math.floor(x);
+      }
+
+      for (var g = 0; g < glyphs.length; g++) {
+        for (var y = 0; y < glyphs[g].length; y++) {
+          for (var x = 0; x < glyphs[g][y].length; x++) {
+            if (glyphs[g][y][x] !== '1') continue;
+            var index = dots.length + 1;
+            dots.push({
+              x: startX + g * (glyphWidth + gap) + x * cell,
+              y: startY + y * cell,
+              r: 2.1,
+              seed: hash(index),
+              delay: (y * 0.055 + g * 0.035 + x * 0.018 + hash(index) * 0.08) % 0.42,
+              lane: (hash(index + 10) - 0.5) * 5
+            });
+          }
+        }
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+
+      function ease(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function drawDot(x, y, r, alpha) {
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawFrame(still) {
+        var now = Date.now();
+        var t = still ? 0 : (now % 2200) / 2200;
+        ctx.clearRect(0, 0, size, size);
+        ctx.fillStyle = '#000';
+
+        if (!still) {
+          for (var j = 0; j < 5; j++) {
+            var streamT = (t * 1.55 + j / 5) % 1;
+            drawDot(
+              32 + Math.sin(streamT * Math.PI * 2 + j) * 1.4,
+              lerp(25, 39, streamT),
+              0.9 + streamT * 0.35,
+              0.18 + Math.sin(streamT * Math.PI) * 0.34
+            );
+          }
+        }
+
+        for (var i = 0; i < dots.length; i++) {
+          var dot = dots[i];
+          var p = still ? 0 : (t + dot.delay) % 1;
+          var xPos = dot.x;
+          var yPos = dot.y;
+          var radius = dot.r;
+          var alpha = 1;
+
+          if (p < 0.52) {
+            xPos += still ? 0 : Math.sin((now / 240) + dot.seed * 20) * 0.18;
+            yPos += still ? 0 : Math.cos((now / 300) + dot.seed * 16) * 0.14;
+          } else if (p < 0.7) {
+            var intoNeck = ease((p - 0.52) / 0.18);
+            xPos = lerp(dot.x, 32 + dot.lane * 0.35, intoNeck);
+            yPos = lerp(dot.y, 29.5 + dot.seed * 4.5, intoNeck);
+            radius = lerp(dot.r, 1.15, intoNeck);
+            alpha = lerp(1, 0.86, intoNeck);
+          } else if (p < 0.84) {
+            var fall = (p - 0.7) / 0.14;
+            xPos = 32 + dot.lane * Math.sin(fall * Math.PI) * 0.7;
+            yPos = lerp(29, 39, fall * fall);
+            radius = 1 + Math.sin(fall * Math.PI) * 0.35;
+            alpha = 0.9;
+          } else {
+            var settle = ease((p - 0.84) / 0.16);
+            var overshoot = Math.sin(settle * Math.PI) * (1 - settle) * 2.5;
+            xPos = lerp(32 + dot.lane * 0.55, dot.x, settle);
+            yPos = lerp(39, dot.y, settle) + overshoot;
+            radius = lerp(1.2, dot.r, settle);
+            alpha = clamp(0.75 + settle * 0.35, 0, 1);
+          }
+
+          drawDot(xPos, yPos, radius, alpha);
+        }
+
+        ctx.globalAlpha = 1;
+        link.href = canvas.toDataURL('image/png');
+      }
+
+      drawFrame(reduceMotion);
+      if (!reduceMotion) window.setInterval(function() { drawFrame(false); }, 125);
+    })();
+  </script>
+  <style>
+    @font-face {
+      font-family: 'Berkeley Mono';
+      src: local('Berkeley Mono'), local('BerkeleyMono-Regular');
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --fg: #e8e8e8;
+      --fg2: #9a9a9a;
+      --fg3: #6e6e6e;
+      --line: #222;
+      --line2: #333;
+      --sun: #f2c14e;
+      --warn: #e0875a;
+      --mono: 'Berkeley Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html {
+      font-size: 16px;
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      line-height: 1.55;
+    }
+
+    ::selection { background: var(--fg); color: var(--bg); }
+    button, input, select { font: inherit; color: inherit; }
+    a { color: inherit; }
+
+    #root { min-height: 100vh; padding: 2.2rem 0.6rem 7.5rem; }
+    .boot { padding: 2rem 1.4rem; color: var(--fg3); letter-spacing: 0.04em; }
+    .boot::before { content: '▶ '; animation: arrow-blink 0.6s steps(1) infinite; }
+
+    /* ── type ── */
+    .k-h1 {
+      font-size: 0.9rem;
+      font-weight: 400;
+      line-height: 1.45;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .k-h2 {
+      font-size: 0.68rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg);
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+    .k-h3 {
+      font-size: 0.62rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg2);
+    }
+    .k-text { display: block; font-size: 0.74rem; line-height: 1.55; color: var(--fg); }
+    .k-text--small { font-size: 0.66rem; }
+    .k-text--label { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; }
+    .k-text--truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .k-tone-secondary { color: var(--fg2); }
+    .k-tone-tertiary { color: var(--fg3); }
+    .k-tone-quaternary { color: #555; }
+    .k-hr { border: 0; height: 0; }
+
+    .k-link {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      font-size: 0.66rem;
+      line-height: 1.5;
+      color: var(--fg);
+      text-decoration: none;
+    }
+    .k-link::before { content: '→'; flex: none; }
+    .k-link:hover::before { content: '▶'; animation: arrow-blink 0.6s steps(1) infinite; }
+
+    /* ── surfaces ── */
+    .k-card { border: 1px solid var(--line); min-width: 0; }
+    .k-card-h {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--line);
+    }
+    .k-card-t { font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .k-card-b { padding: 0.75rem; }
+
+    .k-stat { border: 1px solid var(--line); padding: 0.65rem 0.75rem; min-width: 0; }
+    .k-stat-l { font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg3); }
+    .k-stat-v { margin-top: 0.3rem; font-size: 0.8rem; line-height: 1.35; }
+    .k-stat--success .k-stat-v { color: var(--sun); }
+    .k-stat--warning .k-stat-v, .k-stat--danger .k-stat-v { color: var(--warn); }
+
+    .k-callout { border-left: 2px solid var(--fg); padding: 0.9rem 1.1rem; }
+    .k-callout-t { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.45rem; }
+    .k-callout-b { font-size: 0.7rem; line-height: 1.6; color: var(--fg2); }
+
+    /* ── controls ── */
+    .k-btn {
+      padding: 0.32rem 0.65rem;
+      font-size: 0.66rem;
+      line-height: 1.4;
+      letter-spacing: 0.02em;
+      background: rgba(10,10,10,0.72);
+      border: 1px solid var(--line2);
+      border-radius: 0;
+      color: var(--fg2);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .k-btn:hover { border-color: #888; color: var(--fg); }
+    .k-btn--primary { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+    .k-btn--primary:hover { background: #fff; border-color: #fff; color: #000; }
+    .k-btn--ghost { background: transparent; border-color: transparent; color: var(--fg3); }
+    .k-btn--ghost:hover { border-color: transparent; color: var(--fg); }
+    .k-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .k-pill {
+      display: inline-block;
+      padding: 0.3em 0.85em 0.34em;
+      font-size: 0.62rem;
+      line-height: 1.35;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      color: var(--fg);
+      background: rgba(0,0,0,0.86);
+      border: 1px solid rgba(232,232,232,0.4);
+      border-radius: 0.95em;
+      transition: background-color 0.08s ease-out, color 0.08s ease-out, border-color 0.08s ease-out;
+    }
+    button.k-pill { cursor: pointer; }
+    button.k-pill:hover, button.k-pill:focus-visible, .k-pill--active {
+      background: var(--fg);
+      border-color: var(--fg);
+      color: var(--bg);
+      outline: none;
+    }
+    .k-pill--success { color: var(--sun); border-color: rgba(242,193,78,0.55); }
+    .k-pill--warning { color: var(--warn); border-color: rgba(224,135,90,0.6); }
+
+    .k-toggle {
+      position: relative;
+      flex: none;
+      width: 24px;
+      height: 13px;
+      padding: 0;
+      background: transparent;
+      border: 1px solid #555;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .k-toggle span {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #777;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .k-toggle[aria-checked="true"] { background: var(--fg); border-color: var(--fg); }
+    .k-toggle[aria-checked="true"] span { transform: translateX(11px); background: var(--bg); }
+
+    .k-field {
+      width: 100%;
+      min-width: 0;
+      padding: 0.38rem 0.55rem;
+      font-size: 0.7rem;
+      line-height: 1.4;
+      color: var(--fg);
+      background: var(--bg);
+      border: 1px solid var(--line2);
+      border-radius: 0;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .k-field:hover, .k-field:focus { border-color: #888; }
+    .k-field::placeholder { color: #555; }
+    .k-select { position: relative; display: inline-block; min-width: 0; }
+    .k-select select { appearance: none; -webkit-appearance: none; padding-right: 1.6rem; cursor: pointer; }
+    .k-select::after {
+      content: '▾';
+      position: absolute;
+      right: 0.55rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--fg3);
+      pointer-events: none;
+    }
+    select.k-field option { background: #111; color: var(--fg); }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 16px;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]:focus { outline: none; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: #444; }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 11px;
+      height: 11px;
+      margin-top: -5px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--fg);
+    }
+    input[type="range"]::-moz-range-track { height: 1px; background: #444; }
+    input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 0; border-radius: 50%; background: var(--fg); }
+    input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(232,232,232,0.25); }
+
+    canvas:focus-visible, svg:focus-visible { outline: 1px solid #555; outline-offset: 2px; }
+
+    /* ── tables ── */
+    .k-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .k-table { width: 100%; border-collapse: collapse; font-size: 0.66rem; line-height: 1.5; }
+    .k-table th {
+      padding: 0.4rem 0.55rem;
+      font-size: 0.58rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg3);
+      border-bottom: 1px solid var(--line2);
+      white-space: nowrap;
+    }
+    .k-table td { padding: 0.5rem 0.55rem; vertical-align: top; border-bottom: 1px solid #171717; }
+    .k-table td:first-child { white-space: nowrap; }
+    .k-table--striped tbody tr:nth-child(even) td { background: #0e0e0e; }
+
+    /* ── chart ── */
+    .k-chart { position: relative; width: 100%; }
+    .k-chart text { font-family: var(--mono); }
+    .k-chart-tip {
+      position: absolute;
+      width: 180px;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.6rem;
+      background: rgba(0,0,0,0.9);
+      border: 1px solid rgba(232,232,232,0.4);
+      pointer-events: none;
+    }
+    .k-chart-tip-h { letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.25rem; }
+    .k-chart-tip-r { display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: 0.4rem; color: var(--fg2); }
+    .k-chart-tip-r b { font-weight: 400; color: var(--fg); }
+    .k-chart-tip i, .k-legend i { display: inline-block; width: 8px; height: 2px; }
+    .k-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-top: 0.4rem; font-size: 0.6rem; color: var(--fg2); }
+    .k-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+    .k-legend i { width: 12px; }
+
+    /* ── site chrome, as on the home page ── */
+    .chrome-fade {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 5.2rem;
+      z-index: 9;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(10,10,10,0), rgba(10,10,10,0.92) 55%, #0a0a0a);
+    }
+
+    .nav-overlay {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      z-index: 10;
+      list-style: none;
+      font-size: 0.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .nav-overlay li { font-size: 0.6rem; line-height: 1; }
+    .nav-overlay a {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: 0;
+      transition: color 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      line-height: 1;
+    }
+    .nav-overlay a::before { content: '→'; color: #fff; transition: color 0.3s ease; }
+    .nav-overlay a::after {
+      content: '';
+      display: inline-block;
+      overflow: hidden;
+      width: 0;
+      opacity: 0;
+      transition: width 0.2s ease, opacity 0.2s ease;
+      animation: glyphs 0.4s steps(1) infinite;
+      white-space: pre;
+    }
+    .nav-overlay a:hover::before { content: '▶'; animation: arrow-blink 0.6s steps(1) infinite; }
+    .nav-overlay a:hover::after { width: 4ch; opacity: 1; }
+    .nav-overlay a.active::before { content: '▶'; animation: none; }
+
+    @keyframes glyphs {
+      0%  { content: ' ░▒▓'; }
+      14% { content: ' ▓░▒'; }
+      28% { content: ' ▒▓░'; }
+      42% { content: ' ◈◇◆'; }
+      57% { content: ' ■□■'; }
+      71% { content: ' ◆◇◈'; }
+      85% { content: ' ▓▒░'; }
+    }
+    @keyframes arrow-blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .site-id {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      line-height: 1.6;
+      letter-spacing: 0.04em;
+      text-align: right;
+      color: #fff;
+    }
+
+    @media (max-width: 600px) {
+      #root { padding: 1rem 0 2rem; }
+      .chrome-fade { display: none; }
+      .nav-overlay, .site-id { position: static; padding: 0 1.2rem; }
+      .nav-overlay { margin-bottom: 1rem; }
+      .site-id { text-align: left; padding-bottom: 2rem; }
+      .k-table { min-width: 46rem; }
+    }
+
+    .gate {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.4rem;
+      background: #0a0a0a;
+    }
+    html.open .gate { display: none; }
+    html:not(.open) #root,
+    html:not(.open) nav,
+    html:not(.open) .chrome-fade,
+    html:not(.open) .site-id,
+    html:not(.open) noscript { display: none; }
+    .gate form {
+      width: min(22rem, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .gate h1 {
+      font-size: 0.68rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .gate p.note {
+      font-size: 0.66rem;
+      line-height: 1.5;
+      color: var(--fg3);
+    }
+    .gate label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg2);
+    }
+    .gate input {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      font: inherit;
+      font-size: 0.74rem;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: var(--fg);
+      background: var(--bg);
+      border: 1px solid var(--line2);
+      border-radius: 0;
+      outline: none;
+    }
+    .gate input:focus { border-color: #888; }
+    .gate .row { display: flex; align-items: center; gap: 0.8rem; min-height: 1.6rem; }
+    .gate .err { font-size: 0.66rem; color: var(--warn); letter-spacing: 0.03em; text-transform: none; }
+    .gate button:disabled { opacity: 0.45; cursor: default; }
+  </style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <form id="gate-form" autocomplete="on">
+    <h1>Näckrosvägen 29</h1>
+    <p class="note">Private page. Enter the id and password to open the model.</p>
+    <label>Id
+      <input id="gate-id" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" required>
+    </label>
+    <label>Password
+      <input id="gate-pw" name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <div class="row">
+      <button class="k-pill" type="submit">Enter</button>
+      <span class="err" id="gate-err" role="alert"></span>
+    </div>
+  </form>
+</div>
+
+<main id="root"><p class="boot">Loading the model</p></main>
+<noscript><p class="boot">This page is an interactive 3D model and needs JavaScript.</p></noscript>
+
+<div class="chrome-fade"></div>
+
+<nav>
+  <ul class="nav-overlay">
+    <li><a href="/">Home</a></li>
+    <li><a href="/#portfolio">Portfolio</a></li>
+    <li><a href="./" class="active" aria-current="page">Näckrosvägen 29</a></li>
+  </ul>
+</nav>
+
+<div class="site-id">
+  <div id="stockholm-clock"></div>
+  <div>ssriramagiri.com</div>
+</div>
+
+<script>
+(function () {
+  var clockEl = document.getElementById('stockholm-clock');
+  function updateClock() {
+    var now = new Date();
+    var opts = { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    var dateOpts = { timeZone: 'Europe/Stockholm', year: 'numeric', month: '2-digit', day: '2-digit' };
+    var time = now.toLocaleTimeString('en-GB', opts);
+    var date = now.toLocaleDateString('en-GB', dateOpts);
+    var offset = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Stockholm' }));
+    var utcOff = Math.round((offset - new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }))) / 3600000);
+    clockEl.textContent = 'Stockholm ' + date + ' ' + time + ' GMT' + (utcOff >= 0 ? '+' : '') + utcOff;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+})();
+</script>
+<script>
+(()=>{function tt(t){return t instanceof Uint8Array||ArrayBuffer.isView(t)&&t.constructor.name==="Uint8Array"&&"BYTES_PER_ELEMENT"in t&&t.BYTES_PER_ELEMENT===1}var F=t=>t?`"${t}" `:"";function Ft(t,e=""){if(typeof t!="boolean")throw new TypeError(F(e)+"expected boolean, got type="+typeof t);return t}function P(t,e=""){if(typeof t!="number")throw new TypeError(F(e)+"expected number, got "+typeof t);if(!Number.isSafeInteger(t)||t<0)throw new RangeError(F(e)+"expected integer >= 0, got "+t);return t}function y(t,e,n=""){if(tt(t)&&(e===void 0||t.length===e))return t;e!==void 0&&P(e,"length");let o=tt(t),r=e!==void 0?` of length ${e}`:"",s=o?`length=${t.length}`:`type=${typeof t}`,f=F(n)+"expected Uint8Array"+r+", got "+s;throw o?new RangeError(f):new TypeError(f)}function $(t,e=!0){if(t.destroyed)throw new Error("hash was destroyed");if(e&&t.finished)throw new Error("digest() was already called")}function Pt(t,e){y(t,void 0,"output");let n=e.outputLen;if(!(t.length>=n))throw new RangeError('"output" expected length >= '+n)}function et(t,e){if(Pt(t,e),!C(t))throw new Error("invalid output, must be aligned")}function xt(t){return new Uint8Array(t.buffer,t.byteOffset,t.byteLength)}function U(t){return new Uint32Array(t.buffer,t.byteOffset,Math.floor(t.byteLength/4))}function A(...t){for(let e=0;e<t.length;e++)t[e].fill(0)}function I(t){return new DataView(t.buffer,t.byteOffset,t.byteLength)}var k=new Uint8Array(new Uint32Array([287454020]).buffer)[0]===68;function nt(t){return t<<24&4278190080|t<<8&16711680|t>>>8&65280|t>>>24&255}var g=k?t=>t:t=>nt(t)>>>0;function $t(t){for(let e=0;e<t.length;e++)t[e]=nt(t[e]);return t}var R=k?t=>t:$t;function gt(t,e){if(t=y(t),e=y(e),t.length!==e.length)return!1;let n=0;for(let o=0;o<t.length;o++)n|=t[o]^e[o];return n===0}function ot(t,e,n){let o=e,r=n||(()=>[]),s=(c,i)=>o(i,...r(c)).update(c).digest(),f=o(new Uint8Array(t),...r(new Uint8Array(0)));return s.outputLen=f.outputLen,s.blockLen=f.blockLen,s.create=(c,...i)=>o(c,...i),s}var yt=(t,e)=>{function n(o,...r){if(y(o,void 0,"key"),t.nonceLength!==void 0){let a=r[0];y(a,t.varSizeNonce?void 0:t.nonceLength,"nonce")}let s=t.tagLength,f=t.nonceLength!==void 0?1:0;if(!t.withAAD){for(let a=f;a<r.length;a++)if(tt(r[a]))throw new Error("AAD not supported")}t.withAAD&&r[f]!==void 0&&y(r[f],void 0,"AAD");let c=e(o,...r),i=(a,l)=>{if(l!==void 0){if(a!==2)throw new Error("cipher output not supported");y(l,void 0,"output")}},u=!1;return{encrypt(a,l){if(u)throw new Error("cannot encrypt() twice with same key + nonce");return u=!0,y(a,void 0,"data"),i(c.encrypt.length,l),c.encrypt(a,l)},decrypt(a,l){if(y(a,void 0,"data"),s&&a.length<s)throw new Error('"ciphertext" expected length >= tagLength='+s);return i(c.decrypt.length,l),c.decrypt(a,l)}}}return Object.assign(n,t),n};function bt(t,e,n=!0){if(e===void 0)return new Uint8Array(t);if(y(e,t,"output"),n&&!C(e))throw new Error("invalid output, must be aligned");return e}function wt(t,e,n){P(t),P(e),Ft(n);let o=new Uint8Array(16),r=I(o);return r.setBigUint64(0,BigInt(e),n),r.setBigUint64(8,BigInt(t),n),o}function C(t){return t.byteOffset%4===0}function T(t){return Uint8Array.from(y(t))}var H=16,mt=new Uint8Array(16),M=U(mt),zt=225,Gt=(t,e,n,o)=>{let r=o&1;return{s3:n<<31|o>>>1,s2:e<<31|n>>>1,s1:t<<31|e>>>1,s0:t>>>1^zt<<24&-(r&1)}},z=t=>(t>>>0&255)<<24|(t>>>8&255)<<16|(t>>>16&255)<<8|t>>>24&255|0;var Wt=t=>t>64*1024?8:t>1024?4:2,rt=class{blockLen=H;outputLen=H;s0=0;s1=0;s2=0;s3=0;finished=!1;destroyed=!1;t;W;windowSize;constructor(e,n){y(e,16,"key"),e=T(e);let o=I(e),r=o.getUint32(0,!1),s=o.getUint32(4,!1),f=o.getUint32(8,!1),c=o.getUint32(12,!1),i=[];for(let p=0;p<128;p++)i.push({s0:z(r),s1:z(s),s2:z(f),s3:z(c)}),{s0:r,s1:s,s2:f,s3:c}=Gt(r,s,f,c);let u=Wt(n||1024);if(![1,2,4,8].includes(u))throw new Error("ghash: invalid window size, expected 2, 4 or 8");this.W=u;let a=128/u,l=this.windowSize=2**u,d=[];for(let p=0;p<a;p++)for(let x=0;x<l;x++){let b=0,w=0,m=0,v=0;for(let E=0;E<u;E++){if(!(x>>>u-E-1&1))continue;let{s0:Q,s1:Rt,s2:Mt,s3:Nt}=i[u*p+E];b^=Q,w^=Rt,m^=Mt,v^=Nt}d.push({s0:b,s1:w,s2:m,s3:v})}this.t=d}_updateBlock(e,n,o,r){e^=this.s0,n^=this.s1,o^=this.s2,r^=this.s3;let{W:s,t:f,windowSize:c}=this,i=0,u=0,h=0,a=0,l=(1<<s)-1,d=0;for(let p of[e,n,o,r])for(let x=0;x<4;x++){let b=p>>>8*x&255;for(let w=8/s-1;w>=0;w--){let m=b>>>s*w&l,{s0:v,s1:E,s2:K,s3:Q}=f[d*c+m];i^=v,u^=E,h^=K,a^=Q,d+=1}}this.s0=i,this.s1=u,this.s2=h,this.s3=a}update(e){$(this),y(e),e=T(e);let n=U(e),o=Math.floor(e.length/H),r=e.length%H;for(let s=0;s<o;s++)this._updateBlock(g(n[s*4+0]),g(n[s*4+1]),g(n[s*4+2]),g(n[s*4+3]));return r&&(mt.set(e.subarray(o*H)),this._updateBlock(g(M[0]),g(M[1]),g(M[2]),g(M[3])),A(M)),this}destroy(){this.destroyed=!0;let{t:e}=this;for(let n of e)n.s0=0,n.s1=0,n.s2=0,n.s3=0}digestInto(e){$(this),et(e,this),this.finished=!0;let{s0:n,s1:o,s2:r,s3:s}=this,f=U(e);f[0]=n,f[1]=o,f[2]=r,f[3]=s,k||R(f.subarray(0,H/4))}digest(){let e=new Uint8Array(H);return this.digestInto(e),this.destroy(),e}};var st=ot(16,(t,e)=>new rt(t,e),t=>[t.length]);var it=16,Vt=4,G=new Uint8Array(it);var qt=283;function Yt(t){if(![16,24,32].includes(t.length))throw new Error('"aes key" expected Uint8Array of length 16/24/32, got length='+t.length)}function ft(t){return t<<1^qt&-(t>>7)}function Et(t,e){let n=0;for(;e>0;e>>=1)n^=t&-(e&1),t=ft(t);return n}var Xt=(()=>{let t=new Uint8Array(256);for(let n=0,o=1;n<256;n++,o^=ft(o))t[n]=o;let e=new Uint8Array(256);e[0]=99;for(let n=0;n<255;n++){let o=t[255-n];o|=o<<8,e[t[n]]=(o^o>>4^o>>5^o>>6^o>>7^99)&255}return A(t),e})();var Zt=t=>t<<24|t>>>8,ct=t=>t<<8|t>>>24;function Jt(t,e){if(t.length!==256)throw new Error("wrong sbox length");let n=new Uint32Array(256).map((u,h)=>e(t[h])),o=n.map(ct),r=o.map(ct),s=r.map(ct),f=new Uint32Array(256*256),c=new Uint32Array(256*256),i=new Uint16Array(256*256);for(let u=0;u<256;u++)for(let h=0;h<256;h++){let a=u*256+h;f[a]=n[u]^o[h],c[a]=r[u]^s[h],i[a]=t[u]<<8|t[h]}return{sbox:t,sbox2:i,T0:n,T1:o,T2:r,T3:s,T01:f,T23:c}}var At=Jt(Xt,t=>Et(t,3)<<24|t<<16|t<<8|Et(t,2));var Qt=(()=>{let t=new Uint8Array(16);for(let e=0,n=1;e<16;e++,n=ft(n))t[e]=n;return t})();function te(t){y(t);let e=t.length;Yt(t);let{sbox2:n}=At,o=[];(!k||!C(t))&&o.push(t=T(t));let r=R(U(t)),s=r.length,f=i=>N(n,i,i,i,i),c=new Uint32Array(e+28);c.set(r);for(let i=s;i<c.length;i++){let u=c[i-1];i%s===0?u=f(Zt(u))^Qt[i/s-1]:s>6&&i%s===4&&(u=f(u)),c[i]=c[i-s]^u}return A(...o),c}function W(t,e,n,o,r,s){return t[n<<8&65280|o>>>8&255]^e[r>>>8&65280|s>>>24&255]}function N(t,e,n,o,r){return t[e&255|n&65280]|t[o>>>16&255|r>>>16&65280]<<16}function Lt(t,e,n,o,r){let{sbox2:s,T01:f,T23:c}=At,i=0;e^=t[i++],n^=t[i++],o^=t[i++],r^=t[i++];let u=t.length/4-2;for(let p=0;p<u;p++){let x=t[i++]^W(f,c,e,n,o,r),b=t[i++]^W(f,c,n,o,r,e),w=t[i++]^W(f,c,o,r,e,n),m=t[i++]^W(f,c,r,e,n,o);e=x,n=b,o=w,r=m}let h=t[i++]^N(s,e,n,o,r),a=t[i++]^N(s,n,o,r,e),l=t[i++]^N(s,o,r,e,n),d=t[i++]^N(s,r,e,n,o);return{s0:h,s1:a,s2:l,s3:d}}function V(t,e,n,o,r){y(n,it,"nonce"),y(o),r=bt(o.length,r);let s=n,f=U(s),c=I(s),i=U(o),u=U(r),h=e?0:12,a=o.length,l=c.getUint32(h,e);for(let p=0;p+4<=i.length;p+=4){let{s0:x,s1:b,s2:w,s3:m}=Lt(t,g(f[0]),g(f[1]),g(f[2]),g(f[3]));u[p+0]=i[p+0]^g(x),u[p+1]=i[p+1]^g(b),u[p+2]=i[p+2]^g(w),u[p+3]=i[p+3]^g(m),l=l+1>>>0,c.setUint32(h,l,e)}let d=it*Math.floor(i.length/Vt);if(d<a){let{s0:p,s1:x,s2:b,s3:w}=Lt(t,g(f[0]),g(f[1]),g(f[2]),g(f[3])),m=new Uint32Array([p,x,b,w]);R(m);let v=xt(m);for(let E=d,K=0;E<a;E++,K++)r[E]=o[E]^v[K];A(m)}return r}function ee(t,e,n,o,r){let s=r?r.length:0,f=t.create(n,o.length+s);r&&f.update(r);let c=wt(8*o.length,8*s,e);f.update(o),f.update(c);let i=f.digest();return A(c),i}var Bt=yt({blockSize:16,nonceLength:12,tagLength:16,withAAD:!0,varSizeNonce:!0},function(e,n,o){if(n.length<8)throw new Error("aes/gcm: invalid nonce length");let r=16;function s(c,i,u){let h=ee(st,!1,c,u,o);for(let a=0;a<i.length;a++)h[a]^=i[a];return h}function f(){let c=te(e),i=G.slice(),u=G.slice();if(V(c,!1,u,u,i),n.length===12)u.set(n);else{let a=G.slice();I(a).setBigUint64(8,BigInt(n.length*8),!1);let d=st.create(i).update(n).update(a);d.digestInto(u),d.destroy()}let h=V(c,!1,u,G);return{xk:c,authKey:i,counter:u,tagMask:h}}return{encrypt(c){let{xk:i,authKey:u,counter:h,tagMask:a}=f(),l=new Uint8Array(c.length+r),d=[i,u,h,a];C(c)||d.push(c=T(c)),V(i,!1,h,c,l.subarray(0,c.length));let p=s(u,a,l.subarray(0,l.length-r));return d.push(p),l.set(p,c.length),A(...d),l},decrypt(c){let{xk:i,authKey:u,counter:h,tagMask:a}=f(),l=[i,u,a,h];C(c)||l.push(c=T(c));let d=c.subarray(0,-r),p=c.subarray(-r),x=s(u,a,d);if(l.push(x),!gt(x,p))throw A(...l),new Error("aes-gcm: invalid tag");let b=V(i,!1,h,d);return A(...l),b}}});function Ut(t){return t instanceof Uint8Array||ArrayBuffer.isView(t)&&t.constructor.name==="Uint8Array"&&"BYTES_PER_ELEMENT"in t&&t.BYTES_PER_ELEMENT===1}var at=t=>t?`"${t}" `:"";function _(t,e=""){if(typeof t!="number")throw new TypeError(at(e)+"expected number, got "+typeof t);if(!Number.isSafeInteger(t)||t<0)throw new RangeError(at(e)+"expected integer >= 0, got "+t);return t}function O(t,e,n=""){if(Ut(t)&&(e===void 0||t.length===e))return t;e!==void 0&&_(e,"length");let o=Ut(t),r=e!==void 0?` of length ${e}`:"",s=o?`length=${t.length}`:`type=${typeof t}`,f=at(n)+"expected Uint8Array"+r+", got "+s;throw o?new RangeError(f):new TypeError(f)}function q(t){if(typeof t!="function"||typeof t.create!="function")throw new TypeError("expected hash wrapped by utils.createHasher");if(_(t.outputLen),_(t.blockLen),t.outputLen<1||t.blockLen<1)throw new Error("hash blockLen / outputLen must be >= 1")}var ne=(t,e)=>{if(t===null||typeof t!="object"||Array.isArray(t))throw new TypeError((e==="object"?"":`"${e}" `)+"expected object, got type="+typeof t)},St=(t,e)=>{ne(t,e);let n=Object.getPrototypeOf(t);if(n!==Object.prototype&&n!==null)throw new TypeError(`"${e}" expected plain object`);if(Object.hasOwn(t,"__proto__"))throw new TypeError(`"${e}.__proto__" is not allowed`)};function D(t,e=!0){if(t.destroyed)throw new Error("hash was destroyed");if(e&&t.finished)throw new Error("digest() was already called")}function Y(t,e){O(t,void 0,"output");let n=e.outputLen;if(!(t.length>=n))throw new RangeError('"output" expected length >= '+n)}function B(...t){for(let e=0;e<t.length;e++)t[e].fill(0)}function j(t){return new DataView(t.buffer,t.byteOffset,t.byteLength)}function L(t,e){return t<<32-e|t>>>e}function oe(t){if(typeof t!="string")throw new TypeError("string expected");let e=new TextEncoder().encode(t);try{return new Uint8Array(e)}finally{B(e)}}function ut(t,e=""){return typeof t=="string"?oe(t):O(t,void 0,e)}function ht(t,e,n="opts"){return St(t,"defaults"),e!==void 0&&St(e,n),Object.assign(Object.create(null),t,e)}function Tt(t,e={}){if(typeof t!="function")throw new TypeError('"hashCons" expected function, got type='+typeof t);e=ht({},e,"info");let n=(r,s)=>t(s).update(r).digest(),o=t(void 0);return n.outputLen=o.outputLen,n.blockLen=o.blockLen,n.canXOF=o.canXOF,n.create=r=>t(r),Object.assign(n,e),Object.freeze(n)}var Ht=t=>({oid:Uint8Array.from([6,9,96,134,72,1,101,3,4,2,t])});var X=class{oHash;iHash;blockLen;outputLen;canXOF=!1;finished=!1;destroyed=!1;constructor(e,n){if(q(e),O(n,void 0,"key"),this.iHash=e.create(),typeof this.iHash.update!="function")throw new Error("expected Hash instance");this.blockLen=this.iHash.blockLen,this.outputLen=this.iHash.outputLen;let o=this.blockLen,r=new Uint8Array(o);r.set(n.length>o?e.create().update(n).digest():n);for(let s=0;s<r.length;s++)r[s]^=54;this.iHash.update(r),this.oHash=e.create();for(let s=0;s<r.length;s++)r[s]^=106;this.oHash.update(r),B(r)}update(e){return D(this),this.iHash.update(e),this}digestInto(e){D(this),Y(e,this),this.finished=!0;let n=e.subarray(0,this.outputLen);this.iHash.digestInto(n),this.oHash.update(n),this.oHash.digestInto(n),this.destroy()}digest(){let e=new Uint8Array(this.oHash.outputLen);return this.digestInto(e),e}_cloneInto(e){e||=Object.create(Object.getPrototypeOf(this),{});let{oHash:n,iHash:o,finished:r,destroyed:s,blockLen:f,outputLen:c,canXOF:i}=this;return e=e,e.finished=r,e.destroyed=s,e.blockLen=f,e.outputLen=c,e.canXOF=i,e.oHash=n._cloneInto(e.oHash),e.iHash=o._cloneInto(e.iHash),e}clone(){return this._cloneInto()}destroy(){this.destroyed=!0,this.oHash.destroy(),this.iHash.destroy()}},_t=(()=>{let t=((e,n,o)=>new X(e,n).update(o).digest());return t.create=(e,n)=>new X(e,n),t})();function re(t,e,n,o){q(t);let r=ht({dkLen:32,asyncTick:10},o),{c:s,dkLen:f,asyncTick:c}=r;if(_(s,"c"),_(f,"dkLen"),_(c,"asyncTick"),s<1)throw new Error('"c" (iterations) must be >= 1');if(f<1)throw new Error('"dkLen" must be >= 1');if(f>(2**32-1)*t.outputLen)throw new Error("derived key too long");let i=ut(e,"password");try{let u=ut(n,"salt");try{let h=new Uint8Array(f),{iHash:a,oHash:l,outputLen:d}=_t.create(t,i),p=new Uint8Array(d),x=se(a,l,u,p);return{c:s,dkLen:f,asyncTick:c,DK:h,outputLen:d,eng:x}}finally{typeof n=="string"&&B(u)}}finally{typeof e=="string"&&B(i)}}function se(t,e,n,o){let r=new Uint8Array(4),s=j(r),f=t._cloneInto().update(n),c=e._cloneInto(),i=t._cloneInto,u=e._cloneInto;return{u1:(h,a)=>{s.setInt32(0,h,!1),f._cloneInto(c).update(r).digestInto(o),e._cloneInto(c).update(o).digestInto(o),a.set(o.subarray(0,a.length))},rounds:(h,a)=>{for(let l=1;l<h;l++){i.call(t,c).update(o).digestInto(o),u.call(e,c).update(o).digestInto(o);for(let d=0;d<a.length;d++)a[d]^=o[d]}},output:h=>(t.destroy(),e.destroy(),f.destroy(),c.destroy(),B(o),h)}}function vt(t,e,n,o){let{c:r,dkLen:s,DK:f,outputLen:c,eng:i}=re(t,e,n,o);for(let u=1,h=0;h<s;u++,h+=c){let a=f.subarray(h,h+c);i.u1(u,a),i.rounds(r,a)}return i.output(f)}var ce=t=>t/2**32|0,ie=t=>t>>>0;function It(t,e,n,o){let r=ce(n),s=ie(n);t.setUint32(e,o?s:r,o),t.setUint32(e+4,o?r:s,o)}function kt(t,e,n){return t&e^~t&n}function Ct(t,e,n){return t&e^t&n^e&n}var Z=class{blockLen;outputLen;canXOF=!1;padOffset;isLE;buffer;view;finished=!1;length=0;pos=0;destroyed=!1;constructor(e,n,o,r){this.blockLen=e,this.outputLen=n,this.padOffset=o,this.isLE=r,this.buffer=new Uint8Array(e),this.view=j(this.buffer)}update(e){D(this),O(e);let{view:n,buffer:o,blockLen:r}=this,s=e.length,f=!1;for(let c=0;c<s;){let i=Math.min(r-this.pos,s-c);if(i===r){let u=j(e);for(;r<=s-c;c+=r)this.process(u,c);f=!0;continue}o.set(c===0&&i===s?e:e.subarray(c,c+i),this.pos),this.pos+=i,c+=i,this.pos===r&&(this.process(n,0),this.pos=0,f=!0)}return this.length+=e.length,f&&this.roundClean(),this}digestInto(e){D(this),Y(e,this),this.finished=!0;let{buffer:n,view:o,blockLen:r,isLE:s}=this,{pos:f}=this;n[f++]=128,n.fill(0,f),this.padOffset>r-f&&(this.process(o,0),n.fill(0)),It(o,r-8,this.length*8,s),this.process(o,0),this.roundClean();let c=e===n?o:j(e),i=this.outputLen,u=i/4,h=this.get();if(i%4||u>h.length)throw new Error("invalid outputLen");for(let a=0;a<u;a++)c.setUint32(4*a,h[a],s)}digest(){let{buffer:e,outputLen:n}=this;this.digestInto(e);let o=e.slice(0,n);return this.destroy(),o}_cloneIntoMeta(e){let{buffer:n,length:o,finished:r,destroyed:s,pos:f}=this;return e.destroyed=s,e.finished=r,e.length=o,e.pos=f,f&&e.buffer.set(n),e}clone(){return this._cloneInto()}},Ot=Uint32Array.from([1779033703,3144134277,1013904242,2773480762,1359893119,2600822924,528734635,1541459225]);var fe=Uint32Array.from([1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298]),S=new Uint32Array(64),lt=class extends Z{A=0;B=0;C=0;D=0;E=0;F=0;G=0;H=0;constructor(e,n){super(64,e,8,!1),this.A=n[0]|0,this.B=n[1]|0,this.C=n[2]|0,this.D=n[3]|0,this.E=n[4]|0,this.F=n[5]|0,this.G=n[6]|0,this.H=n[7]|0}get(){let{A:e,B:n,C:o,D:r,E:s,F:f,G:c,H:i}=this;return[e,n,o,r,s,f,c,i]}set(e,n,o,r,s,f,c,i){this.A=e|0,this.B=n|0,this.C=o|0,this.D=r|0,this.E=s|0,this.F=f|0,this.G=c|0,this.H=i|0}_cloneInto(e){return(e||=new this.constructor).set(...this.get()),this._cloneIntoMeta(e)}process(e,n){for(let a=0;a<16;a++,n+=4)S[a]=e.getUint32(n,!1);for(let a=16;a<64;a++){let l=S[a-15],d=S[a-2],p=L(l,7)^L(l,18)^l>>>3,x=L(d,17)^L(d,19)^d>>>10;S[a]=x+S[a-7]+p+S[a-16]|0}let{A:o,B:r,C:s,D:f,E:c,F:i,G:u,H:h}=this;for(let a=0;a<64;a++){let l=L(c,6)^L(c,11)^L(c,25),d=h+l+kt(c,i,u)+fe[a]+S[a]|0,x=(L(o,2)^L(o,13)^L(o,22))+Ct(o,r,s)|0;h=u,u=i,i=c,c=f+d|0,f=s,s=r,r=o,o=d+x|0}o=o+this.A|0,r=r+this.B|0,s=s+this.C|0,f=f+this.D|0,c=c+this.E|0,i=i+this.F|0,u=u+this.G|0,h=h+this.H|0,this.set(o,r,s,f,c,i,u,h)}roundClean(){B(S)}destroy(){this.destroyed=!0,this.set(0,0,0,0,0,0,0,0),B(this.buffer)}},dt=class extends lt{constructor(){super(32,Ot)}};var Dt=Tt(()=>new dt,Ht(1));var ae=8e4,J="nackrosvagen-29-auth";function ue(t,e,n){var o=new TextEncoder().encode(t+`
+`+e);return vt(Dt,o,n,{c:ae,dkLen:32})}function he(t,e,n){if(n.length<48||n[0]!==78||n[1]!==82||n[2]!==50||n[3]!==57)throw new Error("format");var o=n.subarray(4,20),r=n.subarray(20,32),s=n.subarray(32),f=ue(t,e,o);return Bt(f,r).decrypt(s)}async function le(t,e){var n=await fetch("app.js",{cache:"no-store"});if(!n.ok)throw new Error("fetch");var o=new Uint8Array(await n.arrayBuffer()),r=he(t.trim(),e,o),s=new TextDecoder().decode(r);await new Promise(function(c,i){var u=new Blob([s],{type:"text/javascript"}),h=URL.createObjectURL(u),a=document.createElement("script");a.src=h,a.onload=function(){URL.revokeObjectURL(h),c()},a.onerror=function(){URL.revokeObjectURL(h),i(new Error("script"))},document.body.appendChild(a)});try{sessionStorage.setItem(J,JSON.stringify({id:t.trim(),password:e}))}catch{}document.documentElement.classList.add("open");var f=document.getElementById("gate");f&&f.remove()}function jt(t,e){var n=t.querySelector("button");n.disabled=e,n.textContent=e?"Checking":"Enter"}function pt(t){var e=document.getElementById("gate-err");e&&(e.textContent=t)}async function Kt(t,e,n){pt(""),n&&jt(n,!0);try{await le(t,e)}catch(o){try{sessionStorage.removeItem(J)}catch{}n&&jt(n,!1),o&&o.message==="fetch"?pt("Could not open the page."):pt("Wrong id or password.")}}function de(){var t=document.getElementById("gate-form");if(t){t.addEventListener("submit",function(o){o.preventDefault();var r=document.getElementById("gate-id").value,s=document.getElementById("gate-pw").value;Kt(r,s,t)});var e=null;try{e=sessionStorage.getItem(J)}catch{}if(e)try{var n=JSON.parse(e);n&&n.id&&n.password&&Kt(n.id,n.password,t)}catch{try{sessionStorage.removeItem(J)}catch{}}}}de();})();
+/*! Bundled license information:
+
+@noble/ciphers/utils.js:
+  (*! noble-ciphers - MIT License (c) 2023 Paul Miller (paulmillr.com) *)
+*/
+
+</script>
+</body>
+</html>
